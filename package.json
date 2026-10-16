@@ -1,0 +1,24 @@
+{
+    "name": "azul-crm-alto-valor",
+    "version": "1.0.0",
+    "description": "API para uso da Equipe Interna da Azul: Ingestão Medalhão, MLOps (MLflow) e Agentes Preditivos.",
+    "main": "run.py",
+    "scripts": {
+        "start": "node setup.js",
+        "setup": "node setup.js"
+    },
+    "keywords": [
+        "azul",
+        "crm",
+        "alto-valor",
+        "api",
+        "fastapi",
+        "react",
+        "graphrag",
+        "hackaton",
+        "medalhao",
+        "agentes-preditivos"
+    ],
+    "author": "Time Azul - Hackathon Business Avanade",
+    "license": "MIT"
+}
