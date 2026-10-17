@@ -1,5 +1,6 @@
 import os
 from fastapi import UploadFile, HTTPException, status
+from app.services.datalake_service import DataLakeService
 
 ALLOWED_EXTENSIONS = {"xlsx", "xls", "csv", "json"}
 
@@ -60,3 +61,16 @@ class UploadService:
         """
         if os.path.exists(file_path):
             os.remove(file_path)
+
+    @classmethod
+    async def process_upload(cls, file: UploadFile) -> tuple[dict, int]:
+        file_ext = cls.validate_file_extension(file.filename)
+        temp_path = await cls.save_temp_file(file)
+        try:
+            tamanho = os.path.getsize(temp_path)
+            try:
+                return DataLakeService.process_ingestion(temp_path, file_ext), tamanho
+            except ValueError as e:
+                raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
+        finally:
+            cls.cleanup_temp_file(temp_path)

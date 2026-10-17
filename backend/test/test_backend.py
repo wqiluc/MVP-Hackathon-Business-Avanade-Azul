@@ -48,6 +48,24 @@ def test_ml_api_does_not_import_mlflow():
     assert not any(module == "mlflow" or module.startswith("mlflow.") for module in imported_modules)
 
 
+def test_upload_api_does_not_import_or_call_datalake_service():
+    api_path = Path(__file__).parents[1] / "app" / "api" / "v1" / "uploads.py"
+    tree = ast.parse(api_path.read_text(encoding="utf-8"))
+
+    imported_modules = []
+    called_attributes = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            imported_modules.extend(alias.name for alias in node.names)
+        elif isinstance(node, ast.ImportFrom) and node.module:
+            imported_modules.append(node.module)
+        elif isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
+            called_attributes.append(node.func.attr)
+
+    assert not any("datalake_service" in module or "DataLakeService" in module for module in imported_modules)
+    assert "process_ingestion" not in called_attributes
+
+
 def test_swagger_docs():
     res = client.get("/docs")
     assert res.status_code == 200
@@ -211,3 +229,105 @@ def test_front_contract_flow(tmp_path):
     rec = client.post(f"/api/v1/clientes/{cid}/recomendacao", headers=headers).json()
     assert rec["titulo"] and rec["origem"] in ("simulacao", "ia-generativa")
     assert client.get("/api/v1/modelo", headers=headers).json()["metaAcuracia"] == 0.9
+
+
+def test_legacy_upload_route_accepts_file_field(monkeypatch):
+    with patch(
+        "app.services.upload_service.DataLakeService.process_ingestion",
+        return_value={"status": "success", "processed_rows": 2, "layers": ["bronze", "silver", "gold"]},
+    ):
+        response = client.post(
+            "/api/v1/data/ingest",
+            headers=_authenticated_headers(),
+            files={"file": ("customers.csv", b"valid csv payload", "text/csv")},
+        )
+
+    assert response.status_code == 200
+    assert response.json()["details"]["processed_rows"] == 2
+
+
+def test_upload_rejects_invalid_extension_with_existing_response():
+    response = client.post(
+        "/api/v1/ingestao/clientes",
+        headers=_authenticated_headers(),
+        files={"arquivo": ("customers.txt", b"payload", "text/plain")},
+    )
+
+    assert response.status_code == 400
+    assert response.json()["message"] == "Formato não permitido. Envie ficheiros Excel (.xlsx/.xls), CSV ou JSON."
+
+
+def test_empty_upload_preserves_existing_http_500_behavior():
+    response = client.post(
+        "/api/v1/ingestao/clientes",
+        headers=_authenticated_headers(),
+        files={"arquivo": ("empty.csv", b"", "text/csv")},
+    )
+
+    assert response.status_code == 500
+    assert response.json()["message"] == "Falha ao guardar o ficheiro temporário: 400: O ficheiro enviado está vazio."
+
+
+def test_upload_with_invalid_data_returns_422():
+    response = client.post(
+        "/api/v1/ingestao/clientes",
+        headers=_authenticated_headers(),
+        files={"arquivo": ("invalid.csv", b"wrong,columns\n1,2\n", "text/csv")},
+    )
+
+    assert response.status_code == 422
+    assert response.json()["message"] == (
+        "Colunas obrigatórias ausentes: frequencia, gasto_total, id_cliente, incidentes, recencia_dias, tier"
+    )
+
+
+def test_datalake_value_error_returns_http_422():
+    with patch(
+        "app.services.upload_service.DataLakeService.process_ingestion",
+        side_effect=ValueError("ingestion rejected"),
+    ):
+        response = client.post(
+            "/api/v1/ingestao/clientes",
+            headers=_authenticated_headers(),
+            files={"arquivo": ("customers.csv", b"payload", "text/csv")},
+        )
+
+    assert response.status_code == 422
+    assert response.json()["message"] == "ingestion rejected"
+
+
+def test_upload_save_failure_preserves_http_500(monkeypatch):
+    def fail_to_open(*args, **kwargs):
+        raise OSError("disk unavailable")
+
+    monkeypatch.setattr("builtins.open", fail_to_open)
+    response = client.post(
+        "/api/v1/ingestao/clientes",
+        headers=_authenticated_headers(),
+        files={"arquivo": ("customers.csv", b"payload", "text/csv")},
+    )
+
+    assert response.status_code == 500
+    assert response.json()["message"] == "Falha ao guardar o ficheiro temporário: disk unavailable"
+
+
+def test_upload_temp_file_is_removed_when_ingestion_raises(tmp_path, monkeypatch):
+    temp_file = tmp_path / "temporary-upload.csv"
+
+    async def save_temp_file(_file):
+        temp_file.write_bytes(b"payload")
+        return str(temp_file)
+
+    monkeypatch.setattr("app.services.upload_service.UploadService.save_temp_file", staticmethod(save_temp_file))
+    with patch(
+        "app.services.upload_service.DataLakeService.process_ingestion",
+        side_effect=ValueError("ingestion rejected"),
+    ):
+        response = client.post(
+            "/api/v1/ingestao/clientes",
+            headers=_authenticated_headers(),
+            files={"arquivo": ("customers.csv", b"payload", "text/csv")},
+        )
+
+    assert response.status_code == 422
+    assert not temp_file.exists()
