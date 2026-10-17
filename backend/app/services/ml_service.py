@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import mlflow
 import mlflow.sklearn
 import pandas as pd
@@ -5,6 +7,25 @@ from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, precision_score, recall_score
 from app.services.datalake_service import DataLakeService
+
+
+def get_active_model_info() -> dict:
+    """Retorna as informações do último modelo registrado, com o fallback atual."""
+    base = {"nome": "Modelo de evasão (RandomForest)", "plataforma": "MLflow", "metaAcuracia": 0.9}
+    try:
+        runs = mlflow.search_runs(experiment_names=["Azul_CRM_Churn_Prediction"],
+                                  order_by=["attributes.start_time DESC"], max_results=1)
+        if runs.empty:
+            raise LookupError
+        r = runs.iloc[0]
+        return base | {
+            "versao": str(r["run_id"])[:8], "status": "em-producao",
+            "acuracia": float(r["metrics.accuracy"]), "auc": None,
+            "treinadoEm": r["start_time"].isoformat() if isinstance(r["start_time"], datetime) else None,
+        }
+    except Exception:
+        return base | {"versao": "—", "status": "aguardando-registro", "acuracia": None, "auc": None, "treinadoEm": None}
+
 
 def train_and_register_churn_model() -> dict:
     """

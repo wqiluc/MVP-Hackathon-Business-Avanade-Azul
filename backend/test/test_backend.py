@@ -1,13 +1,20 @@
 import ast
+from datetime import datetime, timezone
 from pathlib import Path
 from unittest.mock import patch
 
+import pandas as pd
 import pytest
 from fastapi.testclient import TestClient
 from app.services.crm_service import gerar_recomendacao
 from run import app
 
 client = TestClient(app)
+
+
+def _authenticated_headers():
+    login = client.post("/api/v1/auth/login", json={"username": "analista_azul", "password": "azul123"})
+    return {"Authorization": f"Bearer {login.json()['access_token']}"}
 
 
 def test_crm_service_does_not_import_clients_api():
@@ -25,6 +32,20 @@ def test_crm_service_does_not_import_clients_api():
         module == "app.api.v1.clients" or module.startswith("app.api.v1.clients.")
         for module in imported_modules
     )
+
+
+def test_ml_api_does_not_import_mlflow():
+    api_path = Path(__file__).parents[1] / "app" / "api" / "v1" / "ml.py"
+    tree = ast.parse(api_path.read_text(encoding="utf-8"))
+
+    imported_modules = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            imported_modules.extend(alias.name for alias in node.names)
+        elif isinstance(node, ast.ImportFrom) and node.module:
+            imported_modules.append(node.module)
+
+    assert not any(module == "mlflow" or module.startswith("mlflow.") for module in imported_modules)
 
 
 def test_swagger_docs():
@@ -100,6 +121,69 @@ def test_recommendation_falls_back_when_agent_workflow_fails():
 
     with patch("app.services.crm_service.invoke_agent_workflow", side_effect=RuntimeError("workflow error")):
         assert gerar_recomendacao(cliente) == base_action
+
+
+def test_model_endpoint_returns_existing_mlflow_run_contract():
+    started = datetime(2026, 10, 17, 12, 30, tzinfo=timezone.utc)
+    runs = pd.DataFrame([{
+        "run_id": "12345678abcdefgh",
+        "metrics.accuracy": 0.875,
+        "start_time": started,
+    }])
+
+    with patch("app.services.ml_service.mlflow.search_runs", return_value=runs) as search_runs:
+        response = client.get("/api/v1/modelo", headers=_authenticated_headers())
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "nome": "Modelo de evasão (RandomForest)",
+        "plataforma": "MLflow",
+        "metaAcuracia": 0.9,
+        "versao": "12345678",
+        "status": "em-producao",
+        "acuracia": 0.875,
+        "auc": None,
+        "treinadoEm": started.isoformat(),
+    }
+    search_runs.assert_called_once_with(
+        experiment_names=["Azul_CRM_Churn_Prediction"],
+        order_by=["attributes.start_time DESC"],
+        max_results=1,
+    )
+
+
+def test_model_endpoint_returns_fallback_when_mlflow_has_no_runs():
+    with patch("app.services.ml_service.mlflow.search_runs", return_value=pd.DataFrame()):
+        response = client.get("/api/v1/modelo", headers=_authenticated_headers())
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "nome": "Modelo de evasão (RandomForest)",
+        "plataforma": "MLflow",
+        "metaAcuracia": 0.9,
+        "versao": "—",
+        "status": "aguardando-registro",
+        "acuracia": None,
+        "auc": None,
+        "treinadoEm": None,
+    }
+
+
+def test_model_endpoint_returns_fallback_when_mlflow_query_raises():
+    with patch("app.services.ml_service.mlflow.search_runs", side_effect=RuntimeError("MLflow unavailable")):
+        response = client.get("/api/v1/modelo", headers=_authenticated_headers())
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "nome": "Modelo de evasão (RandomForest)",
+        "plataforma": "MLflow",
+        "metaAcuracia": 0.9,
+        "versao": "—",
+        "status": "aguardando-registro",
+        "acuracia": None,
+        "auc": None,
+        "treinadoEm": None,
+    }
 
 
 def test_front_contract_flow(tmp_path):
