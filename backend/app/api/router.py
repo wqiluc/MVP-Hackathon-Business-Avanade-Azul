@@ -1,12 +1,17 @@
 from fastapi import APIRouter
-from app.api.v1 import auth, clients, health, uploads
+from app.api.v1 import auth, clients, dashboard, health, ml, uploads
 
-# Roteador Principal
 api_router = APIRouter(prefix="/api/v1")
 
-# Agregação das Sub-Rotas por Domínio
-api_router.include_router(health.router, prefix="/health", tags=["Healthcheck"])
+# Rotas diretas exigidas pelo contrato do Front
 api_router.include_router(auth.router, prefix="/auth", tags=["Autenticação"])
-api_router.include_router(uploads.router, prefix="/data", tags=["Data Lake Medalhão"])
-# api_router.include_router(ml.router, prefix="/ml", tags=["MLOps / MLflow"])
-api_router.include_router(clients.router, prefix="/ai", tags=["Agentes Preditivos BFA"])
+api_router.include_router(uploads.router, prefix="/ingestao", tags=["Ingestão Medalhão"])
+api_router.include_router(dashboard.router, prefix="/dashboard", tags=["Dashboard CRM"])
+api_router.include_router(clients.router, prefix="/clientes", tags=["Gestão de Clientes & IA"])
+api_router.include_router(ml.router, prefix="/modelo", tags=["MLOps / MLflow Metrics"])
+api_router.include_router(health.router, prefix="/health", tags=["Healthcheck"])
+
+# Aliases legados (não quebram consumidores anteriores)
+api_router.include_router(uploads.router, prefix="/data", tags=["Legado"], include_in_schema=False)
+api_router.include_router(clients.router, prefix="/ai", tags=["Legado"], include_in_schema=False)
+api_router.include_router(ml.router, prefix="/ml", tags=["Legado"], include_in_schema=False)

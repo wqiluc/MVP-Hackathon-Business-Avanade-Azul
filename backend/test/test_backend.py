@@ -43,3 +43,30 @@ def test_full_analysis_pipeline():
     assert data["client_identifier"].startswith("AZ-")
     assert data["metrics"]["tier"] == "VIP World Legend"
     assert data["audit_status"] == "PASSED_TRUST_FIRST_AUDIT"
+
+
+def test_front_contract_flow(tmp_path):
+    res = client.post("/api/v1/auth/login", json={"email": "analista@exemplo.com", "senha": "azul2026"})
+    assert res.status_code == 200
+    body = res.json()
+    assert body["token"] and body["usuario"]["perfil"] == "analista" and body["expiraEm"]
+    headers = {"Authorization": f"Bearer {body['token']}"}
+
+    csv = tmp_path / "base.csv"
+    csv.write_text(
+        "id_cliente,tier,frequencia,recencia_dias,gasto_total,incidentes\n"
+        + "\n".join(f"{i},DIAMANTE,{10 + i},{i * 10},{5000 * i},{i % 3}" for i in range(1, 9))
+    )
+    with open(csv, "rb") as f:
+        up = client.post("/api/v1/ingestao/clientes", headers=headers, files={"arquivo": ("base.csv", f)})
+    assert up.status_code == 200 and up.json()["status"] == "recebido"
+
+    resumo = client.get("/api/v1/dashboard/resumo", headers=headers).json()
+    assert resumo["totalClientes"] == 8 and len(resumo["receitaMensal"]) == 12
+
+    lista = client.get("/api/v1/clientes", headers=headers).json()
+    cid = lista[0]["id"]
+    assert client.get(f"/api/v1/clientes/{cid}", headers=headers).json()["id"] == cid
+    rec = client.post(f"/api/v1/clientes/{cid}/recomendacao", headers=headers).json()
+    assert rec["titulo"] and rec["origem"] in ("simulacao", "ia-generativa")
+    assert client.get("/api/v1/modelo", headers=headers).json()["metaAcuracia"] == 0.9

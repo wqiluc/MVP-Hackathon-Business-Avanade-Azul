@@ -1,0 +1,1853 @@
+[
+  {
+    "id": "52917638-bc4e-4567-a58d-5090e2a69e99",
+    "nome": "Lucca Carvalho",
+    "email": "ricardo_barros@yahoo.com",
+    "cpf": "77209053168",
+    "regiao": "AP",
+    "statusCliente": "EM_RISCO",
+    "nivelFidelidade": "B�sico",
+    "saldoPontos": 21997,
+    "pontosAExpirar": 6853,
+    "riscoChurnScore": 0.96,
+    "canalAquisicao": "App Azul",
+    "divisaoSugerida": "AZUL_CONECTA",
+    "criadoEm": "2026-10-14T00:19:15.334Z",
+    "interacoes": [
+      {
+        "id": "bfdb13a6-23cc-4497-bdb7-6e82cad76570",
+        "clienteId": "52917638-bc4e-4567-a58d-5090e2a69e99",
+        "divisao": "AZUL_CARGO",
+        "tipoAcao": "COMPRA",
+        "valorGasto": 5347.27,
+        "origemDestino": "REC-VCP",
+        "avaliacaoNPS": 6,
+        "dataInteracao": "2026-07-14T08:21:59.914Z"
+      },
+      {
+        "id": "e70c779b-7aff-4866-b699-1f29f002797f",
+        "clienteId": "52917638-bc4e-4567-a58d-5090e2a69e99",
+        "divisao": "AZUL_CARGO",
+        "tipoAcao": "COMPRA",
+        "valorGasto": 3407.86,
+        "origemDestino": "REC-VCP",
+        "avaliacaoNPS": 4,
+        "dataInteracao": "2026-07-16T19:37:40.629Z"
+      }
+    ]
+  },
+  {
+    "id": "6ea2b657-5087-4e8a-b2bd-ab5ffb7261cf",
+    "nome": "Isabel Pereira",
+    "email": "bruna_pereira0@gmail.com",
+    "cpf": "14394426821",
+    "regiao": "MT",
+    "statusCliente": "EM_RISCO",
+    "nivelFidelidade": "Top�zio",
+    "saldoPontos": 101153,
+    "pontosAExpirar": 28592,
+    "riscoChurnScore": 0.95,
+    "canalAquisicao": "Busca Org�nica",
+    "divisaoSugerida": "AZUL_CARGO",
+    "criadoEm": "2026-10-14T00:19:15.367Z",
+    "interacoes": [
+      {
+        "id": "787bdd1f-595b-4109-8703-47527c9da7e7",
+        "clienteId": "6ea2b657-5087-4e8a-b2bd-ab5ffb7261cf",
+        "divisao": "AZUL_CONECTA",
+        "tipoAcao": "RESGATE_PONTOS",
+        "valorGasto": 4784.63,
+        "origemDestino": "REC-FEN",
+        "avaliacaoNPS": 6,
+        "dataInteracao": "2026-06-26T13:08:36.022Z"
+      },
+      {
+        "id": "d631e700-d5f1-4319-98bf-2b8e1daa97a4",
+        "clienteId": "6ea2b657-5087-4e8a-b2bd-ab5ffb7261cf",
+        "divisao": "AZUL_CONECTA",
+        "tipoAcao": "RESGATE_PONTOS",
+        "valorGasto": 5257.78,
+        "origemDestino": "CNF-SSA",
+        "avaliacaoNPS": 6,
+        "dataInteracao": "2026-10-14T00:00:10.748Z"
+      }
+    ]
+  },
+  {
+    "id": "00fad520-f715-4275-be7f-c85168529dc4",
+    "nome": "Lorraine Macedo",
+    "email": "kleber.moreira9@live.com",
+    "cpf": "80513003785",
+    "regiao": "PI",
+    "statusCliente": "INATIVO",
+    "nivelFidelidade": "Safira",
+    "saldoPontos": 106230,
+    "pontosAExpirar": 74979,
+    "riscoChurnScore": 0.92,
+    "canalAquisicao": "Parceiro Banc�rio (Pontos)",
+    "divisaoSugerida": "VOOS_COMERCIAIS",
+    "criadoEm": "2026-10-14T00:19:15.223Z",
+    "interacoes": [
+      {
+        "id": "75e060cb-c914-4f7a-973b-dcf73610cfdf",
+        "clienteId": "00fad520-f715-4275-be7f-c85168529dc4",
+        "divisao": "AZUL_CARGO",
+        "tipoAcao": "COMPRA",
+        "valorGasto": 3478.97,
+        "origemDestino": "CWB-POA",
+        "avaliacaoNPS": 4,
+        "dataInteracao": "2026-07-14T05:25:11.988Z"
+      }
+    ]
+  },
+  {
+    "id": "e3c9fc0b-7408-44ff-a92b-8b43545d072e",
+    "nome": "Norberto Braga",
+    "email": "nataniel14@gmail.com",
+    "cpf": "78083297830",
+    "regiao": "RS",
+    "statusCliente": "EM_RISCO",
+    "nivelFidelidade": "Top�zio",
+    "saldoPontos": 40315,
+    "pontosAExpirar": 37440,
+    "riscoChurnScore": 0.92,
+    "canalAquisicao": "App Azul",
+    "divisaoSugerida": "VOOS_COMERCIAIS",
+    "criadoEm": "2026-10-14T00:19:15.314Z",
+    "interacoes": [
+      {
+        "id": "9af8733b-ef19-4d23-abf9-55cfb081e7b3",
+        "clienteId": "e3c9fc0b-7408-44ff-a92b-8b43545d072e",
+        "divisao": "AZUL_CARGO",
+        "tipoAcao": "RESGATE_PONTOS",
+        "valorGasto": 6001,
+        "origemDestino": "CWB-POA",
+        "avaliacaoNPS": 3,
+        "dataInteracao": "2026-09-01T03:44:53.937Z"
+      },
+      {
+        "id": "e20241df-9e7e-4d0a-9eb3-78c132097d24",
+        "clienteId": "e3c9fc0b-7408-44ff-a92b-8b43545d072e",
+        "divisao": "AZUL_CARGO",
+        "tipoAcao": "RECLAMACAO",
+        "valorGasto": 1822.05,
+        "origemDestino": "GRU-REC",
+        "avaliacaoNPS": 4,
+        "dataInteracao": "2026-10-09T21:41:24.307Z"
+      }
+    ]
+  },
+  {
+    "id": "86f1f324-b56a-45d2-998b-3a14726ba639",
+    "nome": "Dra. Joana Oliveira",
+    "email": "guilherme77@yahoo.com",
+    "cpf": "64485424219",
+    "regiao": "PA",
+    "statusCliente": "EM_RISCO",
+    "nivelFidelidade": "Safira",
+    "saldoPontos": 83314,
+    "pontosAExpirar": 59348,
+    "riscoChurnScore": 0.91,
+    "canalAquisicao": "App Azul",
+    "divisaoSugerida": "AZUL_CONECTA",
+    "criadoEm": "2026-10-14T00:19:15.644Z",
+    "interacoes": [
+      {
+        "id": "7a8a2b04-e331-47b2-906e-db1e89167d87",
+        "clienteId": "86f1f324-b56a-45d2-998b-3a14726ba639",
+        "divisao": "VOOS_COMERCIAIS",
+        "tipoAcao": "RESGATE_PONTOS",
+        "valorGasto": 5525.2,
+        "origemDestino": "CNF-SSA",
+        "avaliacaoNPS": 2,
+        "dataInteracao": "2026-09-07T18:23:08.769Z"
+      }
+    ]
+  },
+  {
+    "id": "db37c8cb-2727-4e7d-8227-f186428e8eb0",
+    "nome": "Paula Costa",
+    "email": "mariaclara.xavier12@gmail.com",
+    "cpf": "93632617784",
+    "regiao": "MA",
+    "statusCliente": "EM_RISCO",
+    "nivelFidelidade": "Safira",
+    "saldoPontos": 39296,
+    "pontosAExpirar": 34964,
+    "riscoChurnScore": 0.89,
+    "canalAquisicao": "Promo��o Rel�mpago",
+    "divisaoSugerida": "AZUL_CONECTA",
+    "criadoEm": "2026-10-14T00:19:15.165Z",
+    "interacoes": [
+      {
+        "id": "97fceff0-daf2-4971-bcd9-5a17cc5b5a50",
+        "clienteId": "db37c8cb-2727-4e7d-8227-f186428e8eb0",
+        "divisao": "AZUL_VIAGENS",
+        "tipoAcao": "RECLAMACAO",
+        "valorGasto": 1361.29,
+        "origemDestino": "CNF-SSA",
+        "avaliacaoNPS": 3,
+        "dataInteracao": "2026-08-26T20:23:52.214Z"
+      }
+    ]
+  },
+  {
+    "id": "8922e982-c790-40c0-bfea-26adf40c07aa",
+    "nome": "Pedro Silva",
+    "email": "giovanna13@yahoo.com",
+    "cpf": "90439003300",
+    "regiao": "PE",
+    "statusCliente": "INATIVO",
+    "nivelFidelidade": "Diamante",
+    "saldoPontos": 45308,
+    "pontosAExpirar": 37052,
+    "riscoChurnScore": 0.89,
+    "canalAquisicao": "Promo��o Rel�mpago",
+    "divisaoSugerida": "AZUL_CARGO",
+    "criadoEm": "2026-10-14T00:19:15.429Z",
+    "interacoes": [
+      {
+        "id": "e0e2f81f-a84d-496b-91e5-4e37bf2bc4e9",
+        "clienteId": "8922e982-c790-40c0-bfea-26adf40c07aa",
+        "divisao": "AZUL_CONECTA",
+        "tipoAcao": "RESGATE_PONTOS",
+        "valorGasto": 1576.96,
+        "origemDestino": "CNF-SSA",
+        "avaliacaoNPS": 2,
+        "dataInteracao": "2026-07-16T05:42:41.425Z"
+      }
+    ]
+  },
+  {
+    "id": "abe29186-c392-4f78-882b-b8c81ceb8c78",
+    "nome": "Víctor Silva",
+    "email": "sirineu15@live.com",
+    "cpf": "32804461231",
+    "regiao": "AC",
+    "statusCliente": "EM_RISCO",
+    "nivelFidelidade": "B�sico",
+    "saldoPontos": 89288,
+    "pontosAExpirar": 30319,
+    "riscoChurnScore": 0.88,
+    "canalAquisicao": "Ag�ncia Parceira",
+    "divisaoSugerida": "AZUL_VIAGENS",
+    "criadoEm": "2026-10-14T00:19:15.478Z",
+    "interacoes": [
+      {
+        "id": "bea3878b-2e8e-4f74-a528-2515251fe523",
+        "clienteId": "abe29186-c392-4f78-882b-b8c81ceb8c78",
+        "divisao": "VOOS_COMERCIAIS",
+        "tipoAcao": "RESGATE_PONTOS",
+        "valorGasto": 5023.98,
+        "origemDestino": "REC-VCP",
+        "avaliacaoNPS": 3,
+        "dataInteracao": "2026-07-16T23:37:41.689Z"
+      }
+    ]
+  },
+  {
+    "id": "572887a5-508b-4d0c-a567-78d313824587",
+    "nome": "Nicolas Batista",
+    "email": "marcos.albuquerque@yahoo.com",
+    "cpf": "72513894989",
+    "regiao": "PA",
+    "statusCliente": "INATIVO",
+    "nivelFidelidade": "B�sico",
+    "saldoPontos": 32308,
+    "pontosAExpirar": 4675,
+    "riscoChurnScore": 0.88,
+    "canalAquisicao": "Ag�ncia Parceira",
+    "divisaoSugerida": "AZUL_VIAGENS",
+    "criadoEm": "2026-10-14T00:19:15.577Z",
+    "interacoes": [
+      {
+        "id": "fcfd73c2-fbc2-4cba-8296-f8ad7c6d303a",
+        "clienteId": "572887a5-508b-4d0c-a567-78d313824587",
+        "divisao": "AZUL_CONECTA",
+        "tipoAcao": "RECLAMACAO",
+        "valorGasto": 889.6,
+        "origemDestino": "CWB-POA",
+        "avaliacaoNPS": 4,
+        "dataInteracao": "2026-07-18T01:57:11.878Z"
+      }
+    ]
+  },
+  {
+    "id": "6625c721-0f62-4c1e-8ac6-c8b9ef124c1f",
+    "nome": "Rafaela Xavier",
+    "email": "aline64@gmail.com",
+    "cpf": "46058525918",
+    "regiao": "CE",
+    "statusCliente": "EM_RISCO",
+    "nivelFidelidade": "B�sico",
+    "saldoPontos": 59800,
+    "pontosAExpirar": 56125,
+    "riscoChurnScore": 0.87,
+    "canalAquisicao": "App Azul",
+    "divisaoSugerida": "AZUL_CARGO",
+    "criadoEm": "2026-10-14T00:19:15.211Z",
+    "interacoes": [
+      {
+        "id": "c3c4c447-4890-423b-ab3f-817e6ab4eef4",
+        "clienteId": "6625c721-0f62-4c1e-8ac6-c8b9ef124c1f",
+        "divisao": "AZUL_CONECTA",
+        "tipoAcao": "RECLAMACAO",
+        "valorGasto": 2040.64,
+        "origemDestino": "VCP-MCO",
+        "avaliacaoNPS": 3,
+        "dataInteracao": "2026-06-23T14:11:47.853Z"
+      },
+      {
+        "id": "6324984a-3fc6-42e2-a61d-d0f8c01e4ea3",
+        "clienteId": "6625c721-0f62-4c1e-8ac6-c8b9ef124c1f",
+        "divisao": "AZUL_CONECTA",
+        "tipoAcao": "COMPRA",
+        "valorGasto": 3667.2,
+        "origemDestino": "SDU-CGH",
+        "avaliacaoNPS": 4,
+        "dataInteracao": "2026-07-15T11:13:43.531Z"
+      },
+      {
+        "id": "cf98fec5-3544-4c5e-bf0c-22b5a59f805b",
+        "clienteId": "6625c721-0f62-4c1e-8ac6-c8b9ef124c1f",
+        "divisao": "AZUL_CONECTA",
+        "tipoAcao": "RECLAMACAO",
+        "valorGasto": 3174.43,
+        "origemDestino": "GRU-REC",
+        "avaliacaoNPS": 4,
+        "dataInteracao": "2026-07-01T01:42:42.449Z"
+      }
+    ]
+  },
+  {
+    "id": "6270f000-6853-4ee4-bca5-c7cd7a0cc188",
+    "nome": "Lucas Barros Jr.",
+    "email": "beatriz.souza61@gmail.com",
+    "cpf": "23681160149",
+    "regiao": "SP",
+    "statusCliente": "EM_RISCO",
+    "nivelFidelidade": "Top�zio",
+    "saldoPontos": 103014,
+    "pontosAExpirar": 24291,
+    "riscoChurnScore": 0.86,
+    "canalAquisicao": "Ag�ncia Parceira",
+    "divisaoSugerida": "AZUL_CARGO",
+    "criadoEm": "2026-10-14T00:19:15.556Z",
+    "interacoes": [
+      {
+        "id": "7bf48bef-8665-4fd0-ab96-0e1d866f870e",
+        "clienteId": "6270f000-6853-4ee4-bca5-c7cd7a0cc188",
+        "divisao": "VOOS_COMERCIAIS",
+        "tipoAcao": "COMPRA",
+        "valorGasto": 4970.29,
+        "origemDestino": "CWB-POA",
+        "avaliacaoNPS": 3,
+        "dataInteracao": "2026-06-24T00:42:23.484Z"
+      }
+    ]
+  },
+  {
+    "id": "500c77d8-7374-4972-9e91-e267b88faa89",
+    "nome": "Cliente Extra�do de Texto/PDF",
+    "email": "maria.silva@teste.com",
+    "cpf": "12345678999",
+    "regiao": "N�o Informado",
+    "statusCliente": "EM_RISCO",
+    "nivelFidelidade": "B�sico",
+    "saldoPontos": 0,
+    "pontosAExpirar": 0,
+    "riscoChurnScore": 0.85,
+    "canalAquisicao": "Ingest�o de Texto/Documento",
+    "divisaoSugerida": "VOOS_COMERCIAIS",
+    "criadoEm": "2026-10-14T00:26:18.221Z",
+    "interacoes": [
+      {
+        "id": "643640ca-83c2-4762-933f-8d50f4f9d317",
+        "clienteId": "500c77d8-7374-4972-9e91-e267b88faa89",
+        "divisao": "AZUL_VIAGENS",
+        "tipoAcao": "RECLAMACAO",
+        "valorGasto": 0,
+        "origemDestino": null,
+        "avaliacaoNPS": null,
+        "dataInteracao": "2026-10-14T00:26:18.249Z"
+      },
+      {
+        "id": "6b00f545-9dc0-4e4c-a34c-3b6bd101f935",
+        "clienteId": "500c77d8-7374-4972-9e91-e267b88faa89",
+        "divisao": "AZUL_VIAGENS",
+        "tipoAcao": "RECLAMACAO",
+        "valorGasto": 0,
+        "origemDestino": null,
+        "avaliacaoNPS": null,
+        "dataInteracao": "2026-10-14T00:26:45.395Z"
+      }
+    ]
+  },
+  {
+    "id": "bd869efc-dc70-4303-9a1b-89ada6841ce7",
+    "nome": "Cliente Extra�do de Texto/PDF",
+    "email": "roberto.azul@teste.com",
+    "cpf": "11122233344",
+    "regiao": "N�o Informado",
+    "statusCliente": "EM_RISCO",
+    "nivelFidelidade": "B�sico",
+    "saldoPontos": 0,
+    "pontosAExpirar": 0,
+    "riscoChurnScore": 0.85,
+    "canalAquisicao": "Ingest�o de Texto/Documento",
+    "divisaoSugerida": "AZUL_VIAGENS",
+    "criadoEm": "2026-10-14T00:33:04.755Z",
+    "interacoes": [
+      {
+        "id": "c0142797-600a-4461-b010-c1618ffb1454",
+        "clienteId": "bd869efc-dc70-4303-9a1b-89ada6841ce7",
+        "divisao": "VOOS_COMERCIAIS",
+        "tipoAcao": "RECLAMACAO",
+        "valorGasto": 0,
+        "origemDestino": null,
+        "avaliacaoNPS": null,
+        "dataInteracao": "2026-10-14T00:33:04.773Z"
+      }
+    ]
+  },
+  {
+    "id": "8391ad62-7e4e-4674-900d-db50bbf49016",
+    "nome": "Isabella Franco",
+    "email": "leonardo82@bol.com.br",
+    "cpf": "67948209004",
+    "regiao": "BA",
+    "statusCliente": "INATIVO",
+    "nivelFidelidade": "Safira",
+    "saldoPontos": 92557,
+    "pontosAExpirar": 42235,
+    "riscoChurnScore": 0.83,
+    "canalAquisicao": "Ag�ncia Parceira",
+    "divisaoSugerida": "VOOS_COMERCIAIS",
+    "criadoEm": "2026-10-14T00:19:15.419Z",
+    "interacoes": [
+      {
+        "id": "f9e38c22-0b4c-4f8b-9c20-c2cd4e954053",
+        "clienteId": "8391ad62-7e4e-4674-900d-db50bbf49016",
+        "divisao": "AZUL_CARGO",
+        "tipoAcao": "RESGATE_PONTOS",
+        "valorGasto": 2841.78,
+        "origemDestino": "GRU-REC",
+        "avaliacaoNPS": 1,
+        "dataInteracao": "2026-10-11T23:01:06.242Z"
+      },
+      {
+        "id": "3dbe8635-e0a6-41fe-bdad-24426a947c90",
+        "clienteId": "8391ad62-7e4e-4674-900d-db50bbf49016",
+        "divisao": "AZUL_CARGO",
+        "tipoAcao": "RESGATE_PONTOS",
+        "valorGasto": 3025.35,
+        "origemDestino": "REC-VCP",
+        "avaliacaoNPS": 3,
+        "dataInteracao": "2026-09-03T15:05:37.046Z"
+      }
+    ]
+  },
+  {
+    "id": "b59894f6-76b7-468d-9ec3-0e8ec3f87dfa",
+    "nome": "Luiza Saraiva",
+    "email": "clara_moreira@bol.com.br",
+    "cpf": "69811893261",
+    "regiao": "RO",
+    "statusCliente": "INATIVO",
+    "nivelFidelidade": "B�sico",
+    "saldoPontos": 4084,
+    "pontosAExpirar": 2937,
+    "riscoChurnScore": 0.83,
+    "canalAquisicao": "Ag�ncia Parceira",
+    "divisaoSugerida": "AZUL_CARGO",
+    "criadoEm": "2026-10-14T00:19:15.468Z",
+    "interacoes": [
+      {
+        "id": "0cc78caf-17c3-41d2-bf17-f14ce351adbe",
+        "clienteId": "b59894f6-76b7-468d-9ec3-0e8ec3f87dfa",
+        "divisao": "VOOS_COMERCIAIS",
+        "tipoAcao": "RESGATE_PONTOS",
+        "valorGasto": 4488.38,
+        "origemDestino": "CWB-POA",
+        "avaliacaoNPS": 1,
+        "dataInteracao": "2026-07-21T03:26:26.934Z"
+      },
+      {
+        "id": "8056f0d4-4dae-4fa6-9666-1deb97858f91",
+        "clienteId": "b59894f6-76b7-468d-9ec3-0e8ec3f87dfa",
+        "divisao": "VOOS_COMERCIAIS",
+        "tipoAcao": "RECLAMACAO",
+        "valorGasto": 4283.23,
+        "origemDestino": "CNF-SSA",
+        "avaliacaoNPS": 1,
+        "dataInteracao": "2026-08-29T16:29:57.976Z"
+      }
+    ]
+  },
+  {
+    "id": "1adac706-988b-487a-b96e-53bf46884934",
+    "nome": "Washington Costa",
+    "email": "lavinia_melo@hotmail.com",
+    "cpf": "83213312522",
+    "regiao": "PR",
+    "statusCliente": "EM_RISCO",
+    "nivelFidelidade": "Diamante",
+    "saldoPontos": 113408,
+    "pontosAExpirar": 83890,
+    "riscoChurnScore": 0.79,
+    "canalAquisicao": "Busca Org�nica",
+    "divisaoSugerida": "AZUL_CONECTA",
+    "criadoEm": "2026-10-14T00:19:15.235Z",
+    "interacoes": [
+      {
+        "id": "0487746e-1413-493f-9920-16b28c7542fd",
+        "clienteId": "1adac706-988b-487a-b96e-53bf46884934",
+        "divisao": "VOOS_COMERCIAIS",
+        "tipoAcao": "COMPRA",
+        "valorGasto": 4925.09,
+        "origemDestino": "CWB-POA",
+        "avaliacaoNPS": 6,
+        "dataInteracao": "2026-08-08T01:32:08.672Z"
+      }
+    ]
+  },
+  {
+    "id": "b60257fe-3b0f-4f90-b6f1-e20e97ee3dd0",
+    "nome": "Maria Luiza Saraiva",
+    "email": "roberto_santos25@yahoo.com",
+    "cpf": "22171108532",
+    "regiao": "RO",
+    "statusCliente": "EM_RISCO",
+    "nivelFidelidade": "B�sico",
+    "saldoPontos": 99117,
+    "pontosAExpirar": 9940,
+    "riscoChurnScore": 0.78,
+    "canalAquisicao": "Promo��o Rel�mpago",
+    "divisaoSugerida": "VOOS_COMERCIAIS",
+    "criadoEm": "2026-10-14T00:19:15.153Z",
+    "interacoes": [
+      {
+        "id": "52eba371-1844-49e1-a6c5-4dfa3e0b02a6",
+        "clienteId": "b60257fe-3b0f-4f90-b6f1-e20e97ee3dd0",
+        "divisao": "AZUL_CARGO",
+        "tipoAcao": "COMPRA",
+        "valorGasto": 2435.06,
+        "origemDestino": "CNF-SSA",
+        "avaliacaoNPS": 5,
+        "dataInteracao": "2026-08-23T10:37:32.993Z"
+      }
+    ]
+  },
+  {
+    "id": "df65a807-313d-412a-b544-2f5d2affc827",
+    "nome": "Hélio Reis",
+    "email": "isaac_franco@gmail.com",
+    "cpf": "89664480114",
+    "regiao": "SE",
+    "statusCliente": "EM_RISCO",
+    "nivelFidelidade": "Top�zio",
+    "saldoPontos": 97721,
+    "pontosAExpirar": 43490,
+    "riscoChurnScore": 0.78,
+    "canalAquisicao": "Ag�ncia Parceira",
+    "divisaoSugerida": "VOOS_COMERCIAIS",
+    "criadoEm": "2026-10-14T00:19:15.546Z",
+    "interacoes": [
+      {
+        "id": "802ef185-27b2-45cf-8955-e4e362766ecf",
+        "clienteId": "df65a807-313d-412a-b544-2f5d2affc827",
+        "divisao": "AZUL_VIAGENS",
+        "tipoAcao": "RECLAMACAO",
+        "valorGasto": 1308.93,
+        "origemDestino": "REC-FEN",
+        "avaliacaoNPS": 3,
+        "dataInteracao": "2026-09-03T21:15:58.342Z"
+      }
+    ]
+  },
+  {
+    "id": "627e10ce-734c-4208-acaf-0b8ddce53919",
+    "nome": "Ana Luiza Oliveira",
+    "email": "alicia13@live.com",
+    "cpf": "90541297865",
+    "regiao": "BA",
+    "statusCliente": "INATIVO",
+    "nivelFidelidade": "Diamante",
+    "saldoPontos": 109606,
+    "pontosAExpirar": 76370,
+    "riscoChurnScore": 0.76,
+    "canalAquisicao": "Busca Org�nica",
+    "divisaoSugerida": "AZUL_CONECTA",
+    "criadoEm": "2026-10-14T00:19:15.388Z",
+    "interacoes": [
+      {
+        "id": "4b400caa-fada-4bb1-87ba-e8585cd4462e",
+        "clienteId": "627e10ce-734c-4208-acaf-0b8ddce53919",
+        "divisao": "AZUL_CARGO",
+        "tipoAcao": "RECLAMACAO",
+        "valorGasto": 2754.21,
+        "origemDestino": "CWB-POA",
+        "avaliacaoNPS": 2,
+        "dataInteracao": "2026-07-13T00:57:00.376Z"
+      }
+    ]
+  },
+  {
+    "id": "9f9ba520-4e6e-4c25-b39f-5b685bd55092",
+    "nome": "Morgana Carvalho Jr.",
+    "email": "ofelia6@gmail.com",
+    "cpf": "73740745042",
+    "regiao": "RO",
+    "statusCliente": "EM_RISCO",
+    "nivelFidelidade": "Top�zio",
+    "saldoPontos": 22166,
+    "pontosAExpirar": 20313,
+    "riscoChurnScore": 0.74,
+    "canalAquisicao": "Parceiro Banc�rio (Pontos)",
+    "divisaoSugerida": "VOOS_COMERCIAIS",
+    "criadoEm": "2026-10-14T00:19:15.536Z",
+    "interacoes": [
+      {
+        "id": "fbfff693-00cc-49fe-85bb-bf694070d68e",
+        "clienteId": "9f9ba520-4e6e-4c25-b39f-5b685bd55092",
+        "divisao": "AZUL_VIAGENS",
+        "tipoAcao": "RECLAMACAO",
+        "valorGasto": 6261.6,
+        "origemDestino": "VCP-MCO",
+        "avaliacaoNPS": 1,
+        "dataInteracao": "2026-10-02T03:05:22.357Z"
+      },
+      {
+        "id": "2c6d6be6-9051-4d36-bad9-0b8a42934c18",
+        "clienteId": "9f9ba520-4e6e-4c25-b39f-5b685bd55092",
+        "divisao": "AZUL_VIAGENS",
+        "tipoAcao": "COMPRA",
+        "valorGasto": 2208.41,
+        "origemDestino": "GRU-REC",
+        "avaliacaoNPS": 3,
+        "dataInteracao": "2026-07-04T08:36:29.199Z"
+      },
+      {
+        "id": "591e32b0-984f-4e2a-bca1-144863139a00",
+        "clienteId": "9f9ba520-4e6e-4c25-b39f-5b685bd55092",
+        "divisao": "AZUL_VIAGENS",
+        "tipoAcao": "COMPRA",
+        "valorGasto": 560.88,
+        "origemDestino": "REC-FEN",
+        "avaliacaoNPS": 1,
+        "dataInteracao": "2026-09-02T19:38:16.540Z"
+      }
+    ]
+  },
+  {
+    "id": "0a0c647c-fb90-4f10-9b24-bdd37a18436d",
+    "nome": "Rafaela Nogueira",
+    "email": "elisa_barros93@gmail.com",
+    "cpf": "71725736661",
+    "regiao": "RR",
+    "statusCliente": "INATIVO",
+    "nivelFidelidade": "B�sico",
+    "saldoPontos": 110739,
+    "pontosAExpirar": 90686,
+    "riscoChurnScore": 0.73,
+    "canalAquisicao": "Ag�ncia Parceira",
+    "divisaoSugerida": "AZUL_CARGO",
+    "criadoEm": "2026-10-14T00:19:15.201Z",
+    "interacoes": [
+      {
+        "id": "1391b570-7ce1-4bd1-9c72-cf1f702b81d0",
+        "clienteId": "0a0c647c-fb90-4f10-9b24-bdd37a18436d",
+        "divisao": "VOOS_COMERCIAIS",
+        "tipoAcao": "RECLAMACAO",
+        "valorGasto": 2993.3,
+        "origemDestino": "CWB-POA",
+        "avaliacaoNPS": 3,
+        "dataInteracao": "2026-07-09T04:37:15.909Z"
+      },
+      {
+        "id": "01ff2aa4-4120-4f2d-9cb3-776a650f0a77",
+        "clienteId": "0a0c647c-fb90-4f10-9b24-bdd37a18436d",
+        "divisao": "VOOS_COMERCIAIS",
+        "tipoAcao": "RECLAMACAO",
+        "valorGasto": 6183.53,
+        "origemDestino": "VCP-MCO",
+        "avaliacaoNPS": 1,
+        "dataInteracao": "2026-07-10T20:46:54.414Z"
+      },
+      {
+        "id": "0ceb2be2-26cd-40ad-a61e-dcdbd7448d37",
+        "clienteId": "0a0c647c-fb90-4f10-9b24-bdd37a18436d",
+        "divisao": "VOOS_COMERCIAIS",
+        "tipoAcao": "COMPRA",
+        "valorGasto": 3563.45,
+        "origemDestino": "REC-FEN",
+        "avaliacaoNPS": 2,
+        "dataInteracao": "2026-09-04T09:33:54.357Z"
+      }
+    ]
+  },
+  {
+    "id": "f8b6e259-8c73-418c-bf20-cbffb7cbed1a",
+    "nome": "Maria Luiza Souza",
+    "email": "caio.souza@yahoo.com",
+    "cpf": "54627797493",
+    "regiao": "CE",
+    "statusCliente": "EM_RISCO",
+    "nivelFidelidade": "Diamante",
+    "saldoPontos": 21705,
+    "pontosAExpirar": 9515,
+    "riscoChurnScore": 0.71,
+    "canalAquisicao": "Promo��o Rel�mpago",
+    "divisaoSugerida": "VOOS_COMERCIAIS",
+    "criadoEm": "2026-10-14T00:19:15.267Z",
+    "interacoes": [
+      {
+        "id": "ba0b76d9-faa9-4385-bac1-bb25c7afc1fb",
+        "clienteId": "f8b6e259-8c73-418c-bf20-cbffb7cbed1a",
+        "divisao": "AZUL_CARGO",
+        "tipoAcao": "COMPRA",
+        "valorGasto": 1364.55,
+        "origemDestino": "SDU-CGH",
+        "avaliacaoNPS": 6,
+        "dataInteracao": "2026-09-22T10:00:28.766Z"
+      }
+    ]
+  },
+  {
+    "id": "f6b77325-11ca-4a2d-b463-4cd341c3b407",
+    "nome": "Isabella Batista",
+    "email": "yasmin.franco@gmail.com",
+    "cpf": "30231135750",
+    "regiao": "PR",
+    "statusCliente": "EM_RISCO",
+    "nivelFidelidade": "B�sico",
+    "saldoPontos": 2812,
+    "pontosAExpirar": 2757,
+    "riscoChurnScore": 0.71,
+    "canalAquisicao": "App Azul",
+    "divisaoSugerida": "AZUL_CONECTA",
+    "criadoEm": "2026-10-14T00:19:15.457Z",
+    "interacoes": [
+      {
+        "id": "4e8126b4-9ace-46c0-bf0e-ef75b5904885",
+        "clienteId": "f6b77325-11ca-4a2d-b463-4cd341c3b407",
+        "divisao": "AZUL_CARGO",
+        "tipoAcao": "RESGATE_PONTOS",
+        "valorGasto": 3901.81,
+        "origemDestino": "REC-VCP",
+        "avaliacaoNPS": 6,
+        "dataInteracao": "2026-10-05T09:53:43.664Z"
+      }
+    ]
+  },
+  {
+    "id": "c322f1aa-1eb7-41f4-be23-8154a5bfccea",
+    "nome": "Miguel Braga",
+    "email": "caio_costa@gmail.com",
+    "cpf": "01431521693",
+    "regiao": "SC",
+    "statusCliente": "NOVO_LEAD",
+    "nivelFidelidade": "B�sico",
+    "saldoPontos": 0,
+    "pontosAExpirar": 0,
+    "riscoChurnScore": 0.42,
+    "canalAquisicao": "Parceiro Banc�rio (Pontos)",
+    "divisaoSugerida": "AZUL_VIAGENS",
+    "criadoEm": "2026-10-14T00:19:15.408Z",
+    "interacoes": [
+      {
+        "id": "e7928535-33a5-43ed-94fd-fe71028435e6",
+        "clienteId": "c322f1aa-1eb7-41f4-be23-8154a5bfccea",
+        "divisao": "AZUL_CARGO",
+        "tipoAcao": "COTACAO_ABANDONADA",
+        "valorGasto": 0,
+        "origemDestino": "REC-VCP",
+        "avaliacaoNPS": 9,
+        "dataInteracao": "2026-09-02T01:48:03.453Z"
+      },
+      {
+        "id": "c947f1cd-aa3e-4dad-9930-3928f44cd6b3",
+        "clienteId": "c322f1aa-1eb7-41f4-be23-8154a5bfccea",
+        "divisao": "AZUL_CARGO",
+        "tipoAcao": "COTACAO_ABANDONADA",
+        "valorGasto": 0,
+        "origemDestino": "SDU-CGH",
+        "avaliacaoNPS": 7,
+        "dataInteracao": "2026-09-03T18:30:23.717Z"
+      },
+      {
+        "id": "28d051da-be8f-494d-8d0e-7bea9b665c7f",
+        "clienteId": "c322f1aa-1eb7-41f4-be23-8154a5bfccea",
+        "divisao": "AZUL_CARGO",
+        "tipoAcao": "COTACAO_ABANDONADA",
+        "valorGasto": 0,
+        "origemDestino": "CWB-POA",
+        "avaliacaoNPS": 10,
+        "dataInteracao": "2026-09-19T00:29:20.586Z"
+      }
+    ]
+  },
+  {
+    "id": "0a4607a1-48b0-42f4-9534-592e203483a0",
+    "nome": "Marcela Xavier",
+    "email": "calebe32@yahoo.com",
+    "cpf": "52290460715",
+    "regiao": "PB",
+    "statusCliente": "ATIVO",
+    "nivelFidelidade": "B�sico",
+    "saldoPontos": 75203,
+    "pontosAExpirar": 0,
+    "riscoChurnScore": 0.42,
+    "canalAquisicao": "Busca Org�nica",
+    "divisaoSugerida": "AZUL_CONECTA",
+    "criadoEm": "2026-10-14T00:19:15.489Z",
+    "interacoes": [
+      {
+        "id": "c67d26af-8aa8-45ec-a4d5-5951147c5736",
+        "clienteId": "0a4607a1-48b0-42f4-9534-592e203483a0",
+        "divisao": "AZUL_CARGO",
+        "tipoAcao": "RESGATE_PONTOS",
+        "valorGasto": 701.68,
+        "origemDestino": "CWB-POA",
+        "avaliacaoNPS": 9,
+        "dataInteracao": "2026-07-29T18:34:34.149Z"
+      }
+    ]
+  },
+  {
+    "id": "d8a50289-1e0b-49ab-9bbd-e59d77130550",
+    "nome": "Lorena Braga",
+    "email": "roberto.xavier@gmail.com",
+    "cpf": "45626229724",
+    "regiao": "RN",
+    "statusCliente": "ATIVO",
+    "nivelFidelidade": "B�sico",
+    "saldoPontos": 79120,
+    "pontosAExpirar": 0,
+    "riscoChurnScore": 0.41,
+    "canalAquisicao": "Parceiro Banc�rio (Pontos)",
+    "divisaoSugerida": "AZUL_CONECTA",
+    "criadoEm": "2026-10-14T00:19:15.190Z",
+    "interacoes": [
+      {
+        "id": "c96fda0d-bdf5-44fa-a5c5-d5519d5adb2b",
+        "clienteId": "d8a50289-1e0b-49ab-9bbd-e59d77130550",
+        "divisao": "AZUL_VIAGENS",
+        "tipoAcao": "RESGATE_PONTOS",
+        "valorGasto": 5178.06,
+        "origemDestino": "VCP-MCO",
+        "avaliacaoNPS": 9,
+        "dataInteracao": "2026-08-03T04:00:14.189Z"
+      },
+      {
+        "id": "04008667-39b1-45dd-be84-cae992121b32",
+        "clienteId": "d8a50289-1e0b-49ab-9bbd-e59d77130550",
+        "divisao": "AZUL_VIAGENS",
+        "tipoAcao": "RECLAMACAO",
+        "valorGasto": 4169.65,
+        "origemDestino": "REC-FEN",
+        "avaliacaoNPS": 9,
+        "dataInteracao": "2026-07-20T12:19:36.098Z"
+      }
+    ]
+  },
+  {
+    "id": "9afea2f8-dc79-4914-861e-c98182639f35",
+    "nome": "Luiza Braga",
+    "email": "pablo.macedo@yahoo.com",
+    "cpf": "40512526210",
+    "regiao": "AM",
+    "statusCliente": "ATIVO",
+    "nivelFidelidade": "B�sico",
+    "saldoPontos": 40144,
+    "pontosAExpirar": 0,
+    "riscoChurnScore": 0.38,
+    "canalAquisicao": "App Azul",
+    "divisaoSugerida": "VOOS_COMERCIAIS",
+    "criadoEm": "2026-10-14T00:19:15.377Z",
+    "interacoes": [
+      {
+        "id": "d30dd243-2181-4af2-9fef-26599872fe2e",
+        "clienteId": "9afea2f8-dc79-4914-861e-c98182639f35",
+        "divisao": "AZUL_CONECTA",
+        "tipoAcao": "RESGATE_PONTOS",
+        "valorGasto": 5614.86,
+        "origemDestino": "REC-VCP",
+        "avaliacaoNPS": 8,
+        "dataInteracao": "2026-08-10T20:57:04.363Z"
+      },
+      {
+        "id": "d9893339-80c0-4e27-ab4a-7717720dda14",
+        "clienteId": "9afea2f8-dc79-4914-861e-c98182639f35",
+        "divisao": "AZUL_CONECTA",
+        "tipoAcao": "RESGATE_PONTOS",
+        "valorGasto": 2471.92,
+        "origemDestino": "CWB-POA",
+        "avaliacaoNPS": 10,
+        "dataInteracao": "2026-08-15T21:10:03.793Z"
+      }
+    ]
+  },
+  {
+    "id": "123642d3-c279-427c-a224-2c621c2970ff",
+    "nome": "Dalila Reis",
+    "email": "matheus50@bol.com.br",
+    "cpf": "47493050950",
+    "regiao": "PE",
+    "statusCliente": "ATIVO",
+    "nivelFidelidade": "Safira",
+    "saldoPontos": 113904,
+    "pontosAExpirar": 0,
+    "riscoChurnScore": 0.36,
+    "canalAquisicao": "Ag�ncia Parceira",
+    "divisaoSugerida": "AZUL_CARGO",
+    "criadoEm": "2026-10-14T00:19:15.355Z",
+    "interacoes": [
+      {
+        "id": "5d36d5af-64f0-4a02-940c-148a7e4b0831",
+        "clienteId": "123642d3-c279-427c-a224-2c621c2970ff",
+        "divisao": "AZUL_CONECTA",
+        "tipoAcao": "RESGATE_PONTOS",
+        "valorGasto": 3603.65,
+        "origemDestino": "GRU-REC",
+        "avaliacaoNPS": 7,
+        "dataInteracao": "2026-07-05T19:49:06.218Z"
+      },
+      {
+        "id": "98f9515c-e2c6-4c58-891a-aa7cd59c85f8",
+        "clienteId": "123642d3-c279-427c-a224-2c621c2970ff",
+        "divisao": "AZUL_CONECTA",
+        "tipoAcao": "COMPRA",
+        "valorGasto": 3848.1,
+        "origemDestino": "REC-FEN",
+        "avaliacaoNPS": 10,
+        "dataInteracao": "2026-06-28T07:57:29.160Z"
+      },
+      {
+        "id": "94d19abb-da00-42cd-bbe2-60f97dd42b4a",
+        "clienteId": "123642d3-c279-427c-a224-2c621c2970ff",
+        "divisao": "AZUL_CONECTA",
+        "tipoAcao": "COMPRA",
+        "valorGasto": 5242.03,
+        "origemDestino": "SDU-CGH",
+        "avaliacaoNPS": 10,
+        "dataInteracao": "2026-08-11T11:37:50.353Z"
+      }
+    ]
+  },
+  {
+    "id": "5d558178-9bf8-4ed8-a69c-a184b2992952",
+    "nome": "Isabella Albuquerque",
+    "email": "marcelo_pereira20@yahoo.com",
+    "cpf": "23579298122",
+    "regiao": "GO",
+    "statusCliente": "NOVO_LEAD",
+    "nivelFidelidade": "B�sico",
+    "saldoPontos": 0,
+    "pontosAExpirar": 0,
+    "riscoChurnScore": 0.36,
+    "canalAquisicao": "Busca Org�nica",
+    "divisaoSugerida": "AZUL_CONECTA",
+    "criadoEm": "2026-10-14T00:19:15.448Z",
+    "interacoes": [
+      {
+        "id": "8b804b23-78fe-44e6-aba7-282fa7005aaf",
+        "clienteId": "5d558178-9bf8-4ed8-a69c-a184b2992952",
+        "divisao": "VOOS_COMERCIAIS",
+        "tipoAcao": "COTACAO_ABANDONADA",
+        "valorGasto": 0,
+        "origemDestino": "CWB-POA",
+        "avaliacaoNPS": 7,
+        "dataInteracao": "2026-06-26T21:56:25.998Z"
+      },
+      {
+        "id": "45d7b285-1213-4ab1-b0c0-932521a08f6a",
+        "clienteId": "5d558178-9bf8-4ed8-a69c-a184b2992952",
+        "divisao": "VOOS_COMERCIAIS",
+        "tipoAcao": "COTACAO_ABANDONADA",
+        "valorGasto": 0,
+        "origemDestino": "REC-VCP",
+        "avaliacaoNPS": 10,
+        "dataInteracao": "2026-09-26T15:44:31.646Z"
+      },
+      {
+        "id": "f8e76ec5-884b-4888-9d90-f1bc4ef3e1e3",
+        "clienteId": "5d558178-9bf8-4ed8-a69c-a184b2992952",
+        "divisao": "VOOS_COMERCIAIS",
+        "tipoAcao": "COTACAO_ABANDONADA",
+        "valorGasto": 0,
+        "origemDestino": "CWB-POA",
+        "avaliacaoNPS": 7,
+        "dataInteracao": "2026-08-15T05:54:46.543Z"
+      }
+    ]
+  },
+  {
+    "id": "918af846-6cc9-498b-8112-626c92d5f7d7",
+    "nome": "Srta. Maria Luiza Costa",
+    "email": "benicio_moraes4@live.com",
+    "cpf": "25921100232",
+    "regiao": "RJ",
+    "statusCliente": "ATIVO",
+    "nivelFidelidade": "B�sico",
+    "saldoPontos": 74314,
+    "pontosAExpirar": 0,
+    "riscoChurnScore": 0.36,
+    "canalAquisicao": "Busca Org�nica",
+    "divisaoSugerida": "AZUL_VIAGENS",
+    "criadoEm": "2026-10-14T00:19:15.596Z",
+    "interacoes": [
+      {
+        "id": "3b2e8e16-d71e-4066-80bd-36e6c77f9e0a",
+        "clienteId": "918af846-6cc9-498b-8112-626c92d5f7d7",
+        "divisao": "AZUL_CARGO",
+        "tipoAcao": "RECLAMACAO",
+        "valorGasto": 1294.52,
+        "origemDestino": "SDU-CGH",
+        "avaliacaoNPS": 8,
+        "dataInteracao": "2026-09-09T11:22:15.136Z"
+      }
+    ]
+  },
+  {
+    "id": "c70cdbcd-2326-49b7-b91f-0b7bea3e52c5",
+    "nome": "Félix Barros",
+    "email": "elisio59@gmail.com",
+    "cpf": "37515362018",
+    "regiao": "RR",
+    "statusCliente": "NOVO_LEAD",
+    "nivelFidelidade": "B�sico",
+    "saldoPontos": 0,
+    "pontosAExpirar": 0,
+    "riscoChurnScore": 0.35,
+    "canalAquisicao": "Busca Org�nica",
+    "divisaoSugerida": "AZUL_VIAGENS",
+    "criadoEm": "2026-10-14T00:19:15.438Z",
+    "interacoes": [
+      {
+        "id": "be5684da-d191-4c47-8fd3-d01e82f949f8",
+        "clienteId": "c70cdbcd-2326-49b7-b91f-0b7bea3e52c5",
+        "divisao": "VOOS_COMERCIAIS",
+        "tipoAcao": "COTACAO_ABANDONADA",
+        "valorGasto": 0,
+        "origemDestino": "GRU-REC",
+        "avaliacaoNPS": 8,
+        "dataInteracao": "2026-07-14T00:15:38.526Z"
+      },
+      {
+        "id": "cf591bf4-2ccc-4b3a-93f9-691545c18694",
+        "clienteId": "c70cdbcd-2326-49b7-b91f-0b7bea3e52c5",
+        "divisao": "VOOS_COMERCIAIS",
+        "tipoAcao": "COTACAO_ABANDONADA",
+        "valorGasto": 0,
+        "origemDestino": "SDU-CGH",
+        "avaliacaoNPS": 9,
+        "dataInteracao": "2026-08-13T13:36:28.770Z"
+      },
+      {
+        "id": "de3669e1-7f1f-4acb-b509-f1adfe7d8f88",
+        "clienteId": "c70cdbcd-2326-49b7-b91f-0b7bea3e52c5",
+        "divisao": "VOOS_COMERCIAIS",
+        "tipoAcao": "COTACAO_ABANDONADA",
+        "valorGasto": 0,
+        "origemDestino": "VCP-MCO",
+        "avaliacaoNPS": 9,
+        "dataInteracao": "2026-06-25T18:34:19.570Z"
+      }
+    ]
+  },
+  {
+    "id": "bc31e806-77f9-4026-a3b0-94f16ba865ce",
+    "nome": "Noah Barros",
+    "email": "maria99@live.com",
+    "cpf": "81753887553",
+    "regiao": "GO",
+    "statusCliente": "ATIVO",
+    "nivelFidelidade": "B�sico",
+    "saldoPontos": 94149,
+    "pontosAExpirar": 0,
+    "riscoChurnScore": 0.34,
+    "canalAquisicao": "Ag�ncia Parceira",
+    "divisaoSugerida": "AZUL_VIAGENS",
+    "criadoEm": "2026-10-14T00:19:15.665Z",
+    "interacoes": [
+      {
+        "id": "5af32318-17d1-408f-a95e-b3884af8539f",
+        "clienteId": "bc31e806-77f9-4026-a3b0-94f16ba865ce",
+        "divisao": "AZUL_CONECTA",
+        "tipoAcao": "COMPRA",
+        "valorGasto": 5252.97,
+        "origemDestino": "VCP-MCO",
+        "avaliacaoNPS": 7,
+        "dataInteracao": "2026-10-01T23:22:39.814Z"
+      }
+    ]
+  },
+  {
+    "id": "98705d25-92aa-43e0-b9b6-db769044d2e3",
+    "nome": "Norberto Barros",
+    "email": "benjamin_macedo@gmail.com",
+    "cpf": "78595857077",
+    "regiao": "CE",
+    "statusCliente": "ATIVO",
+    "nivelFidelidade": "Safira",
+    "saldoPontos": 40104,
+    "pontosAExpirar": 0,
+    "riscoChurnScore": 0.31,
+    "canalAquisicao": "Ag�ncia Parceira",
+    "divisaoSugerida": "AZUL_CARGO",
+    "criadoEm": "2026-10-14T00:19:15.128Z",
+    "interacoes": [
+      {
+        "id": "29e2e09e-922c-4b95-883a-eefeb3de7ecf",
+        "clienteId": "98705d25-92aa-43e0-b9b6-db769044d2e3",
+        "divisao": "AZUL_CONECTA",
+        "tipoAcao": "RECLAMACAO",
+        "valorGasto": 6187.37,
+        "origemDestino": "CWB-POA",
+        "avaliacaoNPS": 9,
+        "dataInteracao": "2026-08-06T21:09:11.590Z"
+      },
+      {
+        "id": "d82fbaf0-2246-446c-a88a-b27183221bee",
+        "clienteId": "98705d25-92aa-43e0-b9b6-db769044d2e3",
+        "divisao": "AZUL_CONECTA",
+        "tipoAcao": "COMPRA",
+        "valorGasto": 3868.99,
+        "origemDestino": "CWB-POA",
+        "avaliacaoNPS": 9,
+        "dataInteracao": "2026-07-13T17:12:07.487Z"
+      },
+      {
+        "id": "95298b4d-9f23-4514-a811-61a2eb90b921",
+        "clienteId": "98705d25-92aa-43e0-b9b6-db769044d2e3",
+        "divisao": "AZUL_CONECTA",
+        "tipoAcao": "COMPRA",
+        "valorGasto": 2373.3,
+        "origemDestino": "VCP-MCO",
+        "avaliacaoNPS": 9,
+        "dataInteracao": "2026-06-19T23:47:57.030Z"
+      }
+    ]
+  },
+  {
+    "id": "7b698089-6a6d-4fdd-a85f-5fb38b74987d",
+    "nome": "Sra. Ofélia Moreira",
+    "email": "helio_macedo51@hotmail.com",
+    "cpf": "71171073174",
+    "regiao": "TO",
+    "statusCliente": "NOVO_LEAD",
+    "nivelFidelidade": "B�sico",
+    "saldoPontos": 0,
+    "pontosAExpirar": 0,
+    "riscoChurnScore": 0.28,
+    "canalAquisicao": "Busca Org�nica",
+    "divisaoSugerida": "VOOS_COMERCIAIS",
+    "criadoEm": "2026-10-14T00:19:15.398Z",
+    "interacoes": [
+      {
+        "id": "4f1f0037-436e-444b-92da-8f725b00f7d0",
+        "clienteId": "7b698089-6a6d-4fdd-a85f-5fb38b74987d",
+        "divisao": "AZUL_VIAGENS",
+        "tipoAcao": "COTACAO_ABANDONADA",
+        "valorGasto": 0,
+        "origemDestino": "CWB-POA",
+        "avaliacaoNPS": 9,
+        "dataInteracao": "2026-07-01T23:30:30.988Z"
+      },
+      {
+        "id": "cf7db13f-39c3-43f8-86c6-aff687ab841a",
+        "clienteId": "7b698089-6a6d-4fdd-a85f-5fb38b74987d",
+        "divisao": "AZUL_VIAGENS",
+        "tipoAcao": "COTACAO_ABANDONADA",
+        "valorGasto": 0,
+        "origemDestino": "VCP-MCO",
+        "avaliacaoNPS": 7,
+        "dataInteracao": "2026-08-28T21:46:00.145Z"
+      }
+    ]
+  },
+  {
+    "id": "805d7cba-2764-4b57-94ac-ac4fab657e3c",
+    "nome": "Suélen Moraes Filho",
+    "email": "liz_moraes76@gmail.com",
+    "cpf": "78333101739",
+    "regiao": "RO",
+    "statusCliente": "NOVO_LEAD",
+    "nivelFidelidade": "B�sico",
+    "saldoPontos": 0,
+    "pontosAExpirar": 0,
+    "riscoChurnScore": 0.27,
+    "canalAquisicao": "Promo��o Rel�mpago",
+    "divisaoSugerida": "AZUL_CONECTA",
+    "criadoEm": "2026-10-14T00:19:15.178Z",
+    "interacoes": [
+      {
+        "id": "ed6bd682-e485-40af-8bd6-546b41b5d7a6",
+        "clienteId": "805d7cba-2764-4b57-94ac-ac4fab657e3c",
+        "divisao": "AZUL_VIAGENS",
+        "tipoAcao": "COTACAO_ABANDONADA",
+        "valorGasto": 0,
+        "origemDestino": "GRU-REC",
+        "avaliacaoNPS": 9,
+        "dataInteracao": "2026-08-28T20:12:37.343Z"
+      }
+    ]
+  },
+  {
+    "id": "3be876e7-f80a-4496-af9e-d9ca11ebad7e",
+    "nome": "Marina Pereira Jr.",
+    "email": "felipe.reis66@gmail.com",
+    "cpf": "74686558414",
+    "regiao": "PB",
+    "statusCliente": "ATIVO",
+    "nivelFidelidade": "Diamante",
+    "saldoPontos": 90459,
+    "pontosAExpirar": 0,
+    "riscoChurnScore": 0.27,
+    "canalAquisicao": "Promo��o Rel�mpago",
+    "divisaoSugerida": "AZUL_CARGO",
+    "criadoEm": "2026-10-14T00:19:15.277Z",
+    "interacoes": [
+      {
+        "id": "a03ef6b8-905d-4851-a792-8f7d859b71b5",
+        "clienteId": "3be876e7-f80a-4496-af9e-d9ca11ebad7e",
+        "divisao": "AZUL_CONECTA",
+        "tipoAcao": "RECLAMACAO",
+        "valorGasto": 4298.96,
+        "origemDestino": "CWB-POA",
+        "avaliacaoNPS": 8,
+        "dataInteracao": "2026-08-27T15:48:36.657Z"
+      },
+      {
+        "id": "1cdc4600-8fda-4ec9-8c5b-0dcb6597db46",
+        "clienteId": "3be876e7-f80a-4496-af9e-d9ca11ebad7e",
+        "divisao": "AZUL_CONECTA",
+        "tipoAcao": "COMPRA",
+        "valorGasto": 652.72,
+        "origemDestino": "REC-FEN",
+        "avaliacaoNPS": 7,
+        "dataInteracao": "2026-08-17T01:19:16.157Z"
+      },
+      {
+        "id": "31acaeeb-1cb8-42a9-b513-909b12c6d62d",
+        "clienteId": "3be876e7-f80a-4496-af9e-d9ca11ebad7e",
+        "divisao": "AZUL_CONECTA",
+        "tipoAcao": "RECLAMACAO",
+        "valorGasto": 2860.23,
+        "origemDestino": "SDU-CGH",
+        "avaliacaoNPS": 10,
+        "dataInteracao": "2026-08-01T19:18:31.219Z"
+      }
+    ]
+  },
+  {
+    "id": "8b5f8ca7-ce10-4d83-ab30-f07bbe428690",
+    "nome": "Júlio Braga Neto",
+    "email": "anajulia.nogueira@yahoo.com",
+    "cpf": "52215306989",
+    "regiao": "RS",
+    "statusCliente": "ATIVO",
+    "nivelFidelidade": "B�sico",
+    "saldoPontos": 97976,
+    "pontosAExpirar": 0,
+    "riscoChurnScore": 0.27,
+    "canalAquisicao": "Promo��o Rel�mpago",
+    "divisaoSugerida": "AZUL_CONECTA",
+    "criadoEm": "2026-10-14T00:19:15.513Z",
+    "interacoes": [
+      {
+        "id": "c04ee398-3ced-4d5a-95e6-a8baebff69a1",
+        "clienteId": "8b5f8ca7-ce10-4d83-ab30-f07bbe428690",
+        "divisao": "VOOS_COMERCIAIS",
+        "tipoAcao": "RESGATE_PONTOS",
+        "valorGasto": 4935.58,
+        "origemDestino": "REC-VCP",
+        "avaliacaoNPS": 10,
+        "dataInteracao": "2026-09-18T07:42:11.607Z"
+      },
+      {
+        "id": "768db9f2-8cb2-47f9-822e-93d120443935",
+        "clienteId": "8b5f8ca7-ce10-4d83-ab30-f07bbe428690",
+        "divisao": "VOOS_COMERCIAIS",
+        "tipoAcao": "RECLAMACAO",
+        "valorGasto": 6423.31,
+        "origemDestino": "CWB-POA",
+        "avaliacaoNPS": 9,
+        "dataInteracao": "2026-09-09T14:09:33.284Z"
+      },
+      {
+        "id": "c5957fd3-6787-4a09-bde4-6e46fab58e99",
+        "clienteId": "8b5f8ca7-ce10-4d83-ab30-f07bbe428690",
+        "divisao": "VOOS_COMERCIAIS",
+        "tipoAcao": "RECLAMACAO",
+        "valorGasto": 2278.68,
+        "origemDestino": "VCP-MCO",
+        "avaliacaoNPS": 8,
+        "dataInteracao": "2026-10-05T21:18:24.385Z"
+      }
+    ]
+  },
+  {
+    "id": "39bd942f-4bc6-4224-a887-0117d0225d20",
+    "nome": "Isis Martins",
+    "email": "calebe_albuquerque42@gmail.com",
+    "cpf": "89252722447",
+    "regiao": "BA",
+    "statusCliente": "ATIVO",
+    "nivelFidelidade": "Diamante",
+    "saldoPontos": 113406,
+    "pontosAExpirar": 0,
+    "riscoChurnScore": 0.25,
+    "canalAquisicao": "Busca Org�nica",
+    "divisaoSugerida": "AZUL_CARGO",
+    "criadoEm": "2026-10-14T00:19:15.245Z",
+    "interacoes": [
+      {
+        "id": "2fa50f9a-db1c-4485-9ced-3f9d2a6baed5",
+        "clienteId": "39bd942f-4bc6-4224-a887-0117d0225d20",
+        "divisao": "AZUL_CONECTA",
+        "tipoAcao": "RECLAMACAO",
+        "valorGasto": 2977.49,
+        "origemDestino": "SDU-CGH",
+        "avaliacaoNPS": 7,
+        "dataInteracao": "2026-07-14T09:45:50.782Z"
+      }
+    ]
+  },
+  {
+    "id": "c36f9cd5-6d75-47c5-aae2-84752a80d7a0",
+    "nome": "Ofélia Reis Filho",
+    "email": "clara57@bol.com.br",
+    "cpf": "23225853774",
+    "regiao": "AM",
+    "statusCliente": "ATIVO",
+    "nivelFidelidade": "B�sico",
+    "saldoPontos": 52522,
+    "pontosAExpirar": 0,
+    "riscoChurnScore": 0.25,
+    "canalAquisicao": "Parceiro Banc�rio (Pontos)",
+    "divisaoSugerida": "AZUL_VIAGENS",
+    "criadoEm": "2026-10-14T00:19:15.566Z",
+    "interacoes": [
+      {
+        "id": "c5bf03cf-0d75-468d-8fa5-ce02b1fcd804",
+        "clienteId": "c36f9cd5-6d75-47c5-aae2-84752a80d7a0",
+        "divisao": "VOOS_COMERCIAIS",
+        "tipoAcao": "RECLAMACAO",
+        "valorGasto": 3619.41,
+        "origemDestino": "REC-VCP",
+        "avaliacaoNPS": 9,
+        "dataInteracao": "2026-08-23T18:17:10.288Z"
+      },
+      {
+        "id": "e7209fca-6780-488a-a190-c024c664d281",
+        "clienteId": "c36f9cd5-6d75-47c5-aae2-84752a80d7a0",
+        "divisao": "VOOS_COMERCIAIS",
+        "tipoAcao": "COMPRA",
+        "valorGasto": 5653.76,
+        "origemDestino": "REC-VCP",
+        "avaliacaoNPS": 8,
+        "dataInteracao": "2026-09-30T16:50:38.479Z"
+      }
+    ]
+  },
+  {
+    "id": "a6659679-ceeb-4814-bd5b-5d8952f8d38d",
+    "nome": "Ana Laura Santos",
+    "email": "julia_moreira84@gmail.com",
+    "cpf": "61370434649",
+    "regiao": "MG",
+    "statusCliente": "NOVO_LEAD",
+    "nivelFidelidade": "B�sico",
+    "saldoPontos": 0,
+    "pontosAExpirar": 0,
+    "riscoChurnScore": 0.25,
+    "canalAquisicao": "Promo��o Rel�mpago",
+    "divisaoSugerida": "VOOS_COMERCIAIS",
+    "criadoEm": "2026-10-14T00:19:15.654Z",
+    "interacoes": [
+      {
+        "id": "443409ab-1f07-4273-b539-6720fe9492dd",
+        "clienteId": "a6659679-ceeb-4814-bd5b-5d8952f8d38d",
+        "divisao": "AZUL_CONECTA",
+        "tipoAcao": "COTACAO_ABANDONADA",
+        "valorGasto": 0,
+        "origemDestino": "REC-FEN",
+        "avaliacaoNPS": 7,
+        "dataInteracao": "2026-09-07T15:10:45.168Z"
+      },
+      {
+        "id": "bfc3d266-3925-40e9-b7a6-1cc541f3ea83",
+        "clienteId": "a6659679-ceeb-4814-bd5b-5d8952f8d38d",
+        "divisao": "AZUL_CONECTA",
+        "tipoAcao": "COTACAO_ABANDONADA",
+        "valorGasto": 0,
+        "origemDestino": "REC-FEN",
+        "avaliacaoNPS": 7,
+        "dataInteracao": "2026-07-23T23:20:19.905Z"
+      }
+    ]
+  },
+  {
+    "id": "858f380a-b3c2-40d6-a2ee-91083571741a",
+    "nome": "Paula Costa",
+    "email": "alexandre55@bol.com.br",
+    "cpf": "35132245849",
+    "regiao": "PR",
+    "statusCliente": "ATIVO",
+    "nivelFidelidade": "Diamante",
+    "saldoPontos": 100482,
+    "pontosAExpirar": 0,
+    "riscoChurnScore": 0.2,
+    "canalAquisicao": "Parceiro Banc�rio (Pontos)",
+    "divisaoSugerida": "AZUL_VIAGENS",
+    "criadoEm": "2026-10-14T00:19:15.587Z",
+    "interacoes": [
+      {
+        "id": "3cb82b37-ac3c-4b0e-9197-11890b277fa4",
+        "clienteId": "858f380a-b3c2-40d6-a2ee-91083571741a",
+        "divisao": "VOOS_COMERCIAIS",
+        "tipoAcao": "RECLAMACAO",
+        "valorGasto": 6059.99,
+        "origemDestino": "REC-VCP",
+        "avaliacaoNPS": 10,
+        "dataInteracao": "2026-08-09T13:01:11.467Z"
+      },
+      {
+        "id": "17a3c431-f28d-4558-87de-727cd7a4e5c7",
+        "clienteId": "858f380a-b3c2-40d6-a2ee-91083571741a",
+        "divisao": "VOOS_COMERCIAIS",
+        "tipoAcao": "RESGATE_PONTOS",
+        "valorGasto": 4277.99,
+        "origemDestino": "REC-VCP",
+        "avaliacaoNPS": 9,
+        "dataInteracao": "2026-09-25T18:20:11.609Z"
+      }
+    ]
+  },
+  {
+    "id": "3028815a-751f-47bb-82e4-94e60e628f41",
+    "nome": "Joaquim Martins",
+    "email": "roberta_reis84@hotmail.com",
+    "cpf": "78869260812",
+    "regiao": "TO",
+    "statusCliente": "ATIVO",
+    "nivelFidelidade": "B�sico",
+    "saldoPontos": 3835,
+    "pontosAExpirar": 0,
+    "riscoChurnScore": 0.2,
+    "canalAquisicao": "Ag�ncia Parceira",
+    "divisaoSugerida": "AZUL_CONECTA",
+    "criadoEm": "2026-10-14T00:19:15.633Z",
+    "interacoes": [
+      {
+        "id": "df274367-b3be-457d-bbe7-ade6c0a57fa9",
+        "clienteId": "3028815a-751f-47bb-82e4-94e60e628f41",
+        "divisao": "AZUL_CARGO",
+        "tipoAcao": "COMPRA",
+        "valorGasto": 2845.7,
+        "origemDestino": "REC-VCP",
+        "avaliacaoNPS": 8,
+        "dataInteracao": "2026-07-12T05:55:31.311Z"
+      },
+      {
+        "id": "b76ca002-918b-4ac9-8df3-64d717234784",
+        "clienteId": "3028815a-751f-47bb-82e4-94e60e628f41",
+        "divisao": "AZUL_CARGO",
+        "tipoAcao": "RECLAMACAO",
+        "valorGasto": 3308.84,
+        "origemDestino": "CNF-SSA",
+        "avaliacaoNPS": 8,
+        "dataInteracao": "2026-07-28T07:34:54.340Z"
+      },
+      {
+        "id": "49c3c142-429e-4320-acb1-36933fb751a3",
+        "clienteId": "3028815a-751f-47bb-82e4-94e60e628f41",
+        "divisao": "AZUL_CARGO",
+        "tipoAcao": "RECLAMACAO",
+        "valorGasto": 3608.76,
+        "origemDestino": "SDU-CGH",
+        "avaliacaoNPS": 9,
+        "dataInteracao": "2026-07-15T04:59:23.465Z"
+      }
+    ]
+  },
+  {
+    "id": "5e4a6384-cd09-430c-9173-e25efe2225e3",
+    "nome": "Carlos Cargo",
+    "email": "carlos@empresa.com",
+    "cpf": "99988877766",
+    "regiao": "PE",
+    "statusCliente": "NOVO_LEAD",
+    "nivelFidelidade": "B�sico",
+    "saldoPontos": 0,
+    "pontosAExpirar": 0,
+    "riscoChurnScore": 0.2,
+    "canalAquisicao": "JSON_BODY",
+    "divisaoSugerida": "AZUL_VIAGENS",
+    "criadoEm": "2026-10-14T00:26:18.277Z",
+    "interacoes": [
+      {
+        "id": "cf3ed1b4-c9b6-4cdd-8a3b-6db6b8a4962c",
+        "clienteId": "5e4a6384-cd09-430c-9173-e25efe2225e3",
+        "divisao": "AZUL_CARGO",
+        "tipoAcao": "COMPRA",
+        "valorGasto": 3200,
+        "origemDestino": null,
+        "avaliacaoNPS": null,
+        "dataInteracao": "2026-10-14T00:26:18.293Z"
+      },
+      {
+        "id": "ca18fb7a-fdaf-4428-8429-a0c84826c08d",
+        "clienteId": "5e4a6384-cd09-430c-9173-e25efe2225e3",
+        "divisao": "AZUL_CARGO",
+        "tipoAcao": "COMPRA",
+        "valorGasto": 3200,
+        "origemDestino": null,
+        "avaliacaoNPS": null,
+        "dataInteracao": "2026-10-14T00:26:45.425Z"
+      }
+    ]
+  },
+  {
+    "id": "615f9ca2-cfe1-4aa7-93ef-7f0e603d8a22",
+    "nome": "Larissa Albuquerque",
+    "email": "isabel_moreira23@live.com",
+    "cpf": "47978260552",
+    "regiao": "AC",
+    "statusCliente": "ATIVO",
+    "nivelFidelidade": "B�sico",
+    "saldoPontos": 71277,
+    "pontosAExpirar": 0,
+    "riscoChurnScore": 0.19,
+    "canalAquisicao": "App Azul",
+    "divisaoSugerida": "AZUL_VIAGENS",
+    "criadoEm": "2026-10-14T00:19:15.304Z",
+    "interacoes": [
+      {
+        "id": "8dc41b3f-59a5-4dfc-8b75-b910e29f3796",
+        "clienteId": "615f9ca2-cfe1-4aa7-93ef-7f0e603d8a22",
+        "divisao": "AZUL_CARGO",
+        "tipoAcao": "RESGATE_PONTOS",
+        "valorGasto": 1727.21,
+        "origemDestino": "SDU-CGH",
+        "avaliacaoNPS": 10,
+        "dataInteracao": "2026-08-06T12:51:51.958Z"
+      }
+    ]
+  },
+  {
+    "id": "6a3e907c-8aff-4b44-b52b-d7b49ff3685a",
+    "nome": "Lorraine Santos Filho",
+    "email": "elisa.batista@yahoo.com",
+    "cpf": "40883418488",
+    "regiao": "AC",
+    "statusCliente": "NOVO_LEAD",
+    "nivelFidelidade": "B�sico",
+    "saldoPontos": 0,
+    "pontosAExpirar": 0,
+    "riscoChurnScore": 0.18,
+    "canalAquisicao": "Promo��o Rel�mpago",
+    "divisaoSugerida": "AZUL_VIAGENS",
+    "criadoEm": "2026-10-14T00:19:15.615Z",
+    "interacoes": [
+      {
+        "id": "68b487bc-85d0-4576-95ba-df3b27882821",
+        "clienteId": "6a3e907c-8aff-4b44-b52b-d7b49ff3685a",
+        "divisao": "VOOS_COMERCIAIS",
+        "tipoAcao": "COTACAO_ABANDONADA",
+        "valorGasto": 0,
+        "origemDestino": "REC-FEN",
+        "avaliacaoNPS": 8,
+        "dataInteracao": "2026-07-27T14:13:17.085Z"
+      }
+    ]
+  },
+  {
+    "id": "fa80c6b2-9c0b-4c8b-a445-e331778377a1",
+    "nome": "Sra. Marcela Pereira",
+    "email": "pablo5@hotmail.com",
+    "cpf": "88337930040",
+    "regiao": "TO",
+    "statusCliente": "ATIVO",
+    "nivelFidelidade": "B�sico",
+    "saldoPontos": 6127,
+    "pontosAExpirar": 0,
+    "riscoChurnScore": 0.14,
+    "canalAquisicao": "Promo��o Rel�mpago",
+    "divisaoSugerida": "AZUL_CONECTA",
+    "criadoEm": "2026-10-14T00:19:15.624Z",
+    "interacoes": [
+      {
+        "id": "34993c4b-7bcc-481a-956a-311cf55f18be",
+        "clienteId": "fa80c6b2-9c0b-4c8b-a445-e331778377a1",
+        "divisao": "VOOS_COMERCIAIS",
+        "tipoAcao": "RECLAMACAO",
+        "valorGasto": 5122.66,
+        "origemDestino": "REC-FEN",
+        "avaliacaoNPS": 8,
+        "dataInteracao": "2026-06-19T05:07:55.613Z"
+      },
+      {
+        "id": "f4341794-eb47-43a8-98b7-093b2cdce829",
+        "clienteId": "fa80c6b2-9c0b-4c8b-a445-e331778377a1",
+        "divisao": "VOOS_COMERCIAIS",
+        "tipoAcao": "RESGATE_PONTOS",
+        "valorGasto": 2998.63,
+        "origemDestino": "REC-VCP",
+        "avaliacaoNPS": 10,
+        "dataInteracao": "2026-08-24T22:07:33.764Z"
+      },
+      {
+        "id": "cdf90e4b-015c-4f01-90b5-a75308f57dff",
+        "clienteId": "fa80c6b2-9c0b-4c8b-a445-e331778377a1",
+        "divisao": "VOOS_COMERCIAIS",
+        "tipoAcao": "RESGATE_PONTOS",
+        "valorGasto": 446.5,
+        "origemDestino": "REC-VCP",
+        "avaliacaoNPS": 7,
+        "dataInteracao": "2026-06-21T20:53:59.991Z"
+      }
+    ]
+  },
+  {
+    "id": "48ab4646-ff31-4058-8e1a-6de3648d4b2c",
+    "nome": "Joana Souza",
+    "email": "roberto_costa@bol.com.br",
+    "cpf": "62340801233",
+    "regiao": "MT",
+    "statusCliente": "ATIVO",
+    "nivelFidelidade": "Top�zio",
+    "saldoPontos": 21828,
+    "pontosAExpirar": 0,
+    "riscoChurnScore": 0.13,
+    "canalAquisicao": "Promo��o Rel�mpago",
+    "divisaoSugerida": "AZUL_CONECTA",
+    "criadoEm": "2026-10-14T00:19:15.256Z",
+    "interacoes": [
+      {
+        "id": "27144a66-858e-4b10-ae9c-350d725f05dd",
+        "clienteId": "48ab4646-ff31-4058-8e1a-6de3648d4b2c",
+        "divisao": "AZUL_CARGO",
+        "tipoAcao": "COMPRA",
+        "valorGasto": 3904.39,
+        "origemDestino": "REC-VCP",
+        "avaliacaoNPS": 8,
+        "dataInteracao": "2026-08-20T12:22:32.520Z"
+      },
+      {
+        "id": "2077f90d-fbb4-4bed-ba3a-8e80fead7f21",
+        "clienteId": "48ab4646-ff31-4058-8e1a-6de3648d4b2c",
+        "divisao": "AZUL_CARGO",
+        "tipoAcao": "RECLAMACAO",
+        "valorGasto": 3373.84,
+        "origemDestino": "CWB-POA",
+        "avaliacaoNPS": 10,
+        "dataInteracao": "2026-07-24T19:25:58.411Z"
+      }
+    ]
+  },
+  {
+    "id": "f7dfd7d9-6ef1-453a-8b73-4a3ae15f6e79",
+    "nome": "Daniel Carvalho",
+    "email": "fabiano87@yahoo.com",
+    "cpf": "42427383989",
+    "regiao": "SC",
+    "statusCliente": "NOVO_LEAD",
+    "nivelFidelidade": "B�sico",
+    "saldoPontos": 0,
+    "pontosAExpirar": 0,
+    "riscoChurnScore": 0.11,
+    "canalAquisicao": "Promo��o Rel�mpago",
+    "divisaoSugerida": "VOOS_COMERCIAIS",
+    "criadoEm": "2026-10-14T00:19:15.605Z",
+    "interacoes": [
+      {
+        "id": "488bccc1-0339-4c91-9f4a-62abeb978df3",
+        "clienteId": "f7dfd7d9-6ef1-453a-8b73-4a3ae15f6e79",
+        "divisao": "AZUL_CONECTA",
+        "tipoAcao": "COTACAO_ABANDONADA",
+        "valorGasto": 0,
+        "origemDestino": "CNF-SSA",
+        "avaliacaoNPS": 9,
+        "dataInteracao": "2026-09-06T16:01:51.903Z"
+      },
+      {
+        "id": "ed13fc71-d8be-4222-bcff-dc1955026b52",
+        "clienteId": "f7dfd7d9-6ef1-453a-8b73-4a3ae15f6e79",
+        "divisao": "AZUL_CONECTA",
+        "tipoAcao": "COTACAO_ABANDONADA",
+        "valorGasto": 0,
+        "origemDestino": "CNF-SSA",
+        "avaliacaoNPS": 7,
+        "dataInteracao": "2026-07-24T14:18:00.562Z"
+      }
+    ]
+  },
+  {
+    "id": "339d9dd0-c1aa-4228-aa83-29a568e88ffd",
+    "nome": "Leonardo Oliveira",
+    "email": "nataniel_melo@live.com",
+    "cpf": "01833947127",
+    "regiao": "ES",
+    "statusCliente": "NOVO_LEAD",
+    "nivelFidelidade": "B�sico",
+    "saldoPontos": 0,
+    "pontosAExpirar": 0,
+    "riscoChurnScore": 0.1,
+    "canalAquisicao": "Ag�ncia Parceira",
+    "divisaoSugerida": "AZUL_VIAGENS",
+    "criadoEm": "2026-10-14T00:19:15.500Z",
+    "interacoes": [
+      {
+        "id": "4f4972c5-0c76-4356-b8f9-a2c731a46deb",
+        "clienteId": "339d9dd0-c1aa-4228-aa83-29a568e88ffd",
+        "divisao": "AZUL_CARGO",
+        "tipoAcao": "COTACAO_ABANDONADA",
+        "valorGasto": 0,
+        "origemDestino": "REC-VCP",
+        "avaliacaoNPS": 7,
+        "dataInteracao": "2026-09-06T18:15:55.015Z"
+      }
+    ]
+  },
+  {
+    "id": "e41968ab-8048-4213-9502-1deab7eb889a",
+    "nome": "Lucca Pereira",
+    "email": "beatriz71@gmail.com",
+    "cpf": "50820767868",
+    "regiao": "AC",
+    "statusCliente": "NOVO_LEAD",
+    "nivelFidelidade": "B�sico",
+    "saldoPontos": 0,
+    "pontosAExpirar": 0,
+    "riscoChurnScore": 0.08,
+    "canalAquisicao": "Parceiro Banc�rio (Pontos)",
+    "divisaoSugerida": "VOOS_COMERCIAIS",
+    "criadoEm": "2026-10-14T00:19:15.293Z",
+    "interacoes": [
+      {
+        "id": "4abd7f0b-ca8d-450c-bd15-43c2789ee2b7",
+        "clienteId": "e41968ab-8048-4213-9502-1deab7eb889a",
+        "divisao": "AZUL_VIAGENS",
+        "tipoAcao": "COTACAO_ABANDONADA",
+        "valorGasto": 0,
+        "origemDestino": "REC-FEN",
+        "avaliacaoNPS": 8,
+        "dataInteracao": "2026-08-21T07:12:52.010Z"
+      },
+      {
+        "id": "d12b6afa-04e5-4a0e-ab1d-e84e0af766b5",
+        "clienteId": "e41968ab-8048-4213-9502-1deab7eb889a",
+        "divisao": "AZUL_VIAGENS",
+        "tipoAcao": "COTACAO_ABANDONADA",
+        "valorGasto": 0,
+        "origemDestino": "REC-VCP",
+        "avaliacaoNPS": 8,
+        "dataInteracao": "2026-09-11T20:43:14.885Z"
+      }
+    ]
+  },
+  {
+    "id": "80c4d07e-c811-4f20-8b04-c7a0e573e935",
+    "nome": "Marcela Albuquerque",
+    "email": "valentina19@gmail.com",
+    "cpf": "47224431197",
+    "regiao": "SE",
+    "statusCliente": "ATIVO",
+    "nivelFidelidade": "B�sico",
+    "saldoPontos": 55182,
+    "pontosAExpirar": 0,
+    "riscoChurnScore": 0.08,
+    "canalAquisicao": "App Azul",
+    "divisaoSugerida": "VOOS_COMERCIAIS",
+    "criadoEm": "2026-10-14T00:19:15.525Z",
+    "interacoes": [
+      {
+        "id": "e44ea7ce-54d2-4278-b11c-64dbc33f1099",
+        "clienteId": "80c4d07e-c811-4f20-8b04-c7a0e573e935",
+        "divisao": "AZUL_CONECTA",
+        "tipoAcao": "RESGATE_PONTOS",
+        "valorGasto": 6253.64,
+        "origemDestino": "REC-FEN",
+        "avaliacaoNPS": 7,
+        "dataInteracao": "2026-09-14T05:13:55.801Z"
+      },
+      {
+        "id": "8073c78d-ce47-4c09-9b48-90af2dcd5120",
+        "clienteId": "80c4d07e-c811-4f20-8b04-c7a0e573e935",
+        "divisao": "AZUL_CONECTA",
+        "tipoAcao": "RECLAMACAO",
+        "valorGasto": 1501.53,
+        "origemDestino": "REC-VCP",
+        "avaliacaoNPS": 10,
+        "dataInteracao": "2026-09-29T02:41:05.232Z"
+      }
+    ]
+  },
+  {
+    "id": "01dcd188-0c18-470d-b936-b2a7bca75316",
+    "nome": "Samuel Braga",
+    "email": "janaina.moraes21@yahoo.com",
+    "cpf": "07490040987",
+    "regiao": "SP",
+    "statusCliente": "NOVO_LEAD",
+    "nivelFidelidade": "B�sico",
+    "saldoPontos": 0,
+    "pontosAExpirar": 0,
+    "riscoChurnScore": 0.07,
+    "canalAquisicao": "Ag�ncia Parceira",
+    "divisaoSugerida": "AZUL_VIAGENS",
+    "criadoEm": "2026-10-14T00:19:15.324Z",
+    "interacoes": [
+      {
+        "id": "93218b60-7409-4f35-af51-51097324da18",
+        "clienteId": "01dcd188-0c18-470d-b936-b2a7bca75316",
+        "divisao": "AZUL_CARGO",
+        "tipoAcao": "COTACAO_ABANDONADA",
+        "valorGasto": 0,
+        "origemDestino": "VCP-MCO",
+        "avaliacaoNPS": 10,
+        "dataInteracao": "2026-09-04T09:36:28.156Z"
+      },
+      {
+        "id": "898e60b0-f45b-4686-bf3c-cde6385d1d00",
+        "clienteId": "01dcd188-0c18-470d-b936-b2a7bca75316",
+        "divisao": "AZUL_CARGO",
+        "tipoAcao": "COTACAO_ABANDONADA",
+        "valorGasto": 0,
+        "origemDestino": "VCP-MCO",
+        "avaliacaoNPS": 7,
+        "dataInteracao": "2026-07-20T19:10:01.534Z"
+      }
+    ]
+  },
+  {
+    "id": "2c7383e5-01c7-416f-9f88-8e4e32b852c5",
+    "nome": "Arthur Xavier",
+    "email": "davilucca88@gmail.com",
+    "cpf": "92186811208",
+    "regiao": "PR",
+    "statusCliente": "NOVO_LEAD",
+    "nivelFidelidade": "B�sico",
+    "saldoPontos": 0,
+    "pontosAExpirar": 0,
+    "riscoChurnScore": 0.05,
+    "canalAquisicao": "Ag�ncia Parceira",
+    "divisaoSugerida": "VOOS_COMERCIAIS",
+    "criadoEm": "2026-10-14T00:19:15.344Z",
+    "interacoes": [
+      {
+        "id": "ab857fc5-777f-48f9-b125-a9a4787e3100",
+        "clienteId": "2c7383e5-01c7-416f-9f88-8e4e32b852c5",
+        "divisao": "AZUL_CONECTA",
+        "tipoAcao": "COTACAO_ABANDONADA",
+        "valorGasto": 0,
+        "origemDestino": "CNF-SSA",
+        "avaliacaoNPS": 9,
+        "dataInteracao": "2026-07-21T23:03:04.320Z"
+      }
+    ]
+  }
+]

@@ -1,11 +1,14 @@
-from fastapi import APIRouter, Depends
+from typing import Optional
+from fastapi import APIRouter, Depends, HTTPException
 from app.schemas.client_schema import ClientAnalysisRequest, ClientAnalysisResponse
+from app.services.crm_service import CrmService, gerar_recomendacao
 from app.core.security import get_current_user, anonymize_identifier
 from app.services.agent_service import build_multi_agent_system
 
 router = APIRouter()
 agent_orchestrator = build_multi_agent_system()
 
+@router.post("/analyze-client", include_in_schema=False)
 @router.post("/analyze", response_model=ClientAnalysisResponse)
 def analyze_client(req: ClientAnalysisRequest, current_user: dict = Depends(get_current_user)):
     anon_id = anonymize_identifier(req.raw_user_id)
@@ -40,3 +43,25 @@ def analyze_client(req: ClientAnalysisRequest, current_user: dict = Depends(get_
         action_proposal=final_state["action_proposal"],
         audit_status=final_state["audit_status"]
     )
+
+@router.get("")
+@router.get("/")
+def listar_clientes(persona: Optional[str] = None, tier: Optional[str] = None,
+                    current_user: dict = Depends(get_current_user)):
+    return CrmService.listar(persona, tier)
+
+
+@router.get("/{cliente_id}")
+def obter_cliente(cliente_id: str, current_user: dict = Depends(get_current_user)):
+    cliente = CrmService.obter(cliente_id)
+    if not cliente:
+        raise HTTPException(status_code=404, detail="Cliente não encontrado.")
+    return cliente
+
+
+@router.post("/{cliente_id}/recomendacao")
+def recomendar(cliente_id: str, current_user: dict = Depends(get_current_user)):
+    cliente = CrmService.obter(cliente_id)
+    if not cliente:
+        raise HTTPException(status_code=404, detail="Cliente não encontrado.")
+    return gerar_recomendacao(cliente)

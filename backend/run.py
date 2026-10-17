@@ -4,6 +4,7 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.router import api_router
 from app.core.exceptions import register_exception_handlers
+from app.config import settings
 from app.services.datalake_service import DataLakeService
 
 # 1. Inicialização da aplicação FastAPI
@@ -31,7 +32,8 @@ app.include_router(api_router)
 # 5. Evento de Inicialização do Banco (DuckDB Medalhão)
 @app.on_event("startup")
 def startup_event():
-    DataLakeService.init_schema()
+    if settings.DATA_LAKE_BACKEND != "snowflake":
+        DataLakeService.init_schema()
 
 # 6. Endpoint da Raiz (Healthcheck rápido)
 @app.get("/", tags=["Healthcheck"])

@@ -1,0 +1,58 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model BronzeIngestao {
+  id               String   @id @default(uuid())
+  origemArquivo    String
+  formatoOriginal  String
+  caminhoDataLake  String
+  payloadBruto     String
+  statusPipeline   String   @default("PROCESSADO_PARA_SILVER")
+  recebidoEm       DateTime @default(now())
+}
+
+model SilverCliente {
+  id                 String            @id @default(uuid())
+  cpf                String            @unique
+  nome               String
+  email              String            @unique
+  uf                 String
+  nivelFidelidade    String
+  saldoPontos        Int               @default(0)
+  pontosAExpirar     Int               @default(0)
+  canalAquisicao     String
+  atualizadoEm       DateTime          @updatedAt
+  interacoes         SilverInteracao[]
+  metricasGold       GoldAnaliseRetencao?
+}
+
+model SilverInteracao {
+  id             String        @id @default(uuid())
+  clienteId      String
+  divisao        String
+  tipoAcao       String
+  valorGasto     Float         @default(0.0)
+  rota           String?
+  avaliacaoNPS   Int?
+  dataInteracao  DateTime      @default(now())
+  cliente        SilverCliente @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+}
+
+model GoldAnaliseRetencao {
+  id                   String        @id @default(uuid())
+  clienteId            String        @unique
+  statusRetencao       String
+  riscoChurnScore      Float
+  ltvTotalGasto        Float
+  divisaoPrincipal     String
+  divisaoCrossSell     String
+  acaoRecomendada      String
+  calculadoEm          DateTime      @default(now())
+  cliente              SilverCliente @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+}

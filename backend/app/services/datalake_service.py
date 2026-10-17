@@ -22,15 +22,14 @@ class DataLakeService:
 
     @classmethod
     def process_ingestion(cls, file_path: str, file_type: str) -> dict:
+        if settings.DATA_LAKE_BACKEND == "snowflake":
+            from app.services.snowflake_service import SnowflakeDataLake
+            return SnowflakeDataLake.process_ingestion(cls._ler_arquivo(file_path, file_type))
+
         conn = cls.get_connection()
         try:
             # 1. BRONZE (Raw)
-            if file_type == "xlsx":
-                df_raw = pd.read_excel(file_path)
-            elif file_type == "json":
-                df_raw = pd.read_json(file_path)
-            else:
-                raise ValueError("Formato não suportado. Envie arquivos Excel (.xlsx) ou JSON.")
+            df_raw = cls._ler_arquivo(file_path, file_type)
 
             if df_raw.empty:
                 raise ValueError("O arquivo enviado está vazio.")
@@ -67,6 +66,7 @@ class DataLakeService:
                 FROM silver.cleaned_clients
             """)
 
+            cls._score_gold(conn)
             row_count = conn.execute("SELECT COUNT(*) FROM gold.client_features").fetchone()[0]
 
             return {
@@ -74,5 +74,46 @@ class DataLakeService:
                 "processed_rows": row_count,
                 "layers": ["bronze.raw_clients", "silver.cleaned_clients", "gold.client_features"]
             }
+        finally:
+            conn.close()
+
+    @staticmethod
+    def _ler_arquivo(file_path: str, file_type: str) -> pd.DataFrame:
+        if file_type in ("xlsx", "xls"):
+            df = pd.read_excel(file_path)
+        elif file_type == "csv":
+            df = pd.read_csv(file_path, sep=None, engine="python")
+        elif file_type == "json":
+            df = pd.read_json(file_path)
+        else:
+            raise ValueError("Formato não suportado. Envie arquivos Excel, CSV ou JSON.")
+        obrigatorias = {"id_cliente", "tier", "frequencia", "recencia_dias", "gasto_total", "incidentes"}
+        faltando = obrigatorias - set(df.columns)
+        if faltando:
+            raise ValueError(f"Colunas obrigatórias ausentes: {', '.join(sorted(faltando))}")
+        if df.empty:
+            raise ValueError("O arquivo enviado está vazio.")
+        return df
+
+    @classmethod
+    def _score_gold(cls, conn) -> None:
+        """Inferência (MLflow Serving ou regras locais) gravada de volta na Gold."""
+        from app.services.inference_service import predict_churn
+
+        df = conn.execute("SELECT * FROM gold.client_features").fetchdf()
+        df["churn_score"] = predict_churn(df)
+        conn.execute("CREATE OR REPLACE TABLE gold.client_features AS SELECT * FROM df")
+
+    @classmethod
+    def read_gold(cls) -> pd.DataFrame:
+        """Lê a camada Ouro (vazia se ainda não houve ingestão)."""
+        if settings.DATA_LAKE_BACKEND == "snowflake":
+            from app.services.snowflake_service import SnowflakeDataLake
+            return SnowflakeDataLake.read_gold()
+        conn = cls.get_connection()
+        try:
+            return conn.execute("SELECT * FROM gold.client_features").fetchdf()
+        except duckdb.CatalogException:
+            return pd.DataFrame()
         finally:
             conn.close()

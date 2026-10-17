@@ -13,12 +13,8 @@ def train_and_register_churn_model() -> dict:
     """
     mlflow.set_experiment("Azul_CRM_Churn_Prediction")
     
-    conn = DataLakeService.get_connection()
-    try:
-        df = conn.execute("SELECT * FROM gold.client_features").fetchdf()
-    finally:
-        conn.close()
-        
+    df = DataLakeService.read_gold()
+
     if df.empty:
         raise ValueError("A camada Ouro do Data Lake está vazia. Execute o upload de dados (/data/ingest) antes de treinar o modelo.")
 

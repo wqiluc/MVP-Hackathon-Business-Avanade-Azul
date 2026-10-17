@@ -1,7 +1,7 @@
 import os
 from fastapi import UploadFile, HTTPException, status
 
-ALLOWED_EXTENSIONS = {"xlsx", "json"}
+ALLOWED_EXTENSIONS = {"xlsx", "xls", "csv", "json"}
 
 class UploadService:
     @staticmethod
@@ -20,7 +20,7 @@ class UploadService:
         if extension not in ALLOWED_EXTENSIONS:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Formato não permitido. Envie apenas ficheiros no formato Excel (.xlsx) ou JSON."
+                detail="Formato não permitido. Envie ficheiros Excel (.xlsx/.xls), CSV ou JSON."
             )
 
         return extension

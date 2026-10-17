@@ -86,6 +86,16 @@ if (!fs.existsSync(frontendNodeModules)) {
   log('   -> Dependências do frontend já instaladas.', colors.gray);
 }
 
+// Integração: aponta o front para a API real (sem sobrescrever um .env existente)
+const frontendEnv = path.join(frontendDir, '.env');
+if (!fs.existsSync(frontendEnv)) {
+  fs.writeFileSync(frontendEnv, 'VITE_API_URL=http://localhost:8000/api/v1\n');
+  log('   -> frontend/.env criado (VITE_API_URL=http://localhost:8000/api/v1).', colors.gray);
+}
+if (!fs.existsSync(path.join(backendDir, '.env')) && fs.existsSync(path.join(backendDir, '.env.example'))) {
+  fs.copyFileSync(path.join(backendDir, '.env.example'), path.join(backendDir, '.env'));
+}
+
 // 4. Iniciar os Serviços em Paralelo
 log('\n⚡ Subindo a aplicação completa...', colors.green);
 log('   -> Backend FastAPI : http://localhost:8000', colors.cyan);
