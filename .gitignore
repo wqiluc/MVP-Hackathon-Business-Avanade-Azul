@@ -1,0 +1,15 @@
+# Ocultar credenciais e ambiente real
+.env
+test-conn.js
+exportar-snowflake.js
+
+# Ocultar banco local anterior (SQLite)
+*.db
+*.db-journal
+prisma/migrations/
+
+# Ocultar arquivos físicos gerados na máquina
+datalake/bronze/*.json
+datalake/silver/*
+datalake/gold/*
+node_modules/
