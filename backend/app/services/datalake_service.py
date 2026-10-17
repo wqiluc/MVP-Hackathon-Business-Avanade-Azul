@@ -4,6 +4,7 @@ import pandas as pd
 from app.config import settings
 from data.bronze.duckdb_writer import DuckDBBronzeWriter
 from data.ingestion.file_reader import FileReader
+from data.silver.duckdb_transformer import DuckDBSilverTransformer
 
 class DataLakeService:
     @staticmethod
@@ -39,19 +40,7 @@ class DataLakeService:
             DuckDBBronzeWriter.write_raw_clients(conn, df_raw)
 
             # 2. SILVER (Cleaned & LGPD)
-            conn.execute("""
-                CREATE OR REPLACE TABLE silver.cleaned_clients AS
-                SELECT 
-                    'AZ-' || SUBSTR(MD5(CAST(id_cliente AS VARCHAR)), 1, 8) AS client_identifier,
-                    UPPER(TRIM(tier)) AS tier,
-                    CAST(frequencia AS INTEGER) AS frequency,
-                    CAST(recencia_dias AS INTEGER) AS recency_days,
-                    CAST(gasto_total AS DOUBLE) AS total_spend,
-                    CAST(incidentes AS INTEGER) AS flight_incidents,
-                    CURRENT_TIMESTAMP AS ingested_at
-                FROM bronze.raw_clients
-                WHERE id_cliente IS NOT NULL
-            """)
+            DuckDBSilverTransformer.transform_cleaned_clients(conn)
 
             # 3. GOLD (Analytics & ML Features)
             conn.execute("""
