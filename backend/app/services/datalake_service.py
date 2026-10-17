@@ -2,6 +2,7 @@ import os
 import duckdb
 import pandas as pd
 from app.config import settings
+from data.bronze.duckdb_writer import DuckDBBronzeWriter
 from data.ingestion.file_reader import FileReader
 
 class DataLakeService:
@@ -35,7 +36,7 @@ class DataLakeService:
             if df_raw.empty:
                 raise ValueError("O arquivo enviado está vazio.")
 
-            conn.execute("CREATE OR REPLACE TABLE bronze.raw_clients AS SELECT * FROM df_raw")
+            DuckDBBronzeWriter.write_raw_clients(conn, df_raw)
 
             # 2. SILVER (Cleaned & LGPD)
             conn.execute("""
