@@ -1,5 +1,6 @@
 import pandas as pd
 from app.services.datalake_service import DataLakeService
+from app.services.agent_service import invoke_agent_workflow
 
 DATA_REFERENCIA = "2026-09-30"
 MESES = ["out/25", "nov/25", "dez/25", "jan/26", "fev/26", "mar/26",
@@ -150,8 +151,7 @@ def gerar_recomendacao(cliente: dict) -> dict:
     """Aciona os agentes (GraphRAG + decisão + auditoria) e converte para ProximaAcao do front."""
     base = cliente["proximaAcao"]
     try:
-        from app.api.v1.clients import agent_orchestrator
-        final = agent_orchestrator.invoke({
+        final = invoke_agent_workflow({
             "client_identifier": cliente["id"], "frequency": cliente["voos12m"],
             "total_spend": cliente["receita12m"], "incidents": round(max(0, 1 - cliente["sentimentoScore"]) * 2),
             "incident_type": "Downgrade Involuntário", "tier": "", "churn_risk": 0.0, "value_at_risk": 0.0,

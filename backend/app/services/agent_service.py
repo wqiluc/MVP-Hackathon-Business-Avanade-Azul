@@ -88,3 +88,10 @@ def build_multi_agent_system():
     workflow.add_edge("auditor", END)
     
     return workflow.compile()
+
+
+_agent_workflow = build_multi_agent_system()
+
+
+def invoke_agent_workflow(state: AgentState) -> AgentState:
+    return _agent_workflow.invoke(state)

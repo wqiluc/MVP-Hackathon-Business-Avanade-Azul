@@ -1,8 +1,31 @@
+import ast
+from pathlib import Path
+from unittest.mock import patch
+
 import pytest
 from fastapi.testclient import TestClient
+from app.services.crm_service import gerar_recomendacao
 from run import app
 
 client = TestClient(app)
+
+
+def test_crm_service_does_not_import_clients_api():
+    service_path = Path(__file__).parents[1] / "app" / "services" / "crm_service.py"
+    tree = ast.parse(service_path.read_text(encoding="utf-8"))
+
+    imported_modules = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            imported_modules.extend(alias.name for alias in node.names)
+        elif isinstance(node, ast.ImportFrom) and node.module:
+            imported_modules.append(node.module)
+
+    assert not any(
+        module == "app.api.v1.clients" or module.startswith("app.api.v1.clients.")
+        for module in imported_modules
+    )
+
 
 def test_swagger_docs():
     res = client.get("/docs")
@@ -43,6 +66,40 @@ def test_full_analysis_pipeline():
     assert data["client_identifier"].startswith("AZ-")
     assert data["metrics"]["tier"] == "VIP World Legend"
     assert data["audit_status"] == "PASSED_TRUST_FIRST_AUDIT"
+
+
+def test_current_client_analysis_endpoint():
+    login = client.post("/api/v1/auth/login", json={"username": "analista_azul", "password": "azul123"})
+    headers = {"Authorization": f"Bearer {login.json()['access_token']}"}
+    response = client.post(
+        "/api/v1/clientes/analyze",
+        headers=headers,
+        json={
+            "raw_user_id": "99988877700",
+            "frequency": 15,
+            "total_spend": 85000.0,
+            "incidents": 2,
+            "incident_type": "Downgrade Involuntário",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["metrics"]["tier"] == "VIP World Legend"
+    assert response.json()["audit_status"] == "PASSED_TRUST_FIRST_AUDIT"
+
+
+def test_recommendation_falls_back_when_agent_workflow_fails():
+    base_action = {"tipo": "simulacao", "titulo": "Ação por regras"}
+    cliente = {
+        "proximaAcao": base_action,
+        "id": "AZ-test",
+        "voos12m": 10,
+        "receita12m": 50000.0,
+        "sentimentoScore": 0.5,
+    }
+
+    with patch("app.services.crm_service.invoke_agent_workflow", side_effect=RuntimeError("workflow error")):
+        assert gerar_recomendacao(cliente) == base_action
 
 
 def test_front_contract_flow(tmp_path):

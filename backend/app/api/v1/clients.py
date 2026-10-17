@@ -3,10 +3,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from app.schemas.client_schema import ClientAnalysisRequest, ClientAnalysisResponse
 from app.services.crm_service import CrmService, gerar_recomendacao
 from app.core.security import get_current_user, anonymize_identifier
-from app.services.agent_service import build_multi_agent_system
+from app.services.agent_service import invoke_agent_workflow
 
 router = APIRouter()
-agent_orchestrator = build_multi_agent_system()
 
 @router.post("/analyze-client", include_in_schema=False)
 @router.post("/analyze", response_model=ClientAnalysisResponse)
@@ -28,7 +27,7 @@ def analyze_client(req: ClientAnalysisRequest, current_user: dict = Depends(get_
         "audit_status": ""
     }
     
-    final_state = agent_orchestrator.invoke(initial_state)
+    final_state = invoke_agent_workflow(initial_state)
     
     return ClientAnalysisResponse(
         audience="Equipe Interna da Azul",
