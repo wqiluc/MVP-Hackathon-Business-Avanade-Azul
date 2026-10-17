@@ -7,6 +7,7 @@ import pandas as pd
 import pytest
 from fastapi.testclient import TestClient
 from app.services.crm_service import gerar_recomendacao
+from app.services.datalake_service import DataLakeService
 from run import app
 
 client = TestClient(app)
@@ -64,6 +65,19 @@ def test_upload_api_does_not_import_or_call_datalake_service():
 
     assert not any("datalake_service" in module or "DataLakeService" in module for module in imported_modules)
     assert "process_ingestion" not in called_attributes
+
+
+def test_datalake_file_reader_delegates_to_file_reader():
+    expected = pd.DataFrame({"id_cliente": [1]})
+
+    with patch(
+        "app.services.datalake_service.FileReader.read_file",
+        return_value=expected,
+    ) as read_file:
+        result = DataLakeService._ler_arquivo("clients.csv", "csv")
+
+    assert result is expected
+    read_file.assert_called_once_with("clients.csv", "csv")
 
 
 def test_swagger_docs():

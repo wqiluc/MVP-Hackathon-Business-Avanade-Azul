@@ -2,6 +2,7 @@ import os
 import duckdb
 import pandas as pd
 from app.config import settings
+from data.ingestion.file_reader import FileReader
 
 class DataLakeService:
     @staticmethod
@@ -79,21 +80,7 @@ class DataLakeService:
 
     @staticmethod
     def _ler_arquivo(file_path: str, file_type: str) -> pd.DataFrame:
-        if file_type in ("xlsx", "xls"):
-            df = pd.read_excel(file_path)
-        elif file_type == "csv":
-            df = pd.read_csv(file_path, sep=None, engine="python")
-        elif file_type == "json":
-            df = pd.read_json(file_path)
-        else:
-            raise ValueError("Formato não suportado. Envie arquivos Excel, CSV ou JSON.")
-        obrigatorias = {"id_cliente", "tier", "frequencia", "recencia_dias", "gasto_total", "incidentes"}
-        faltando = obrigatorias - set(df.columns)
-        if faltando:
-            raise ValueError(f"Colunas obrigatórias ausentes: {', '.join(sorted(faltando))}")
-        if df.empty:
-            raise ValueError("O arquivo enviado está vazio.")
-        return df
+        return FileReader.read_file(file_path, file_type)
 
     @classmethod
     def _score_gold(cls, conn) -> None:
