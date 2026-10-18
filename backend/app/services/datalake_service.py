@@ -6,6 +6,40 @@ from data.ingestion.file_reader import FileReader
 from data.silver.duckdb_transformer import DuckDBSilverTransformer
 from data.storage.duckdb_adapter import DuckDBAdapter
 
+
+class DuckDBDataLake:
+    @staticmethod
+    def process_ingestion(df_raw: pd.DataFrame) -> dict:
+        conn = DataLakeService.get_connection()
+        try:
+            DuckDBBronzeWriter.write_raw_clients(conn, df_raw)
+            DuckDBSilverTransformer.transform_cleaned_clients(conn)
+            DuckDBGoldTransformer.transform_client_features(conn)
+            DataLakeService._score_gold(conn)
+            row_count = conn.execute(
+                "SELECT COUNT(*) FROM gold.client_features"
+            ).fetchone()[0]
+            return {
+                "status": "success",
+                "processed_rows": row_count,
+                "layers": [
+                    "bronze.raw_clients",
+                    "silver.cleaned_clients",
+                    "gold.client_features",
+                ],
+            }
+        finally:
+            conn.close()
+
+    @staticmethod
+    def read_gold() -> pd.DataFrame:
+        conn = DataLakeService.get_connection()
+        try:
+            return DuckDBAdapter.read_gold(conn)
+        finally:
+            conn.close()
+
+
 class DataLakeService:
     @staticmethod
     def get_connection():
@@ -22,36 +56,19 @@ class DataLakeService:
 
     @classmethod
     def process_ingestion(cls, file_path: str, file_type: str) -> dict:
+        df_raw = cls._ler_arquivo(file_path, file_type)
+        if df_raw.empty:
+            raise ValueError("O arquivo enviado está vazio.")
+
         if settings.DATA_LAKE_BACKEND == "snowflake":
             from app.services.snowflake_service import SnowflakeDataLake
-            return SnowflakeDataLake.process_ingestion(cls._ler_arquivo(file_path, file_type))
-
-        conn = cls.get_connection()
-        try:
-            # 1. BRONZE (Raw)
-            df_raw = cls._ler_arquivo(file_path, file_type)
-
-            if df_raw.empty:
-                raise ValueError("O arquivo enviado está vazio.")
-
-            DuckDBBronzeWriter.write_raw_clients(conn, df_raw)
-
-            # 2. SILVER (Cleaned & LGPD)
-            DuckDBSilverTransformer.transform_cleaned_clients(conn)
-
-            # 3. GOLD (Analytics & ML Features)
-            DuckDBGoldTransformer.transform_client_features(conn)
-
-            cls._score_gold(conn)
-            row_count = conn.execute("SELECT COUNT(*) FROM gold.client_features").fetchone()[0]
-
-            return {
-                "status": "success",
-                "processed_rows": row_count,
-                "layers": ["bronze.raw_clients", "silver.cleaned_clients", "gold.client_features"]
-            }
-        finally:
-            conn.close()
+            return SnowflakeDataLake.process_ingestion(df_raw)
+        if settings.DATA_LAKE_BACKEND == "duckdb":
+            return DuckDBDataLake.process_ingestion(df_raw)
+        raise ValueError(
+            f"Backend de Data Lake inválido: {settings.DATA_LAKE_BACKEND!r}. "
+            "Use 'duckdb' ou 'snowflake'."
+        )
 
     @staticmethod
     def _ler_arquivo(file_path: str, file_type: str) -> pd.DataFrame:
@@ -72,8 +89,9 @@ class DataLakeService:
         if settings.DATA_LAKE_BACKEND == "snowflake":
             from app.services.snowflake_service import SnowflakeDataLake
             return SnowflakeDataLake.read_gold()
-        conn = cls.get_connection()
-        try:
-            return DuckDBAdapter.read_gold(conn)
-        finally:
-            conn.close()
+        if settings.DATA_LAKE_BACKEND == "duckdb":
+            return DuckDBDataLake.read_gold()
+        raise ValueError(
+            f"Backend de Data Lake inválido: {settings.DATA_LAKE_BACKEND!r}. "
+            "Use 'duckdb' ou 'snowflake'."
+        )

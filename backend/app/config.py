@@ -40,6 +40,7 @@ class Settings(BaseSettings):
     SNOWFLAKE_WAREHOUSE: str = os.getenv("SNOWFLAKE_WAREHOUSE", "COMPUTE_WH")
     SNOWFLAKE_DATABASE: str = os.getenv("SNOWFLAKE_DATABASE", "AZUL_DATA_LAKE")
     SNOWFLAKE_ROLE: str = os.getenv("SNOWFLAKE_ROLE", "")
+    SNOWFLAKE_TEST_DATABASE: str = os.getenv("SNOWFLAKE_TEST_DATABASE", "")
 
     # MLflow Serving (ex.: http://localhost:5000/invocations). Vazio = score por regras locais.
     MLFLOW_SERVING_URL: str = os.getenv("MLFLOW_SERVING_URL", "")

@@ -1,52 +1,164 @@
+from pathlib import Path
+
 import pandas as pd
+
 from app.config import settings
 
 
+_SNOWFLAKE_SQL_DIR = (
+    Path(__file__).resolve().parents[3] / "infrastructure" / "snowflake"
+)
+
+
 class SnowflakeDataLake:
-    """Data Lake Medalhão oficial (Bronze/Silver/Gold) no Snowflake."""
+    """Snowflake implementation of the AeroShield medallion data lake."""
 
     @staticmethod
     def get_connection():
+        missing = [
+            name
+            for name in (
+                "SNOWFLAKE_ACCOUNT",
+                "SNOWFLAKE_USER",
+                "SNOWFLAKE_PASSWORD",
+                "SNOWFLAKE_DATABASE",
+                "SNOWFLAKE_WAREHOUSE",
+            )
+            if not getattr(settings, name)
+        ]
+        if missing:
+            raise RuntimeError(
+                "Snowflake backend selecionado, mas faltam configurações: "
+                + ", ".join(missing)
+            )
+
         import snowflake.connector
+
         return snowflake.connector.connect(
-            user=settings.SNOWFLAKE_USER, password=settings.SNOWFLAKE_PASSWORD,
-            account=settings.SNOWFLAKE_ACCOUNT, warehouse=settings.SNOWFLAKE_WAREHOUSE,
-            database=settings.SNOWFLAKE_DATABASE, role=settings.SNOWFLAKE_ROLE or None,
+            account=settings.SNOWFLAKE_ACCOUNT,
+            user=settings.SNOWFLAKE_USER,
+            password=settings.SNOWFLAKE_PASSWORD,
+            database=settings.SNOWFLAKE_DATABASE,
+            warehouse=settings.SNOWFLAKE_WAREHOUSE,
+            role=settings.SNOWFLAKE_ROLE or None,
         )
+
+    @staticmethod
+    def _execute_sql_file(conn, filename: str) -> None:
+        sql_file = _SNOWFLAKE_SQL_DIR / filename
+        if not sql_file.is_file():
+            raise FileNotFoundError(f"SQL Snowflake não encontrado: {sql_file}")
+
+        sql = sql_file.read_text(encoding="utf-8")
+        statements = []
+        for statement in sql.split(";"):
+            statement = "\n".join(
+                line
+                for line in statement.splitlines()
+                if not line.lstrip().startswith("--")
+            ).strip()
+            if statement:
+                statements.append(statement)
+
+        cursor = conn.cursor()
+        try:
+            for statement in statements:
+                cursor.execute(statement)
+        finally:
+            cursor.close()
+
+    @classmethod
+    def ensure_schemas(cls, conn) -> None:
+        cls._execute_sql_file(conn, "01_schemas.sql")
+
+    @staticmethod
+    def _predict_churn(gold: pd.DataFrame) -> list[float]:
+        if not settings.MLFLOW_SERVING_URL:
+            raise RuntimeError(
+                "MLFLOW_SERVING_URL não está configurado para inferência "
+                "no backend Snowflake."
+            )
+
+        from app.services.inference_service import predict_churn
+
+        return predict_churn(gold)
 
     @classmethod
     def process_ingestion(cls, df_raw: pd.DataFrame) -> dict:
-        from snowflake.connector.pandas_tools import write_pandas
-        from app.services.inference_service import predict_churn
+        if df_raw.empty:
+            raise ValueError("O arquivo enviado está vazio.")
 
         conn = cls.get_connection()
         try:
-            df_raw = df_raw.copy()
-            df_raw.columns = [c.upper() for c in df_raw.columns]
-            write_pandas(conn, df_raw, "BRONZE_CLIENTS", schema="BRONZE",
-                         auto_create_table=True, overwrite=True)
-            cur = conn.cursor()
-            cur.execute("CALL PROCESS_SILVER_LAYER()")  # limpeza + hash LGPD
-            cur.execute("CALL PROCESS_GOLD_LAYER()")    # feature store
+            from snowflake.connector.pandas_tools import write_pandas
+
+            cls.ensure_schemas(conn)
+            bronze = df_raw.copy()
+            bronze.columns = [str(column).upper() for column in bronze.columns]
+            if bronze.columns.duplicated().any():
+                raise ValueError(
+                    "Os nomes das colunas ficam duplicados após normalização "
+                    "para maiúsculas no Snowflake."
+                )
+
+            success, _, written_rows, _ = write_pandas(
+                conn,
+                bronze,
+                "BRONZE_CLIENTS",
+                schema="BRONZE",
+                auto_create_table=True,
+                overwrite=True,
+            )
+            if not success or written_rows != len(bronze):
+                raise RuntimeError(
+                    "Falha ao gravar todos os registros em "
+                    "BRONZE.BRONZE_CLIENTS: "
+                    f"success={success}, gravados={written_rows}, "
+                    f"esperados={len(bronze)}."
+                )
+
+            cls._execute_sql_file(conn, "02_transform_silver.sql")
+            cls._execute_sql_file(conn, "03_transform_gold.sql")
+
             gold = cls.read_gold(conn)
-            gold["churn_score"] = predict_churn(gold)
-            write_pandas(conn, gold.rename(columns=str.upper), "CLIENT_FEATURES",
-                         schema="GOLD", overwrite=True)
-            return {"status": "success", "processed_rows": len(gold),
-                    "layers": ["BRONZE.BRONZE_CLIENTS", "SILVER", "GOLD.CLIENT_FEATURES"]}
+            gold["churn_score"] = cls._predict_churn(gold)
+            success, _, written_rows, _ = write_pandas(
+                conn,
+                gold.rename(columns=str.upper),
+                "CLIENT_FEATURES",
+                schema="GOLD",
+                overwrite=True,
+            )
+            if not success or written_rows != len(gold):
+                raise RuntimeError(
+                    "Falha ao gravar todos os scores em GOLD.CLIENT_FEATURES: "
+                    f"success={success}, gravados={written_rows}, "
+                    f"esperados={len(gold)}."
+                )
+
+            return {
+                "status": "success",
+                "processed_rows": len(gold),
+                "layers": [
+                    "BRONZE.BRONZE_CLIENTS",
+                    "SILVER",
+                    "GOLD.CLIENT_FEATURES",
+                ],
+            }
         finally:
             conn.close()
 
     @classmethod
     def read_gold(cls, conn=None) -> pd.DataFrame:
-        own = conn is None
-        conn = conn or cls.get_connection()
+        owns_connection = conn is None
+        connection = conn or cls.get_connection()
+        cursor = connection.cursor()
         try:
-            cur = conn.cursor()
-            cur.execute("SELECT * FROM GOLD.CLIENT_FEATURES")
-            df = cur.fetch_pandas_all()
-            df.columns = [c.lower() for c in df.columns]
-            return df
+            cursor.execute("SELECT * FROM GOLD.CLIENT_FEATURES")
+            gold = cursor.fetch_pandas_all()
+            gold.columns = [str(column).lower() for column in gold.columns]
+            return gold
         finally:
-            if own:
-                conn.close()
+            cursor.close()
+            if owns_connection:
+                connection.close()
