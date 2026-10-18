@@ -6,6 +6,7 @@ from pydantic_settings import BaseSettings
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent  # Diretório raiz do projeto (backend/)
 
+load_dotenv(BASE_DIR / "backend" / ".env")
 load_dotenv(BASE_DIR / ".env")
 
 class Settings(BaseSettings):
@@ -42,8 +43,15 @@ class Settings(BaseSettings):
     SNOWFLAKE_ROLE: str = os.getenv("SNOWFLAKE_ROLE", "")
     SNOWFLAKE_TEST_DATABASE: str = os.getenv("SNOWFLAKE_TEST_DATABASE", "")
 
-    # MLflow Serving (ex.: http://localhost:5000/invocations). Vazio = score por regras locais.
+    # MLflow Tracking and Serving are separate processes.
+    MLFLOW_TRACKING_URI: str = os.getenv(
+        "MLFLOW_TRACKING_URI",
+        "http://localhost:5000",
+    )
     MLFLOW_SERVING_URL: str = os.getenv("MLFLOW_SERVING_URL", "")
+    MLFLOW_LOCAL_INFERENCE: bool = (
+        os.getenv("MLFLOW_LOCAL_INFERENCE", "false").lower() == "true"
+    )
 
     # Acesso do front (ambiente de avaliação do Hackathon)
     DEMO_EMAIL: str = os.getenv("DEMO_EMAIL", "analista@exemplo.com")

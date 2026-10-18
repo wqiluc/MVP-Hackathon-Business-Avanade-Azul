@@ -27,6 +27,7 @@ const isWindows = os.platform() === 'win32';
 const backendDir = path.join(__dirname, 'backend');
 const frontendDir = path.join(__dirname, 'frontend');
 const venvDir = path.join(backendDir, '.venv');
+const mlflowDataDir = path.join(__dirname, 'infrastructure', 'mlflow', 'data');
 const venvPython = isWindows 
   ? path.join(venvDir, 'Scripts', 'python.exe')
   : path.join(venvDir, 'bin', 'python');
@@ -92,11 +93,68 @@ if (!fs.existsSync(frontendEnv)) {
   fs.writeFileSync(frontendEnv, 'VITE_API_URL=http://localhost:8000/api/v1\n');
   log('   -> frontend/.env criado (VITE_API_URL=http://localhost:8000/api/v1).', colors.gray);
 }
-if (!fs.existsSync(path.join(backendDir, '.env')) && fs.existsSync(path.join(backendDir, '.env.example'))) {
+if (
+  !fs.existsSync(path.join(backendDir, '.env')) &&
+  !fs.existsSync(path.join(__dirname, '.env')) &&
+  fs.existsSync(path.join(backendDir, '.env.example'))
+) {
   fs.copyFileSync(path.join(backendDir, '.env.example'), path.join(backendDir, '.env'));
 }
 
-// 4. Iniciar os Serviços em Paralelo
+function readConfiguredEnv(name, fallback) {
+  if (process.env[name]) return process.env[name];
+  for (const envPath of [
+    path.join(backendDir, '.env'),
+    path.join(__dirname, '.env'),
+  ]) {
+    if (!fs.existsSync(envPath)) continue;
+    const line = fs.readFileSync(envPath, 'utf8')
+      .split(/\r?\n/)
+      .find(entry => entry.trim().startsWith(`${name}=`));
+    if (line) {
+      return line.slice(line.indexOf('=') + 1).trim().replace(/^['"]|['"]$/g, '');
+    }
+  }
+  return fallback;
+}
+
+// 4. Iniciar MLflow Tracking quando a URI apontar para o serviço local padrão
+const trackingUri = readConfiguredEnv('MLFLOW_TRACKING_URI', 'http://localhost:5000');
+let mlflowProcess = null;
+try {
+  const trackingUrl = new URL(trackingUri);
+  const isLocalTracking =
+    trackingUrl.protocol === 'http:' &&
+    ['localhost', '127.0.0.1', '::1'].includes(trackingUrl.hostname) &&
+    (trackingUrl.pathname === '/' || trackingUrl.pathname === '');
+  if (isLocalTracking) {
+    const trackingPort = trackingUrl.port || '80';
+    fs.mkdirSync(path.join(mlflowDataDir, 'artifacts'), { recursive: true });
+    const trackingDb = path.join(mlflowDataDir, 'tracking.db').replace(/\\/g, '/');
+    const artifactsUri = require('url').pathToFileURL(
+      path.join(mlflowDataDir, 'artifacts')
+    ).href;
+    mlflowProcess = spawn(venvPython, [
+      '-m', 'mlflow', 'server',
+      '--backend-store-uri', `sqlite:///${path.resolve(trackingDb)}`,
+      '--artifacts-destination', artifactsUri,
+      '--host', trackingUrl.hostname === 'localhost' ? '127.0.0.1' : trackingUrl.hostname,
+      '--port', trackingPort,
+      '--workers', '1'
+    ], {
+      cwd: __dirname,
+      stdio: 'inherit'
+    });
+    log(`   -> MLflow Tracking : ${trackingUri}`, colors.cyan);
+  } else {
+    log(`   -> MLflow Tracking externo: ${trackingUri}`, colors.cyan);
+  }
+} catch (error) {
+  log(`❌ MLFLOW_TRACKING_URI inválida: ${error.message}`, colors.red);
+  process.exit(1);
+}
+
+// 5. Iniciar os Serviços da aplicação em paralelo
 log('\n⚡ Subindo a aplicação completa...', colors.green);
 log('   -> Backend FastAPI : http://localhost:8000', colors.cyan);
 log('   -> Swagger UI Docs  : http://localhost:8000/docs', colors.cyan);
@@ -119,6 +177,7 @@ const frontendProcess = spawn('npm', ['run', 'dev'], {
 // Encerrar ambos os processos graciosamente no CTRL+C
 process.on('SIGINT', () => {
   log('\n🛑 Encerrando todos os serviços...', colors.yellow);
+  if (mlflowProcess) mlflowProcess.kill();
   backendProcess.kill();
   frontendProcess.kill();
   process.exit(0);

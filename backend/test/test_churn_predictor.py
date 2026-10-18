@@ -4,6 +4,7 @@ from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
+import pytest
 import requests
 
 from app.services.inference_service import predict_churn
@@ -35,7 +36,12 @@ def test_without_serving_url_uses_current_rules_and_rounding():
         }
     )
 
-    assert ChurnPredictor.predict(df, "") == [0.08, 0.01, 0.08, 0.082]
+    assert ChurnPredictor.predict(df, "", allow_local_inference=True) == [
+        0.08,
+        0.01,
+        0.08,
+        0.082,
+    ]
 
 
 def test_rules_keep_current_upper_bound_and_null_handling():
@@ -47,7 +53,7 @@ def test_rules_keep_current_upper_bound_and_null_handling():
         }
     )
 
-    scores = ChurnPredictor.predict(df, "")
+    scores = ChurnPredictor.predict(df, "", allow_local_inference=True)
 
     assert scores == [0.89, 0.08]
     assert all(0.01 <= score <= 0.99 for score in scores)
@@ -108,15 +114,20 @@ def test_serving_clips_values_to_zero_and_one_and_rounds_to_three_decimals():
     assert scores == [0.0, 0.935]
 
 
-def test_http_failure_uses_current_rules():
+def test_http_failure_propagates_when_serving_is_configured():
     df = _feature_frame()
-    expected = ChurnPredictor._rules(df).tolist()
 
     with patch(
         "ml.inference.churn_predictor.requests.post",
         side_effect=requests.Timeout("serving unavailable"),
     ):
-        assert ChurnPredictor.predict(df, "https://serving.example/invocations") == expected
+        with pytest.raises(RuntimeError, match="Falha ao consultar MLflow Serving"):
+            ChurnPredictor.predict(df, "https://serving.example/invocations")
+
+
+def test_missing_serving_url_requires_explicit_local_mode():
+    with pytest.raises(RuntimeError, match="MLflow Serving não está configurado"):
+        ChurnPredictor.predict(_feature_frame(), "")
 
 
 def test_legacy_facade_delegates_with_configured_serving_url(monkeypatch):
@@ -129,7 +140,11 @@ def test_legacy_facade_delegates_with_configured_serving_url(monkeypatch):
     ) as predict:
         assert predict_churn(df) == [0.1, 0.2]
 
-    predict.assert_called_once_with(df, "https://serving.example")
+    predict.assert_called_once_with(
+        df,
+        "https://serving.example",
+        allow_local_inference=False,
+    )
 
 
 def test_churn_predictor_module_does_not_import_application_modules():

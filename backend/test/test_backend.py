@@ -1,6 +1,7 @@
 import ast
 from datetime import datetime, timezone
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import duckdb
@@ -178,35 +179,38 @@ def test_recommendation_falls_back_when_agent_workflow_fails():
 
 def test_model_endpoint_returns_existing_mlflow_run_contract():
     started = datetime(2026, 10, 17, 12, 30, tzinfo=timezone.utc)
-    runs = pd.DataFrame([{
-        "run_id": "12345678abcdefgh",
-        "metrics.accuracy": 0.875,
-        "start_time": started,
-    }])
+    active = SimpleNamespace(
+        model_name="AeroShieldChurnModel",
+        model_version="3",
+        alias="champion",
+        run_id="12345678abcdefgh",
+        status="READY",
+        metrics={"accuracy": 0.875},
+        start_time=int(started.timestamp() * 1000),
+    )
 
-    with patch("app.services.ml_service.mlflow.search_runs", return_value=runs) as search_runs:
+    with patch(
+        "app.services.ml_service.get_active_churn_model",
+        return_value=active,
+    ) as get_active_model:
         response = client.get("/api/v1/modelo", headers=_authenticated_headers())
 
     assert response.status_code == 200
     assert response.json() == {
-        "nome": "Modelo de evasão (RandomForest)",
+        "nome": "AeroShieldChurnModel",
         "plataforma": "MLflow",
         "metaAcuracia": 0.9,
-        "versao": "12345678",
+        "versao": "3",
         "status": "em-producao",
         "acuracia": 0.875,
         "auc": None,
         "treinadoEm": started.isoformat(),
     }
-    search_runs.assert_called_once_with(
-        experiment_names=["Azul_CRM_Churn_Prediction"],
-        order_by=["attributes.start_time DESC"],
-        max_results=1,
-    )
+    get_active_model.assert_called_once_with()
 
 
 def test_model_endpoint_returns_fallback_when_mlflow_has_no_runs():
-    with patch("app.services.ml_service.mlflow.search_runs", return_value=pd.DataFrame()):
+    with patch("app.services.ml_service.get_active_churn_model", return_value=None):
         response = client.get("/api/v1/modelo", headers=_authenticated_headers())
 
     assert response.status_code == 200

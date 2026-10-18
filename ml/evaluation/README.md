@@ -1,3 +1,4 @@
 # Model evaluation
 
-Reserved for model evaluation logic and reports.
+`metrics.py` calcula accuracy, precision e recall, usando `zero_division=0`
+nas métricas de precision e recall.
