@@ -739,6 +739,27 @@ table.table {
   background: var(--surface-2);
 }
 
+.table tbody tr.is-priority {
+  box-shadow: inset 3px 0 0 var(--serious);
+}
+
+.table-client {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.table-priority {
+  border-radius: 999px;
+  background: var(--serious-wash);
+  color: var(--serious);
+  padding: 2px 7px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 /* ==========================================================================
    Gráficos
    ========================================================================== */
