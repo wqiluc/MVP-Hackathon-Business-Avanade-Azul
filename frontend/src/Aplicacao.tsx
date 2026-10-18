@@ -12,6 +12,9 @@ import { servicoCrm } from './servicos/servicoCrm';
 const PaginaDashboard = lazy(() =>
   import('./paginas/PaginaDashboard').then((m) => ({ default: m.PaginaDashboard })),
 );
+const PaginaClientes = lazy(() =>
+  import('./paginas/PaginaClientes').then((m) => ({ default: m.PaginaClientes })),
+);
 const PaginaCliente = lazy(() => import('./paginas/PaginaCliente').then((m) => ({ default: m.PaginaCliente })));
 
 const carregando = <p className="empty">Carregando…</p>;
@@ -33,6 +36,7 @@ export function Aplicacao() {
             <Route path="/" element={<PaginaMenu />} />
             <Route element={<LayoutPrincipal />}>
               <Route path="/dashboard" element={<Suspense fallback={carregando}><PaginaDashboard /></Suspense>} />
+              <Route path="/clientes/lista" element={<Suspense fallback={carregando}><PaginaClientes /></Suspense>} />
               <Route path="/clientes" element={<ClientePrioritario />} />
               <Route path="/clientes/:id" element={<Suspense fallback={carregando}><PaginaCliente /></Suspense>} />
             </Route>

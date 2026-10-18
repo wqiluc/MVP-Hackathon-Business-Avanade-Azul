@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { SegmentosPersona } from '../componentes/dashboard/SegmentosPersona';
 import { TabelaPrioritarios } from '../componentes/dashboard/TabelaPrioritarios';
 import { BarrasRanking } from '../componentes/graficos/BarrasRanking';
@@ -76,7 +76,12 @@ export function PaginaDashboard() {
             {resumo && <> Dados até {formatData(resumo.dataReferencia)}.</>}
           </p>
         </div>
-        <SeloDadosSinteticos />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <Link to="/clientes/lista" className="btn btn--primary">
+            Ver todos os clientes
+          </Link>
+          <SeloDadosSinteticos />
+        </div>
       </div>
 
       <div className="filters">
