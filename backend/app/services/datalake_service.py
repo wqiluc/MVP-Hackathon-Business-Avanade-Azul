@@ -1,26 +1,22 @@
-import os
-import duckdb
 import pandas as pd
 from app.config import settings
 from data.bronze.duckdb_writer import DuckDBBronzeWriter
 from data.gold.duckdb_transformer import DuckDBGoldTransformer
 from data.ingestion.file_reader import FileReader
 from data.silver.duckdb_transformer import DuckDBSilverTransformer
+from data.storage.duckdb_adapter import DuckDBAdapter
 
 class DataLakeService:
     @staticmethod
     def get_connection():
-        os.makedirs(os.path.dirname(settings.DUCKDB_PATH), exist_ok=True)
-        return duckdb.connect(settings.DUCKDB_PATH)
+        return DuckDBAdapter.connect(settings.DUCKDB_PATH)
 
     @classmethod
     def init_schema(cls):
         """Cria as camadas Medalhão (Bronze, Silver, Gold)."""
         conn = cls.get_connection()
         try:
-            conn.execute("CREATE SCHEMA IF NOT EXISTS bronze;")
-            conn.execute("CREATE SCHEMA IF NOT EXISTS silver;")
-            conn.execute("CREATE SCHEMA IF NOT EXISTS gold;")
+            DuckDBAdapter.init_schema(conn)
         finally:
             conn.close()
 
@@ -78,8 +74,6 @@ class DataLakeService:
             return SnowflakeDataLake.read_gold()
         conn = cls.get_connection()
         try:
-            return conn.execute("SELECT * FROM gold.client_features").fetchdf()
-        except duckdb.CatalogException:
-            return pd.DataFrame()
+            return DuckDBAdapter.read_gold(conn)
         finally:
             conn.close()
