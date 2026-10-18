@@ -1,0 +1,52 @@
+﻿CPF,Nome,Email,UF,Fidelidade,Saldo_Pontos,Pontos_Expirando,Status_Retencao,Risco_Churn,Divisao_Principal,Cross_Sell_Sugerido,LTV_Gasto_R$,Acao_Recomendada
+01403627796,Márcia Nogueira,vitoria.macedo@hotmail.com,CE,Diamante,116528,6299,CHURN_PROVAVEL,98%,AZUL_VIAGENS,VOOS_COMERCIAIS,6135.62,Reten��o Urgente: Ofertar voucher na divis�o VOOS_COMERCIAIS antes que 6299 pontos expirem
+99034898442,Ana Júlia Santos Filho,arthur96@live.com,TO,Safira,13023,24018,EM_RISCO,97%,AZUL_CONECTA,AZUL_CARGO,723.02,Reten��o Urgente: Ofertar voucher na divis�o AZUL_CARGO antes que 24018 pontos expirem
+16432839431,Bruna Batista,feliciano_melo40@gmail.com,ES,Top�zio,14366,16853,EM_RISCO,96%,AZUL_CONECTA,VOOS_COMERCIAIS,5672.36,Reten��o Urgente: Ofertar voucher na divis�o VOOS_COMERCIAIS antes que 16853 pontos expirem
+14829218941,Dra. Sílvia Martins,joaopedro.braga@yahoo.com,PB,Top�zio,71908,11714,CHURN_PROVAVEL,96%,AZUL_CARGO,VOOS_COMERCIAIS,7785.54,Reten��o Urgente: Ofertar voucher na divis�o VOOS_COMERCIAIS antes que 11714 pontos expirem
+73825739911,Guilherme Xavier,cecilia_franco@bol.com.br,TO,Diamante,23958,12183,EM_RISCO,95%,VOOS_COMERCIAIS,AZUL_CONECTA,2082.74,Reten��o Urgente: Ofertar voucher na divis�o AZUL_CONECTA antes que 12183 pontos expirem
+68688337704,Félix Costa,cesar_moraes88@live.com,RO,Diamante,115414,11378,CHURN_PROVAVEL,93%,AZUL_CARGO,AZUL_VIAGENS,1010.34,Reten��o Urgente: Ofertar voucher na divis�o AZUL_VIAGENS antes que 11378 pontos expirem
+73194228184,Elísio Carvalho,samuel.santos@yahoo.com,RJ,Diamante,127034,16119,CHURN_PROVAVEL,92%,AZUL_VIAGENS,VOOS_COMERCIAIS,8478.02,Reten��o Urgente: Ofertar voucher na divis�o VOOS_COMERCIAIS antes que 16119 pontos expirem
+43798227051,Morgana Nogueira,helena_nogueira@live.com,AM,B�sico,43299,14808,CHURN_PROVAVEL,91%,AZUL_CONECTA,VOOS_COMERCIAIS,8190.46,Reten��o Urgente: Ofertar voucher na divis�o VOOS_COMERCIAIS antes que 14808 pontos expirem
+98688753721,Antonella Nogueira,calebe.barros@live.com,GO,Diamante,3305,12600,CHURN_PROVAVEL,90%,AZUL_CONECTA,AZUL_VIAGENS,4769.03,Reten��o Urgente: Ofertar voucher na divis�o AZUL_VIAGENS antes que 12600 pontos expirem
+55544433322,Cliente Extra�do DataLake (NLP/Regex),fernanda.recife@teste.com,BR,B�sico,0,0,EM_RISCO,88%,AZUL_CARGO,VOOS_COMERCIAIS,0,Ofertar pacote VOOS_COMERCIAIS com foco em reten��o/aquisi��o
+17524728388,Ana Júlia Braga,noah.nogueira41@gmail.com,SE,Diamante,80148,8964,EM_RISCO,86%,VOOS_COMERCIAIS,AZUL_CARGO,2495.1,Reten��o Urgente: Ofertar voucher na divis�o AZUL_CARGO antes que 8964 pontos expirem
+14838699954,Célia Macedo,marialuiza_saraiva47@gmail.com,SC,B�sico,118298,23762,CHURN_PROVAVEL,84%,AZUL_CONECTA,AZUL_CARGO,3321.01,Reten��o Urgente: Ofertar voucher na divis�o AZUL_CARGO antes que 23762 pontos expirem
+12715336011,Maitê Saraiva,samuel.oliveira@hotmail.com,PA,Diamante,91964,4609,EM_RISCO,83%,AZUL_VIAGENS,AZUL_CARGO,4808.88,Reten��o Urgente: Ofertar voucher na divis�o AZUL_CARGO antes que 4609 pontos expirem
+84220909540,Gael Batista,anthony7@hotmail.com,RJ,B�sico,25480,11851,CHURN_PROVAVEL,81%,AZUL_CARGO,AZUL_VIAGENS,4133.08,Reten��o Urgente: Ofertar voucher na divis�o AZUL_VIAGENS antes que 11851 pontos expirem
+07043413517,Morgana Moraes,helio31@hotmail.com,PE,Diamante,30351,11276,CHURN_PROVAVEL,78%,VOOS_COMERCIAIS,AZUL_CARGO,4676.77,Reten��o Urgente: Ofertar voucher na divis�o AZUL_CARGO antes que 11276 pontos expirem
+28943096601,Helena Moreira,julia77@gmail.com,PI,Top�zio,17363,18581,EM_RISCO,76%,AZUL_VIAGENS,AZUL_CARGO,8352.26,Reten��o Urgente: Ofertar voucher na divis�o AZUL_CARGO antes que 18581 pontos expirem
+51116034410,Davi Lucca Souza,margarida_martins@hotmail.com,MG,Top�zio,110570,24879,EM_RISCO,74%,AZUL_CONECTA,AZUL_VIAGENS,5505.69,Reten��o Urgente: Ofertar voucher na divis�o AZUL_VIAGENS antes que 24879 pontos expirem
+47774266875,Lucca Martins,natalia.braga@gmail.com,SC,Top�zio,61187,12917,CHURN_PROVAVEL,73%,AZUL_CARGO,VOOS_COMERCIAIS,4567.45,Reten��o Urgente: Ofertar voucher na divis�o VOOS_COMERCIAIS antes que 12917 pontos expirem
+87122297584,Sílvia Reis,karla.martins14@hotmail.com,MA,Top�zio,48600,14822,CHURN_PROVAVEL,73%,AZUL_CONECTA,AZUL_CARGO,6259.51,Reten��o Urgente: Ofertar voucher na divis�o AZUL_CARGO antes que 14822 pontos expirem
+07824079003,Sílvia Saraiva,liz.oliveira@live.com,TO,Top�zio,101764,9533,CHURN_PROVAVEL,72%,AZUL_CARGO,AZUL_VIAGENS,2249.71,Reten��o Urgente: Ofertar voucher na divis�o AZUL_VIAGENS antes que 9533 pontos expirem
+67634325342,Célia Macedo,mariacecilia35@yahoo.com,SP,B�sico,42726,21612,EM_RISCO,71%,AZUL_CONECTA,AZUL_CARGO,6468.9,Reten��o Urgente: Ofertar voucher na divis�o AZUL_CARGO antes que 21612 pontos expirem
+07884261375,Isabela Saraiva,lucas_xavier@bol.com.br,RN,B�sico,75069,20256,EM_RISCO,70%,AZUL_CONECTA,AZUL_CARGO,5495.93,Reten��o Urgente: Ofertar voucher na divis�o AZUL_CARGO antes que 20256 pontos expirem
+10802552364,Caio Carvalho,dalila90@live.com,SC,Safira,53354,15183,EM_RISCO,68%,AZUL_CONECTA,VOOS_COMERCIAIS,7361.4,Reten��o Urgente: Ofertar voucher na divis�o VOOS_COMERCIAIS antes que 15183 pontos expirem
+91683917629,Maria Júlia Saraiva,antonio.martins@yahoo.com,SP,Safira,87611,24904,CHURN_PROVAVEL,68%,AZUL_VIAGENS,VOOS_COMERCIAIS,1838.06,Reten��o Urgente: Ofertar voucher na divis�o VOOS_COMERCIAIS antes que 24904 pontos expirem
+86795749653,Sr. João Miguel Moreira,marcos_martins78@hotmail.com,CE,Diamante,69087,4488,CHURN_PROVAVEL,67%,AZUL_CARGO,AZUL_VIAGENS,1867.49,Reten��o Urgente: Ofertar voucher na divis�o AZUL_VIAGENS antes que 4488 pontos expirem
+60927164987,Sr. Noah Martins,eduardo.batista@hotmail.com,RS,B�sico,116584,20647,CHURN_PROVAVEL,67%,AZUL_VIAGENS,VOOS_COMERCIAIS,1036.68,Reten��o Urgente: Ofertar voucher na divis�o VOOS_COMERCIAIS antes que 20647 pontos expirem
+24824621253,Hugo Costa,lorena.costa@live.com,PR,B�sico,4720,4285,EM_RISCO,65%,AZUL_CONECTA,AZUL_VIAGENS,2491.99,Reten��o Urgente: Ofertar voucher na divis�o AZUL_VIAGENS antes que 4285 pontos expirem
+90862570934,Murilo Albuquerque,gustavo1@hotmail.com,GO,Top�zio,60628,10242,CHURN_PROVAVEL,65%,AZUL_CONECTA,AZUL_CARGO,7445.87,Reten��o Urgente: Ofertar voucher na divis�o AZUL_CARGO antes que 10242 pontos expirem
+96440068919,Núbia Nogueira,isis.xavier6@gmail.com,RJ,Safira,128331,9058,EM_RISCO,65%,AZUL_CONECTA,AZUL_VIAGENS,6389.44,Reten��o Urgente: Ofertar voucher na divis�o AZUL_VIAGENS antes que 9058 pontos expirem
+25635315228,Morgana Barros,bryan_moreira12@live.com,PA,B�sico,126717,0,ATIVO,38%,VOOS_COMERCIAIS,AZUL_VIAGENS,6234.44,Aquisi��o Cross-Sell: Apresentar benef�cios da divis�o AZUL_VIAGENS
+73338241836,Sra. Isabelly Melo,maria.franco86@yahoo.com,RR,B�sico,0,0,NOVO_LEAD,36%,AZUL_VIAGENS,VOOS_COMERCIAIS,0,Aquisi��o Cross-Sell: Apresentar benef�cios da divis�o VOOS_COMERCIAIS
+13262834469,Emanuel Reis,vicente_nogueira3@live.com,RS,B�sico,0,0,NOVO_LEAD,31%,AZUL_CARGO,VOOS_COMERCIAIS,0,Aquisi��o Cross-Sell: Apresentar benef�cios da divis�o VOOS_COMERCIAIS
+00675727643,Alexandre Barros,isabelly58@bol.com.br,AL,B�sico,0,0,NOVO_LEAD,31%,AZUL_VIAGENS,AZUL_CARGO,0,Aquisi��o Cross-Sell: Apresentar benef�cios da divis�o AZUL_CARGO
+53446656757,Gabriel Batista,davilucca.oliveira40@yahoo.com,SP,B�sico,0,0,NOVO_LEAD,28%,VOOS_COMERCIAIS,AZUL_CARGO,0,Aquisi��o Cross-Sell: Apresentar benef�cios da divis�o AZUL_CARGO
+72097743083,Alexandre Costa,mariana.barros@live.com,PE,Diamante,90201,0,ATIVO,26%,AZUL_CARGO,AZUL_CONECTA,1298.49,Aquisi��o Cross-Sell: Apresentar benef�cios da divis�o AZUL_CONECTA
+00877852028,Pedro Franco,eduarda18@hotmail.com,RR,Top�zio,116572,0,ATIVO,23%,AZUL_CARGO,AZUL_VIAGENS,8521.38,Aquisi��o Cross-Sell: Apresentar benef�cios da divis�o AZUL_VIAGENS
+21661719687,Pablo Moraes,theo91@yahoo.com,RS,Top�zio,72980,0,ATIVO,23%,AZUL_CARGO,AZUL_CONECTA,3075.21,Aquisi��o Cross-Sell: Apresentar benef�cios da divis�o AZUL_CONECTA
+09881943028,Yango Moreira,frederico_braga@live.com,AP,B�sico,12520,0,ATIVO,23%,AZUL_VIAGENS,AZUL_CONECTA,4317.62,Aquisi��o Cross-Sell: Apresentar benef�cios da divis�o AZUL_CONECTA
+02650944574,Isaac Braga,emanuelly54@live.com,PA,B�sico,0,0,NOVO_LEAD,23%,AZUL_CARGO,VOOS_COMERCIAIS,0,Aquisi��o Cross-Sell: Apresentar benef�cios da divis�o VOOS_COMERCIAIS
+00658586334,Srta. Elisa Santos,marialuiza_franco60@yahoo.com,PA,B�sico,0,0,NOVO_LEAD,19%,VOOS_COMERCIAIS,AZUL_CARGO,0,Aquisi��o Cross-Sell: Apresentar benef�cios da divis�o AZUL_CARGO
+52965862476,Natália Souza,clara_barros43@bol.com.br,SE,B�sico,0,0,NOVO_LEAD,18%,AZUL_VIAGENS,VOOS_COMERCIAIS,0,Aquisi��o Cross-Sell: Apresentar benef�cios da divis�o VOOS_COMERCIAIS
+90851485205,Margarida Barros,caua_macedo@gmail.com,PE,Top�zio,101018,0,ATIVO,17%,VOOS_COMERCIAIS,AZUL_VIAGENS,8200.4,Aquisi��o Cross-Sell: Apresentar benef�cios da divis�o AZUL_VIAGENS
+23522847837,Sr. Antônio Moraes,celia0@live.com,SE,B�sico,0,0,NOVO_LEAD,14%,AZUL_CONECTA,AZUL_CARGO,0,Aquisi��o Cross-Sell: Apresentar benef�cios da divis�o AZUL_CARGO
+68729002107,Ana Laura Silva,yango.albuquerque@live.com,GO,B�sico,74680,0,ATIVO,12%,VOOS_COMERCIAIS,AZUL_CARGO,1326.46,Aquisi��o Cross-Sell: Apresentar benef�cios da divis�o AZUL_CARGO
+02561238753,João Pedro Costa,fabiano7@gmail.com,PA,Diamante,140972,0,ATIVO,12%,AZUL_CARGO,VOOS_COMERCIAIS,8405.19,Aquisi��o Cross-Sell: Apresentar benef�cios da divis�o VOOS_COMERCIAIS
+06709576192,Gúbio Santos,cecilia_xavier@hotmail.com,AC,B�sico,0,0,NOVO_LEAD,10%,AZUL_CARGO,AZUL_VIAGENS,0,Aquisi��o Cross-Sell: Apresentar benef�cios da divis�o AZUL_VIAGENS
+59182901320,Paula Oliveira,lavinia11@hotmail.com,RR,Top�zio,58572,0,ATIVO,8%,VOOS_COMERCIAIS,AZUL_CARGO,6368.03,Aquisi��o Cross-Sell: Apresentar benef�cios da divis�o AZUL_CARGO
+75882952529,Norberto Carvalho,celia.melo@live.com,RN,Diamante,67756,0,ATIVO,8%,AZUL_CARGO,AZUL_CONECTA,3977.56,Aquisi��o Cross-Sell: Apresentar benef�cios da divis�o AZUL_CONECTA
+68321419854,Sr. Marcos Moraes,arthur_santos@hotmail.com,ES,B�sico,0,0,NOVO_LEAD,7%,AZUL_CONECTA,AZUL_VIAGENS,0,Aquisi��o Cross-Sell: Apresentar benef�cios da divis�o AZUL_VIAGENS
+61635876709,Heitor Martins,isaac_franco50@live.com,ES,Diamante,135863,0,ATIVO,6%,AZUL_VIAGENS,AZUL_CARGO,3675.31,Aquisi��o Cross-Sell: Apresentar benef�cios da divis�o AZUL_CARGO
+63573892627,Pedro Xavier,joaquim96@hotmail.com,MS,B�sico,0,0,NOVO_LEAD,5%,AZUL_CARGO,AZUL_VIAGENS,0,Aquisi��o Cross-Sell: Apresentar benef�cios da divis�o AZUL_VIAGENS

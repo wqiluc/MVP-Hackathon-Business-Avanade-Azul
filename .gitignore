@@ -1,15 +1,17 @@
-# Ocultar credenciais e ambiente real
+# Caches do Python e de Testes
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Ambientes e Segredos
 .env
-test-conn.js
-exportar-snowflake.js
+.env.local
+*.log
+snowflake.log
 
-# Ocultar banco local anterior (SQLite)
-*.db
-*.db-journal
-prisma/migrations/
-
-# Ocultar arquivos físicos gerados na máquina
-datalake/bronze/*.json
-datalake/silver/*
-datalake/gold/*
+# Dependências Node
 node_modules/
+
+# Builds / Saídas temporárias
+outputs/

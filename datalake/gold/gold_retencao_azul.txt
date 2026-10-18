@@ -1,0 +1,51 @@
+[GOLD] Márcia Nogueira (01403627796) | Churn: 98% | Reten��o Urgente: Ofertar voucher na divis�o VOOS_COMERCIAIS antes que 6299 pontos expirem
+[GOLD] Ana Júlia Santos Filho (99034898442) | Churn: 97% | Reten��o Urgente: Ofertar voucher na divis�o AZUL_CARGO antes que 24018 pontos expirem
+[GOLD] Bruna Batista (16432839431) | Churn: 96% | Reten��o Urgente: Ofertar voucher na divis�o VOOS_COMERCIAIS antes que 16853 pontos expirem
+[GOLD] Dra. Sílvia Martins (14829218941) | Churn: 96% | Reten��o Urgente: Ofertar voucher na divis�o VOOS_COMERCIAIS antes que 11714 pontos expirem
+[GOLD] Guilherme Xavier (73825739911) | Churn: 95% | Reten��o Urgente: Ofertar voucher na divis�o AZUL_CONECTA antes que 12183 pontos expirem
+[GOLD] Félix Costa (68688337704) | Churn: 93% | Reten��o Urgente: Ofertar voucher na divis�o AZUL_VIAGENS antes que 11378 pontos expirem
+[GOLD] Elísio Carvalho (73194228184) | Churn: 92% | Reten��o Urgente: Ofertar voucher na divis�o VOOS_COMERCIAIS antes que 16119 pontos expirem
+[GOLD] Morgana Nogueira (43798227051) | Churn: 91% | Reten��o Urgente: Ofertar voucher na divis�o VOOS_COMERCIAIS antes que 14808 pontos expirem
+[GOLD] Antonella Nogueira (98688753721) | Churn: 90% | Reten��o Urgente: Ofertar voucher na divis�o AZUL_VIAGENS antes que 12600 pontos expirem
+[GOLD] Cliente Extra�do DataLake (NLP/Regex) (55544433322) | Churn: 88% | Ofertar pacote VOOS_COMERCIAIS com foco em reten��o/aquisi��o
+[GOLD] Ana Júlia Braga (17524728388) | Churn: 86% | Reten��o Urgente: Ofertar voucher na divis�o AZUL_CARGO antes que 8964 pontos expirem
+[GOLD] Célia Macedo (14838699954) | Churn: 84% | Reten��o Urgente: Ofertar voucher na divis�o AZUL_CARGO antes que 23762 pontos expirem
+[GOLD] Maitê Saraiva (12715336011) | Churn: 83% | Reten��o Urgente: Ofertar voucher na divis�o AZUL_CARGO antes que 4609 pontos expirem
+[GOLD] Gael Batista (84220909540) | Churn: 81% | Reten��o Urgente: Ofertar voucher na divis�o AZUL_VIAGENS antes que 11851 pontos expirem
+[GOLD] Morgana Moraes (07043413517) | Churn: 78% | Reten��o Urgente: Ofertar voucher na divis�o AZUL_CARGO antes que 11276 pontos expirem
+[GOLD] Helena Moreira (28943096601) | Churn: 76% | Reten��o Urgente: Ofertar voucher na divis�o AZUL_CARGO antes que 18581 pontos expirem
+[GOLD] Davi Lucca Souza (51116034410) | Churn: 74% | Reten��o Urgente: Ofertar voucher na divis�o AZUL_VIAGENS antes que 24879 pontos expirem
+[GOLD] Lucca Martins (47774266875) | Churn: 73% | Reten��o Urgente: Ofertar voucher na divis�o VOOS_COMERCIAIS antes que 12917 pontos expirem
+[GOLD] Sílvia Reis (87122297584) | Churn: 73% | Reten��o Urgente: Ofertar voucher na divis�o AZUL_CARGO antes que 14822 pontos expirem
+[GOLD] Sílvia Saraiva (07824079003) | Churn: 72% | Reten��o Urgente: Ofertar voucher na divis�o AZUL_VIAGENS antes que 9533 pontos expirem
+[GOLD] Célia Macedo (67634325342) | Churn: 71% | Reten��o Urgente: Ofertar voucher na divis�o AZUL_CARGO antes que 21612 pontos expirem
+[GOLD] Isabela Saraiva (07884261375) | Churn: 70% | Reten��o Urgente: Ofertar voucher na divis�o AZUL_CARGO antes que 20256 pontos expirem
+[GOLD] Caio Carvalho (10802552364) | Churn: 68% | Reten��o Urgente: Ofertar voucher na divis�o VOOS_COMERCIAIS antes que 15183 pontos expirem
+[GOLD] Maria Júlia Saraiva (91683917629) | Churn: 68% | Reten��o Urgente: Ofertar voucher na divis�o VOOS_COMERCIAIS antes que 24904 pontos expirem
+[GOLD] Sr. João Miguel Moreira (86795749653) | Churn: 67% | Reten��o Urgente: Ofertar voucher na divis�o AZUL_VIAGENS antes que 4488 pontos expirem
+[GOLD] Sr. Noah Martins (60927164987) | Churn: 67% | Reten��o Urgente: Ofertar voucher na divis�o VOOS_COMERCIAIS antes que 20647 pontos expirem
+[GOLD] Hugo Costa (24824621253) | Churn: 65% | Reten��o Urgente: Ofertar voucher na divis�o AZUL_VIAGENS antes que 4285 pontos expirem
+[GOLD] Murilo Albuquerque (90862570934) | Churn: 65% | Reten��o Urgente: Ofertar voucher na divis�o AZUL_CARGO antes que 10242 pontos expirem
+[GOLD] Núbia Nogueira (96440068919) | Churn: 65% | Reten��o Urgente: Ofertar voucher na divis�o AZUL_VIAGENS antes que 9058 pontos expirem
+[GOLD] Morgana Barros (25635315228) | Churn: 38% | Aquisi��o Cross-Sell: Apresentar benef�cios da divis�o AZUL_VIAGENS
+[GOLD] Sra. Isabelly Melo (73338241836) | Churn: 36% | Aquisi��o Cross-Sell: Apresentar benef�cios da divis�o VOOS_COMERCIAIS
+[GOLD] Emanuel Reis (13262834469) | Churn: 31% | Aquisi��o Cross-Sell: Apresentar benef�cios da divis�o VOOS_COMERCIAIS
+[GOLD] Alexandre Barros (00675727643) | Churn: 31% | Aquisi��o Cross-Sell: Apresentar benef�cios da divis�o AZUL_CARGO
+[GOLD] Gabriel Batista (53446656757) | Churn: 28% | Aquisi��o Cross-Sell: Apresentar benef�cios da divis�o AZUL_CARGO
+[GOLD] Alexandre Costa (72097743083) | Churn: 26% | Aquisi��o Cross-Sell: Apresentar benef�cios da divis�o AZUL_CONECTA
+[GOLD] Pedro Franco (00877852028) | Churn: 23% | Aquisi��o Cross-Sell: Apresentar benef�cios da divis�o AZUL_VIAGENS
+[GOLD] Pablo Moraes (21661719687) | Churn: 23% | Aquisi��o Cross-Sell: Apresentar benef�cios da divis�o AZUL_CONECTA
+[GOLD] Yango Moreira (09881943028) | Churn: 23% | Aquisi��o Cross-Sell: Apresentar benef�cios da divis�o AZUL_CONECTA
+[GOLD] Isaac Braga (02650944574) | Churn: 23% | Aquisi��o Cross-Sell: Apresentar benef�cios da divis�o VOOS_COMERCIAIS
+[GOLD] Srta. Elisa Santos (00658586334) | Churn: 19% | Aquisi��o Cross-Sell: Apresentar benef�cios da divis�o AZUL_CARGO
+[GOLD] Natália Souza (52965862476) | Churn: 18% | Aquisi��o Cross-Sell: Apresentar benef�cios da divis�o VOOS_COMERCIAIS
+[GOLD] Margarida Barros (90851485205) | Churn: 17% | Aquisi��o Cross-Sell: Apresentar benef�cios da divis�o AZUL_VIAGENS
+[GOLD] Sr. Antônio Moraes (23522847837) | Churn: 14% | Aquisi��o Cross-Sell: Apresentar benef�cios da divis�o AZUL_CARGO
+[GOLD] Ana Laura Silva (68729002107) | Churn: 12% | Aquisi��o Cross-Sell: Apresentar benef�cios da divis�o AZUL_CARGO
+[GOLD] João Pedro Costa (02561238753) | Churn: 12% | Aquisi��o Cross-Sell: Apresentar benef�cios da divis�o VOOS_COMERCIAIS
+[GOLD] Gúbio Santos (06709576192) | Churn: 10% | Aquisi��o Cross-Sell: Apresentar benef�cios da divis�o AZUL_VIAGENS
+[GOLD] Paula Oliveira (59182901320) | Churn: 8% | Aquisi��o Cross-Sell: Apresentar benef�cios da divis�o AZUL_CARGO
+[GOLD] Norberto Carvalho (75882952529) | Churn: 8% | Aquisi��o Cross-Sell: Apresentar benef�cios da divis�o AZUL_CONECTA
+[GOLD] Sr. Marcos Moraes (68321419854) | Churn: 7% | Aquisi��o Cross-Sell: Apresentar benef�cios da divis�o AZUL_VIAGENS
+[GOLD] Heitor Martins (61635876709) | Churn: 6% | Aquisi��o Cross-Sell: Apresentar benef�cios da divis�o AZUL_CARGO
+[GOLD] Pedro Xavier (63573892627) | Churn: 5% | Aquisi��o Cross-Sell: Apresentar benef�cios da divis�o AZUL_VIAGENS
