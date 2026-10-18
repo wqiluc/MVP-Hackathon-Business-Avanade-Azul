@@ -1,3 +1,6 @@
-# GraphRAG
+# Graph-based context retrieval
 
-Reserved for the existing graph-based retrieval to be migrated in a later phase.
+`context_retrieval.py` consulta um grafo NetworkX pequeno, estático e
+definido no próprio código. O nome histórico GraphRAG identifica esse contexto
+de grafo, mas a implementação não inclui ingestão de documentos, geração por
+LLM, recuperação vetorial ou um GraphRAG completo.

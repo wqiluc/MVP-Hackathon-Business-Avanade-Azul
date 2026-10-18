@@ -2,32 +2,21 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException
 from app.schemas.client_schema import ClientAnalysisRequest, ClientAnalysisResponse
 from app.services.crm_service import CrmService, gerar_recomendacao
-from app.core.security import get_current_user, anonymize_identifier
-from app.services.agent_service import invoke_agent_workflow
+from app.core.security import get_current_user
+from app.services.agent_service import analyze_client as analyze_client_service
 
 router = APIRouter()
 
 @router.post("/analyze-client", include_in_schema=False)
 @router.post("/analyze", response_model=ClientAnalysisResponse)
 def analyze_client(req: ClientAnalysisRequest, current_user: dict = Depends(get_current_user)):
-    anon_id = anonymize_identifier(req.raw_user_id)
-    
-    initial_state = {
-        "client_identifier": anon_id,
-        "frequency": req.frequency,
-        "total_spend": req.total_spend,
-        "incidents": req.incidents,
-        "incident_type": req.incident_type,
-        "tier": "",
-        "churn_risk": 0.0,
-        "value_at_risk": 0.0,
-        "graph_rag_context": {},
-        "decision_reasoning": "",
-        "action_proposal": {},
-        "audit_status": ""
-    }
-    
-    final_state = invoke_agent_workflow(initial_state)
+    final_state = analyze_client_service(
+        req.raw_user_id,
+        req.frequency,
+        req.total_spend,
+        req.incidents,
+        req.incident_type,
+    )
     
     return ClientAnalysisResponse(
         audience="Equipe Interna da Azul",
