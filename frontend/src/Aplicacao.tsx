@@ -33,8 +33,8 @@ export function Aplicacao() {
         <Routes>
           <Route path="/login" element={<PaginaLogin />} />
           <Route element={<RotaProtegida />}>
-            <Route path="/" element={<PaginaMenu />} />
             <Route element={<LayoutPrincipal />}>
+              <Route path="/" element={<PaginaMenu />} />
               <Route path="/dashboard" element={<Suspense fallback={carregando}><PaginaDashboard /></Suspense>} />
               <Route path="/clientes/lista" element={<Suspense fallback={carregando}><PaginaClientes /></Suspense>} />
               <Route path="/clientes" element={<ClientePrioritario />} />

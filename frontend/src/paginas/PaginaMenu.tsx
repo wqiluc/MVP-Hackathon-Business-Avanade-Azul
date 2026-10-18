@@ -1,11 +1,8 @@
 import { Link } from 'react-router-dom';
-import { BuscaCliente } from '../componentes/estrutura/BuscaCliente';
-import { MenuUsuario } from '../componentes/estrutura/MenuUsuario';
 import { EnvioBaseClientes } from '../componentes/ingestao/EnvioBaseClientes';
-import { SeloDadosSinteticos, SeloPersona, SeloRisco } from '../componentes/ui/Selos';
+import { SeloDadosSinteticos } from '../componentes/ui/Selos';
 import { Icone, type NomeIcone } from '../componentes/ui/Icone';
 import { useBuscaAssincrona } from '../hooks/useBuscaAssincrona';
-import logo from '../imagens/logo-azul.jpg';
 import { servicoCrm } from '../servicos/servicoCrm';
 import { formatBRLCompacto, formatNumero } from '../utilitarios/formatacao';
 import './PaginaMenu.css';
@@ -25,10 +22,10 @@ const MODULOS: Modulo[] = [
     para: '/dashboard',
   },
   {
-    titulo: 'Visão do cliente',
+    titulo: 'Visão dos clientes',
     descricao: 'Perfil 360°, explicação do modelo e recomendação personalizada gerada pela IA.',
     icone: 'user',
-    para: '/clientes',
+    para: '/clientes/lista',
   },
   {
     titulo: 'Personas e segmentação',
@@ -92,10 +89,6 @@ export function PaginaMenu() {
     <div className="menu">
       <header className="menu__hero">
         <div className="menu__hero-inner">
-          <div className="menu__topo">
-            <img className="menu__logo" src={logo} alt="Azul Linhas Aéreas Brasileiras" />
-            <MenuUsuario />
-          </div>
           <div>
             <h1>CRM de Alto Valor</h1>
             <p style={{ marginTop: 10 }}>
@@ -103,7 +96,6 @@ export function PaginaMenu() {
               reterem os clientes estratégicos da Azul.
             </p>
           </div>
-          <BuscaCliente placeholder="Buscar cliente por nome ou ID (ex.: AZ-10000)" />
           {stats && (
             <div className="menu__stats">
               {stats.map((s) => (
@@ -131,36 +123,7 @@ export function PaginaMenu() {
           </div>
         </section>
 
-        {resumo && (
-          <section>
-            <div className="row" style={{ justifyContent: 'space-between', marginBottom: 14 }}>
-              <h2 className="menu__section-title" style={{ margin: 0 }}>
-                Clientes que pedem ação agora
-              </h2>
-              <Link to="/dashboard" className="modulo__cta">
-                Ver todos no dashboard <Icone name="arrowRight" size={16} />
-              </Link>
-            </div>
-            <div className="atencao">
-              {resumo.prioritarios.slice(0, 3).map((c) => (
-                <Link key={c.id} to={`/clientes/${c.id}`} className="atencao__item">
-                  <div className="row" style={{ justifyContent: 'space-between' }}>
-                    <strong>{c.nome}</strong>
-                    <SeloRisco risco={c.riscoEvasao} />
-                  </div>
-                  <div className="row">
-                    <SeloPersona persona={c.persona} />
-                    <small className="tabular">CLV {formatBRLCompacto(c.clvProjetado)}</small>
-                  </div>
-                  <small>
-                    <Icone name="sparkles" size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} />
-                    {c.proximaAcao}
-                  </small>
-                </Link>
-              ))}
-            </div>
-          </section>
-        )}
+        
       </main>
 
       <footer className="menu__footer">

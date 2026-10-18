@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { SegmentosPersona } from '../componentes/dashboard/SegmentosPersona';
 import { TabelaPrioritarios } from '../componentes/dashboard/TabelaPrioritarios';
+import { BuscaCliente } from '../componentes/estrutura/BuscaCliente';
 import { BarrasRanking } from '../componentes/graficos/BarrasRanking';
 import { CartaoGrafico } from '../componentes/graficos/CartaoGrafico';
 import { ComposicaoCategorias } from '../componentes/graficos/ComposicaoCategorias';
@@ -115,6 +116,10 @@ export function PaginaDashboard() {
             ))}
           </select>
         </label>
+        <div className="field">
+          <span>Buscar cliente</span>
+          <BuscaCliente />
+        </div>
         {temFiltro && (
           <button type="button" className="btn" onClick={() => setParams({}, { replace: true })}>
             Limpar filtros

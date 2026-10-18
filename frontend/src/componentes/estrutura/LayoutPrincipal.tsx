@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import logo from '../../imagens/logo-azul.jpg';
 import { usandoDadosSinteticos } from '../../servicos/servicoCrm';
@@ -8,17 +9,21 @@ import { MenuUsuario } from './MenuUsuario';
 const NAVEGACAO: { para: string; rotulo: string; icone: NomeIcone; fim?: boolean }[] = [
   { para: '/', rotulo: 'Menu', icone: 'grid', fim: true },
   { para: '/dashboard', rotulo: 'Dashboard', icone: 'chart' },
-  { para: '/clientes', rotulo: 'Cliente', icone: 'user' },
+  { para: '/clientes/lista', rotulo: 'Clientes', icone: 'user' },
 ];
 
 const TITULOS: Record<string, string> = {
+  '': 'Menu',
   dashboard: 'Dashboard',
   clientes: 'Visão do cliente',
 };
 
 export function LayoutPrincipal() {
   const { pathname } = useLocation();
-  const secao = TITULOS[pathname.split('/')[1]] ?? '';
+  const [tema, setTema] = useState<'light' | 'dark'>(() =>
+    document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light',
+  );
+  const secao = pathname === '/clientes/lista' ? 'Clientes' : TITULOS[pathname.split('/')[1]] ?? '';
 
   return (
     <div className="app-shell">
@@ -35,6 +40,20 @@ export function LayoutPrincipal() {
             </NavLink>
           ))}
         </nav>
+        <button
+          type="button"
+          className="nav-link theme-toggle"
+          aria-label={`Ativar modo ${tema === 'dark' ? 'claro' : 'escuro'}`}
+          onClick={() => {
+            const novoTema = tema === 'dark' ? 'light' : 'dark';
+            document.documentElement.dataset.theme = novoTema;
+            window.localStorage.setItem('azul-crm-theme', novoTema);
+            setTema(novoTema);
+          }}
+        >
+          <Icone name={tema === 'dark' ? 'sun' : 'moon'} />
+          Modo {tema === 'dark' ? 'claro' : 'escuro'}
+        </button>
         <div className="sidebar__footer">
           <Icone name="shield" size={16} />
           <span>
@@ -53,7 +72,7 @@ export function LayoutPrincipal() {
             <span aria-hidden="true">/</span>
             <strong style={{ color: 'var(--text-primary)' }}>{secao}</strong>
           </div>
-          <BuscaCliente />
+          {pathname !== '/dashboard' && pathname !== '/clientes/lista' && <BuscaCliente />}
         </header>
         <main className="content">
           <Outlet />
