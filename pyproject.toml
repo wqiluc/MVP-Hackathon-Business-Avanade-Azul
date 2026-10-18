@@ -8,5 +8,5 @@ version = "0.1.0"
 requires-python = ">=3.12"
 
 [tool.setuptools]
-packages = ["data", "data.ingestion", "data.bronze", "data.silver", "data.gold", "data.storage"]
+packages = ["data", "data.ingestion", "data.bronze", "data.silver", "data.gold", "data.storage", "ml", "ml.inference"]
 include-package-data = false
