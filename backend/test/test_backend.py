@@ -239,31 +239,48 @@ def test_model_endpoint_returns_fallback_when_mlflow_query_raises():
     }
 
 
-def test_front_contract_flow(tmp_path):
-    res = client.post("/api/v1/auth/login", json={"email": "analista@exemplo.com", "senha": "azul2026"})
-    assert res.status_code == 200
-    body = res.json()
-    assert body["token"] and body["usuario"]["perfil"] == "analista" and body["expiraEm"]
-    headers = {"Authorization": f"Bearer {body['token']}"}
+def test_front_contract_flow(tmp_path, monkeypatch):
+    monkeypatch.setattr(
+        "app.config.settings.DUCKDB_PATH",
+        str(tmp_path / "front-contract.duckdb"),
+    )
+    monkeypatch.setattr("app.config.settings.DATA_LAKE_BACKEND", "duckdb")
 
     csv = tmp_path / "base.csv"
     csv.write_text(
         "id_cliente,tier,frequencia,recencia_dias,gasto_total,incidentes\n"
         + "\n".join(f"{i},DIAMANTE,{10 + i},{i * 10},{5000 * i},{i % 3}" for i in range(1, 9))
     )
-    with open(csv, "rb") as f:
-        up = client.post("/api/v1/ingestao/clientes", headers=headers, files={"arquivo": ("base.csv", f)})
-    assert up.status_code == 200 and up.json()["status"] == "recebido"
+    with TestClient(app) as test_client:
+        res = test_client.post(
+            "/api/v1/auth/login",
+            json={"email": "analista@exemplo.com", "senha": "azul2026"},
+        )
+        assert res.status_code == 200
+        body = res.json()
+        assert body["token"] and body["usuario"]["perfil"] == "analista" and body["expiraEm"]
+        headers = {"Authorization": f"Bearer {body['token']}"}
 
-    resumo = client.get("/api/v1/dashboard/resumo", headers=headers).json()
-    assert resumo["totalClientes"] == 8 and len(resumo["receitaMensal"]) == 12
+        with open(csv, "rb") as f:
+            up = test_client.post(
+                "/api/v1/ingestao/clientes",
+                headers=headers,
+                files={"arquivo": ("base.csv", f)},
+            )
+        assert up.status_code == 200 and up.json()["status"] == "recebido"
 
-    lista = client.get("/api/v1/clientes", headers=headers).json()
-    cid = lista[0]["id"]
-    assert client.get(f"/api/v1/clientes/{cid}", headers=headers).json()["id"] == cid
-    rec = client.post(f"/api/v1/clientes/{cid}/recomendacao", headers=headers).json()
-    assert rec["titulo"] and rec["origem"] in ("simulacao", "ia-generativa")
-    assert client.get("/api/v1/modelo", headers=headers).json()["metaAcuracia"] == 0.9
+        resumo = test_client.get("/api/v1/dashboard/resumo", headers=headers).json()
+        assert resumo["totalClientes"] == 8 and len(resumo["receitaMensal"]) == 12
+
+        lista = test_client.get("/api/v1/clientes", headers=headers).json()
+        cid = lista[0]["id"]
+        assert test_client.get(f"/api/v1/clientes/{cid}", headers=headers).json()["id"] == cid
+        rec = test_client.post(
+            f"/api/v1/clientes/{cid}/recomendacao",
+            headers=headers,
+        ).json()
+        assert rec["titulo"] and rec["origem"] in ("simulacao", "ia-generativa")
+        assert test_client.get("/api/v1/modelo", headers=headers).json()["metaAcuracia"] == 0.9
 
 
 def test_legacy_upload_route_accepts_file_field(monkeypatch):
