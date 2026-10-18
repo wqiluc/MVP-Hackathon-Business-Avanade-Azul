@@ -65,6 +65,28 @@ def test_read_gold_returns_empty_dataframe_when_table_is_missing(tmp_path):
     assert result.empty
 
 
+def test_write_gold_replaces_table_and_keeps_connection_open(tmp_path):
+    conn = duckdb.connect(str(tmp_path / "warehouse.duckdb"))
+    DuckDBAdapter.init_schema(conn)
+    conn.execute("CREATE TABLE gold.client_features AS SELECT 'old' AS client_identifier")
+    expected = pd.DataFrame(
+        {
+            "client_identifier": ["AZ-test"],
+            "frequency": [3],
+            "churn_score": [0.425],
+        }
+    )
+
+    try:
+        DuckDBAdapter.write_gold(conn, expected)
+
+        result = DuckDBAdapter.read_gold(conn)
+        pd.testing.assert_frame_equal(result, expected)
+        assert conn.execute("SELECT 1").fetchone() == (1,)
+    finally:
+        conn.close()
+
+
 def test_adapter_uses_and_keeps_supplied_connection_open(tmp_path, monkeypatch):
     conn = DuckDBAdapter.connect(tmp_path / "warehouse.duckdb")
     DuckDBAdapter.init_schema(conn)

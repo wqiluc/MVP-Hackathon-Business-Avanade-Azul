@@ -24,3 +24,9 @@ class DuckDBAdapter:
             return conn.execute("SELECT * FROM gold.client_features").fetchdf()
         except duckdb.CatalogException:
             return pd.DataFrame()
+
+    @staticmethod
+    def write_gold(conn: duckdb.DuckDBPyConnection, df_gold: pd.DataFrame) -> None:
+        conn.execute(
+            "CREATE OR REPLACE TABLE gold.client_features AS SELECT * FROM df_gold"
+        )

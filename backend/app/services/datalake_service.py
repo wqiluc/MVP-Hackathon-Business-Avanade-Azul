@@ -64,7 +64,7 @@ class DataLakeService:
 
         df = conn.execute("SELECT * FROM gold.client_features").fetchdf()
         df["churn_score"] = predict_churn(df)
-        conn.execute("CREATE OR REPLACE TABLE gold.client_features AS SELECT * FROM df")
+        DuckDBAdapter.write_gold(conn, df)
 
     @classmethod
     def read_gold(cls) -> pd.DataFrame:

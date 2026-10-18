@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from unittest.mock import patch
 
+import duckdb
 import pandas as pd
 import pytest
 from fastapi.testclient import TestClient
@@ -78,6 +79,26 @@ def test_datalake_file_reader_delegates_to_file_reader():
 
     assert result is expected
     read_file.assert_called_once_with("clients.csv", "csv")
+
+
+def test_score_gold_delegates_persistence_to_duckdb_adapter():
+    conn = duckdb.connect(":memory:")
+    conn.execute("CREATE SCHEMA gold")
+    conn.execute(
+        "CREATE TABLE gold.client_features AS "
+        "SELECT 'AZ-test' AS client_identifier, 3 AS frequency"
+    )
+
+    with patch("app.services.inference_service.predict_churn", return_value=[0.425]) as predict:
+        DataLakeService._score_gold(conn)
+
+    result = conn.execute("SELECT * FROM gold.client_features").fetchdf()
+    conn.close()
+
+    assert result.to_dict(orient="records") == [
+        {"client_identifier": "AZ-test", "frequency": 3, "churn_score": 0.425}
+    ]
+    predict.assert_called_once()
 
 
 def test_swagger_docs():
