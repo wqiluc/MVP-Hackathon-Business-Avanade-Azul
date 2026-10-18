@@ -3,6 +3,7 @@ import duckdb
 import pandas as pd
 from app.config import settings
 from data.bronze.duckdb_writer import DuckDBBronzeWriter
+from data.gold.duckdb_transformer import DuckDBGoldTransformer
 from data.ingestion.file_reader import FileReader
 from data.silver.duckdb_transformer import DuckDBSilverTransformer
 
@@ -43,19 +44,7 @@ class DataLakeService:
             DuckDBSilverTransformer.transform_cleaned_clients(conn)
 
             # 3. GOLD (Analytics & ML Features)
-            conn.execute("""
-                CREATE OR REPLACE TABLE gold.client_features AS
-                SELECT 
-                    client_identifier,
-                    tier,
-                    frequency,
-                    recency_days,
-                    total_spend,
-                    flight_incidents,
-                    ROUND(total_spend / NULLIF(frequency, 0), 2) AS avg_ticket,
-                    CASE WHEN flight_incidents >= 2 OR recency_days > 60 THEN 1 ELSE 0 END AS high_risk_flag
-                FROM silver.cleaned_clients
-            """)
+            DuckDBGoldTransformer.transform_client_features(conn)
 
             cls._score_gold(conn)
             row_count = conn.execute("SELECT COUNT(*) FROM gold.client_features").fetchone()[0]
