@@ -4,7 +4,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from pydantic_settings import BaseSettings
 
-BASE_DIR = Path(__file__).resolve().parent.parent.parent  # Diretório raiz do projeto (backend/)
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 load_dotenv(BASE_DIR / "backend" / ".env")
 load_dotenv(BASE_DIR / ".env")
@@ -13,21 +13,27 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
     
     # Segurança e Autenticação
-    SECRET_KEY: str = os.getenv("SECRET_KEY", secrets.token_urlsafe(32))
     JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY", secrets.token_urlsafe(32))
+    JWT_SECRET_CONFIGURED: bool = bool(os.getenv("JWT_SECRET_KEY"))
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_HOURS: int = 8
+    CORS_ORIGINS: str = os.getenv(
+        "CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173"
+    )
+    MAX_UPLOAD_BYTES: int = int(os.getenv("MAX_UPLOAD_BYTES", str(10 * 1024 * 1024)))
     
     # Provedores de IA (Modo Free vs Produção)  
-    LLM_PROVIDER: str = os.getenv("LLM_PROVIDER", "ollama")  # 'ollama' ou 'openai'
+    LLM_PROVIDER: str = os.getenv("LLM_PROVIDER", "openai").strip().lower()
     OLLAMA_BASE_URL: str = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
     OLLAMA_MODEL: str = os.getenv("OLLAMA_MODEL", "llama3")
     OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
+    OPENAI_MODEL: str = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+    OPENAI_TIMEOUT_SECONDS: float = float(os.getenv("OPENAI_TIMEOUT_SECONDS", "12"))
     
     # Observabilidade (LangSmith Rate-Limited)
     LANGCHAIN_TRACING_V2: str = os.getenv("LANGCHAIN_TRACING_V2", "false")
     LANGCHAIN_API_KEY: str = os.getenv("LANGCHAIN_API_KEY", "")
-    LANGCHAIN_PROJECT: str = os.getenv("LANGCHAIN_PROJECT", "azul-crm-aeroshield")
+    LANGCHAIN_PROJECT: str = os.getenv("LANGCHAIN_PROJECT", "crm-alto-valor-azul")
     
     # Data Lake e Embeddings
     DUCKDB_PATH: str = str(BASE_DIR / "data" / "processed" / "azul_datalake.duckdb")
@@ -54,8 +60,10 @@ class Settings(BaseSettings):
     )
 
     # Acesso do front (ambiente de avaliação do Hackathon)
-    DEMO_EMAIL: str = os.getenv("DEMO_EMAIL", "analista@exemplo.com")
-    DEMO_PASSWORD: str = os.getenv("DEMO_PASSWORD", "azul2026")
+    DEMO_EMAIL: str = os.getenv("DEMO_EMAIL", "")
+    DEMO_PASSWORD: str = os.getenv("DEMO_PASSWORD", "")
+    ADMIN_EMAIL: str = os.getenv("ADMIN_EMAIL", "")
+    ADMIN_PASSWORD: str = os.getenv("ADMIN_PASSWORD", "")
 
     # class Config:
     #     env_file = ".env"

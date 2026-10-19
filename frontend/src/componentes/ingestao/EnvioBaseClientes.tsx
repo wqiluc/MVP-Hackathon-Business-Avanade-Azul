@@ -1,11 +1,12 @@
 import { useRef, useState } from 'react';
+import { baixarBaseSinteticaCsv } from '../../dados/sinteticos/exportarCsv';
 import { servicoCrm } from '../../servicos/servicoCrm';
 import type { ReciboIngestao } from '../../tipos/crm';
 import { Icone } from '../ui/Icone';
 
 const FORMATOS = '.xlsx,.xls,.csv,.json';
 
-/** Envia uma base de clientes ao backend, que a grava na camada Bronze do Snowflake. */
+/** Envia uma base de clientes ao backend e gera um CSV demonstrativo sem nomes ou e-mails. */
 export function EnvioBaseClientes() {
   const entrada = useRef<HTMLInputElement>(null);
   const [arquivo, setArquivo] = useState<File | null>(null);
@@ -33,7 +34,10 @@ export function EnvioBaseClientes() {
         <Icone name="database" size={20} />
       </span>
       <h3>Enviar base de clientes</h3>
-      <p>Excel, CSV ou JSON. O backend grava na camada Bronze e o pipeline atualiza Prata e Ouro.</p>
+      <p>
+        CSV, Excel ou JSON (máximo 10 MB). Colunas fora dos contratos aceitos são descartadas antes da Bronze.
+        Sem modelo ativo, a Gold é criada e o score fica pendente até o treinamento no MLflow.
+      </p>
 
       <input
         ref={entrada}
@@ -49,6 +53,9 @@ export function EnvioBaseClientes() {
       <div className="row">
         <button type="button" className="btn" onClick={() => entrada.current?.click()}>
           {arquivo ? 'Trocar arquivo' : 'Escolher arquivo'}
+        </button>
+        <button type="button" className="btn" onClick={baixarBaseSinteticaCsv}>
+          Baixar CSV sintético
         </button>
         <button type="button" className="btn btn--primary" disabled={!arquivo || enviando} onClick={enviar}>
           <Icone name="send" size={16} />

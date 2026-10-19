@@ -1,6 +1,6 @@
-import { TIERS, nivelRisco } from '../../configuracao/fidelidade';
+import { TIERS } from '../../configuracao/fidelidade';
 import { PERSONAS } from '../../configuracao/personas';
-import type { NivelRisco, PersonaId, Sentimento, Tier } from '../../tipos/crm';
+import type { PersonaId, Sentimento, Tier } from '../../tipos/crm';
 import { formatPercentual } from '../../utilitarios/formatacao';
 import { COR_TIER } from './cores';
 import { Icone, type NomeIcone } from './Icone';
@@ -23,20 +23,20 @@ export function SeloPersona({ persona }: { persona: PersonaId }) {
   );
 }
 
-const STATUS_RISCO: Record<NivelRisco, { classe: string; icone: NomeIcone; rotulo: string }> = {
-  baixo: { classe: 'good', icone: 'check', rotulo: 'Baixo' },
-  moderado: { classe: 'warning', icone: 'info', rotulo: 'Moderado' },
-  alto: { classe: 'serious', icone: 'alert', rotulo: 'Alto' },
-  critico: { classe: 'critical', icone: 'octagon', rotulo: 'Crítico' },
-};
-
-export function SeloRisco({ risco, mostrarValor = true }: { risco: number; mostrarValor?: boolean }) {
-  const status = STATUS_RISCO[nivelRisco(risco)];
+export function SeloRisco({
+  risco,
+  origem = 'classificador',
+}: {
+  risco: number | null;
+  origem?: 'classificador' | 'heuristica-sintetica';
+}) {
+  if (risco === null) {
+    return <span className="badge badge--status">Score indisponível</span>;
+  }
   return (
-    <span className={`badge badge--status badge--${status.classe}`}>
-      <Icone name={status.icone} size={14} />
-      {status.rotulo}
-      {mostrarValor && <span className="tabular">· {formatPercentual(risco)}</span>}
+    <span className={`badge ${origem === 'heuristica-sintetica' ? 'badge--synthetic' : 'badge--status'}`}>
+      {origem === 'heuristica-sintetica' ? 'Heurística sintética' : 'high_risk_flag'}
+      <span className="tabular">· {formatPercentual(risco)}</span>
     </span>
   );
 }

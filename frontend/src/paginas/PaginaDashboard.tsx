@@ -72,7 +72,7 @@ export function PaginaDashboard() {
           <div className="eyebrow">Visão executiva</div>
           <h1>Clientes de alto valor</h1>
           <p>
-            Onde está o valor da base, quem está em risco de evasão e qual ação tomar primeiro.
+            Onde está o valor da base, como se distribui o score high_risk_flag e qual ação revisar primeiro.
             {resumo && <> Dados até {formatData(resumo.dataReferencia)}.</>}
           </p>
         </div>
@@ -140,9 +140,9 @@ export function PaginaDashboard() {
               hint={`CLV de clientes com risco ≥ ${formatPercentual(RISCO_ALTO)}`}
             />
             <Indicador
-              label="Clientes em risco alto"
+              label="Share com score high_risk_flag ≥ 0,5"
               value={formatPercentual(resumo.percentualRiscoAlto)}
-              hint="Probabilidade de evasão em 6 meses"
+              hint="Percentual dos clientes com score disponível; não é taxa de churn observado"
             />
             <Indicador
               label="Sentimento médio"
@@ -153,8 +153,8 @@ export function PaginaDashboard() {
 
           <div className="grid grid--3-2">
             <CartaoGrafico
-              title="Matriz de valor × risco"
-              subtitle={`Cada ponto é um cliente. Prioridade: CLV acima de ${formatBRLCompacto(corteClv)} (quartil superior) e risco ≥ ${formatPercentual(RISCO_ALTO)}.`}
+              title="Matriz de valor × score high_risk_flag"
+              subtitle={`Cada ponto com score disponível é um cliente. Prioridade: CLV acima de ${formatBRLCompacto(corteClv)} e score ≥ ${formatPercentual(RISCO_ALTO)}.`}
               legend={
                 <Legenda
                   itens={[
@@ -167,7 +167,7 @@ export function PaginaDashboard() {
                 colunas: [
                   { rotulo: 'Cliente' },
                   { rotulo: 'CLV 24m', numerica: true },
-                  { rotulo: 'Risco', numerica: true },
+                  { rotulo: 'Score high_risk_flag', numerica: true },
                 ],
                 linhas: resumo.prioritarios.map((c) => [
                   c.nome,
@@ -220,8 +220,8 @@ export function PaginaDashboard() {
           </div>
 
           <Cartao
-            title="Fila de prioridade de retenção"
-            subtitle="Ordenada pela perda esperada (CLV × risco de evasão). Clique em um cliente para ver a recomendação da IA."
+            title="Fila de prioridade de relacionamento"
+            subtitle="Ordenada por CLV × score de classificação (heurística de priorização, não perda observada). Clique para revisar a recomendação."
           >
             <TabelaPrioritarios clientes={resumo.prioritarios} />
           </Cartao>

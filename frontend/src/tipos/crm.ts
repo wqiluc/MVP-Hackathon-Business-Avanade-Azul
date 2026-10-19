@@ -67,12 +67,12 @@ export interface ProximaAcao {
   mensagem: string;
   /** Regras do Azul Fidelidade usadas como base de conhecimento do agente. */
   regrasFidelidade: string[];
-  confianca: number;
-  /** Quem gerou a recomendação: simulação local ou IA generativa no backend. */
-  origem: 'simulacao' | 'ia-generativa';
+  confianca: number | null;
+  /** LLM means a validated OpenAI response; rules/simulation are not generative AI. */
+  origem: 'simulacao' | 'regras' | 'llm' | 'llm-indisponivel';
   impactoEstimado: {
-    reducaoRiscoPp: number;
-    receitaProtegida: number;
+    reducaoRiscoPp: number | null;
+    receitaProtegida: number | null;
   };
 }
 
@@ -84,17 +84,19 @@ export interface Cliente {
   aeroportoBase: string;
   cidadeBase: string;
   membroDesde: string;
-  consentimentoMarketing: boolean;
+  consentimentoMarketing: boolean | null;
 
   /** CLV: receita projetada em 24 meses caso o cliente seja retido, em R$. */
   clvProjetado: number;
   /** Score de alto valor, 0–100 (valor monetário, frequência, recência e potencial). */
   scoreValor: number;
-  /** Probabilidade de evasão nos próximos 6 meses, 0–1. */
-  riscoEvasao: number;
+  /** Probability of the synthetic high_risk_flag label; not observed churn. */
+  riscoEvasao: number | null;
 
   recenciaDias: number;
   voos12m: number;
+  /** Synthetic incident count; not an observed airline operations feed. */
+  incidentesVoo: number;
   receita12m: number;
   ticketMedio: number;
   saldoPontos: number;
@@ -134,7 +136,7 @@ export interface ResumoDashboard {
   clientesAltoValor: number;
   clvMedio: number;
   receitaEmRisco: number;
-  percentualRiscoAlto: number;
+  percentualRiscoAlto: number | null;
   sentimentoMedio: number;
   receitaMensal: PontoMensal[];
   /** Respeita o filtro de categoria, mas não o de persona (o painel é o seletor). */
@@ -142,7 +144,7 @@ export interface ResumoDashboard {
     persona: PersonaId;
     clientes: number;
     clvTotal: number;
-    riscoMedio: number;
+    riscoMedio: number | null;
   }[];
   porTier: { tier: Tier; clientes: number }[];
   atritos: { tema: string; mencoes: number }[];
@@ -154,10 +156,14 @@ export interface ResumoDashboard {
 export interface ModeloInfo {
   nome: string;
   versao: string;
-  plataforma: 'MLflow' | 'DagsHub';
-  status: 'em-producao' | 'aguardando-registro';
+  plataforma: 'MLflow';
+  status:
+    | 'em-producao'
+    | 'aguardando-registro'
+    | 'aguardando-serving'
+    | 'serving-configurado';
   /** Meta de acurácia acordada na mentoria. */
-  metaAcuracia: number;
+  metaAcuracia: number | null;
   /** Métricas de validação; null enquanto não houver modelo registrado. */
   acuracia: number | null;
   auc: number | null;

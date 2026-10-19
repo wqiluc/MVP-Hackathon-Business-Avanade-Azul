@@ -29,6 +29,16 @@ experiments, runs, and Registry metadata in `tracking.db`; model artifacts are
 stored below `infrastructure/mlflow/data/artifacts/` and accessed through the
 Tracking Server's artifact proxy.
 
+The API's `/api/v1/health/live` endpoint is process-only. `/api/v1/health/ready`
+checks the configured data lake (a local `SELECT 1` for DuckDB or a bounded,
+read-only `SELECT 1` for Snowflake) and Tracking Server; Tracking uses MLflow's
+`/health` endpoint with a short timeout. If Serving is configured, readiness
+also checks its `/ping` endpoint (derived from the configured
+`MLFLOW_SERVING_URL`, normally `/invocations`). Local development may omit
+Serving; production requires it. Readiness does not train models or call the
+LLM. Probe responses expose dependency states, not connection errors or
+credentials.
+
 ## Train, register, and activate
 
 Start the API, ingest data into Gold, then call the existing authenticated

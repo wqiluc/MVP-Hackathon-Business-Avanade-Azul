@@ -29,6 +29,8 @@ export const MESES = [
   'out/25', 'nov/25', 'dez/25', 'jan/26', 'fev/26', 'mar/26',
   'abr/26', 'mai/26', 'jun/26', 'jul/26', 'ago/26', 'set/26',
 ];
+const AVISO_RECOMENDACAO_DEMONSTRATIVA =
+  'Demonstração não verificada: oferta, condições e elegibilidade precisam ser confirmadas por um analista antes de qualquer comunicação ou aplicação.';
 
 // ---------------------------------------------------------------------------
 // Aleatoriedade reprodutível
@@ -215,9 +217,8 @@ function rotuloSentimento(score: number): string {
   return 'Neutro';
 }
 
-// Simulação da IA generativa: regras determinísticas que produzem a mesma
-// estrutura (ação, justificativa, mensagem redigida, regras citadas) que o
-// backend devolve com Gemini/ChatGPT. Ver ProximaAcao em src/tipos/crm.ts.
+// Recomendações sintéticas construídas por regras determinísticas. O projeto
+// não executa LLM neste fluxo. Ver ProximaAcao em src/tipos/crm.ts.
 function gerarProximaAcao(
   c: Omit<Cliente, 'proximaAcao'>,
 ): ProximaAcao {
@@ -236,7 +237,7 @@ function gerarProximaAcao(
 
   let base: Pick<ProximaAcao, 'tipo' | 'titulo' | 'justificativa' | 'mensagem' | 'regrasFidelidade'>;
 
-  if (c.riscoEvasao >= 0.5 && negativa) {
+  if (c.riscoEvasao !== null && c.riscoEvasao >= 0.5 && negativa) {
     base = {
       tipo: 'recuperacao-servico',
       titulo: 'Contato de recuperação com bônus de pontos',
@@ -245,7 +246,7 @@ function gerarProximaAcao(
         `CLV projetado de ${formatBRLCompacto(c.clvProjetado)} em 24 meses está exposto`,
         'Reconhecer a falha antes de qualquer oferta reduz a chance de rejeição',
       ],
-      mensagem: `Olá, ${nome}! Sabemos que sua experiência recente com ${negativa.tema.toLowerCase()} não foi a que você merece. Como reconhecimento pela sua fidelidade, creditamos 3.000 pontos bônus na sua conta Azul Fidelidade. Se quiser, nossa equipe ajuda a planejar sua próxima viagem para ${cidade(rota.destino)}. Conte com a gente.`,
+      mensagem: `Olá, ${nome}! Esta é uma sugestão demonstrativa: após analisar sua experiência com ${negativa.tema.toLowerCase()} e consultar as regras vigentes, um analista poderia avaliar se há alguma forma de reconhecimento, como pontos bônus. Nenhum ponto foi creditado nem benefício confirmado. Nossa equipe pode ajudar a planejar sua próxima viagem para ${cidade(rota.destino)}.`,
       regrasFidelidade: [REGRAS_FIDELIDADE.bonusRelacionamento, REGRAS_FIDELIDADE.contatoServico],
     };
   } else if (c.persona === 'executivo-frequente' || (c.persona === 'potencial-ascensao' && !prox)) {
@@ -257,7 +258,7 @@ function gerarProximaAcao(
         'Persona sensível a conforto e pontualidade',
         `Categoria ${c.tier}: o upgrade reforça o valor percebido do status`,
       ],
-      mensagem: `Olá, ${nome}! Como agradecimento pelos ${c.voos12m} voos com a gente neste ano, suas próximas 3 viagens entre ${cidade(rota.origem)} e ${cidade(rota.destino)} terão upgrade de cortesia para um assento com mais espaço. É só fazer o check-in normalmente.`,
+      mensagem: `Olá, ${nome}! Esta é uma sugestão demonstrativa: considerando seu histórico de ${c.voos12m} voos, um analista poderia verificar se existe alguma opção de assento com mais espaço para viagens entre ${cidade(rota.origem)} e ${cidade(rota.destino)}. Upgrade, disponibilidade e elegibilidade não estão confirmados.`,
       regrasFidelidade: [REGRAS_FIDELIDADE.beneficiosCategoria, REGRAS_FIDELIDADE.categorias],
     };
   } else if (c.persona === 'lazer-premium') {
@@ -269,7 +270,7 @@ function gerarProximaAcao(
         `Ticket médio de ${formatBRLCompacto(c.ticketMedio)}, acima da média da base`,
         `Última viagem há ${c.recenciaDias} dias: momento de planejar a próxima`,
       ],
-      mensagem: `Olá, ${nome}! Que tal voltar a ${cidade(rota.destino)}? Separamos uma condição especial para você: pontos em dobro na sua próxima viagem para lá, comprando até o fim do mês, com assentos juntos para quem viaja com você.`,
+      mensagem: `Olá, ${nome}! Esta é uma sugestão demonstrativa: um analista poderia verificar se existe campanha vigente de pontos em dobro para viagens a ${cidade(rota.destino)} e se há alguma condição aplicável. Campanha, prazo, assentos e elegibilidade não estão confirmados.`,
       regrasFidelidade: [REGRAS_FIDELIDADE.pontosEmDobro, REGRAS_FIDELIDADE.bonusRelacionamento],
     };
   } else if (c.persona === 'regional-conectado') {
@@ -281,7 +282,7 @@ function gerarProximaAcao(
         `${c.voos12m} voos nos últimos 12 meses`,
         'Informação proativa sobre conexões reduz atrito percebido',
       ],
-      mensagem: `Olá, ${nome}! Temos novidades para quem voa a partir de ${c.cidadeBase}: novos horários de conexão facilitam suas viagens para ${cidade(rota.destino)}. E, por voar com frequência com a gente, você ganha 1.500 pontos bônus no próximo trecho.`,
+      mensagem: `Olá, ${nome}! Esta é uma sugestão demonstrativa: um analista poderia confirmar informações de conexão para viagens a ${cidade(rota.destino)} e verificar se existe alguma ação vigente de pontos bônus para quem voa a partir de ${c.cidadeBase}. Horários, campanha e elegibilidade não estão confirmados.`,
       regrasFidelidade: [REGRAS_FIDELIDADE.bonusRelacionamento],
     };
   } else {
@@ -293,22 +294,23 @@ function gerarProximaAcao(
         `A ${formatNumero(faltam)} pontos qualificáveis da categoria ${prox}`,
         'Subir de categoria aumenta o custo de troca e o CLV futuro',
       ],
-      mensagem: `Olá, ${nome}! Você está a apenas ${formatNumero(faltam)} pontos qualificáveis da categoria ${prox}. Voe mais 2 vezes até o fim do trimestre e ganhe 2.000 pontos bônus para chegar lá mais rápido, com todos os benefícios da nova categoria.`,
+      mensagem: `Olá, ${nome}! Os dados sintéticos estimam uma distância de ${formatNumero(faltam)} pontos qualificáveis até a categoria ${prox}; saldo e regras precisam ser confirmados. Como demonstração, um analista poderia verificar opções vigentes para apoiar sua jornada. Não há bônus ou mudança de categoria confirmados.`,
       regrasFidelidade: [REGRAS_FIDELIDADE.categorias, REGRAS_FIDELIDADE.bonusRelacionamento],
     };
   }
 
-  const reducaoRiscoPp = umaCasa(c.riscoEvasao * 100 * entre(0.15, 0.3));
   return {
     ...base,
+    mensagem: `${AVISO_RECOMENDACAO_DEMONSTRATIVA}\n\n${base.mensagem}`,
+    regrasFidelidade: [AVISO_RECOMENDACAO_DEMONSTRATIVA, ...base.regrasFidelidade],
     canal: c.consentimentoMarketing || base.tipo === 'recuperacao-servico'
       ? canalPorPersona[c.persona]
       : 'Bloqueado: sem consentimento de marketing',
-    confianca: limitar(0.62 + c.scoreValor / 400 + rnd() * 0.08, 0, 0.95),
+    confianca: null,
     origem: 'simulacao',
     impactoEstimado: {
-      reducaoRiscoPp,
-      receitaProtegida: Math.round((c.clvProjetado * reducaoRiscoPp) / 100),
+      reducaoRiscoPp: null,
+      receitaProtegida: null,
     },
   };
 }
@@ -387,6 +389,7 @@ function gerarCliente(indice: number): Cliente {
     riscoEvasao,
     recenciaDias,
     voos12m,
+    incidentesVoo: atrasos,
     receita12m,
     ticketMedio,
     saldoPontos: Math.round(pontosQualificaveis * entre(0.8, 2.6)),

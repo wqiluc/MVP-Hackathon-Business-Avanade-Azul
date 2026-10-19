@@ -15,6 +15,19 @@
 - `backend/app/services/ml_service.py`: coordenação e contrato do serviço; não
   lê DuckDB diretamente.
 
+`high_risk_flag` é calculado por regra (`flight_incidents >= 2` ou
+`recency_days > 60`) e funciona apenas como proxy supervisionada; não é churn
+observado. Portanto, accuracy, precision e recall descrevem a classificação
+desse target derivado, não a previsão de churn real. `churn_score` é a
+probabilidade de classe positiva do modelo e não deve ser confundida com
+`high_risk_flag` nem com churn observado.
+
+O Registry mantém o nome técnico `AeroShieldChurnModel` e promove a versão
+validada ao alias `champion`. O teste `test_mlflow_integration.py` pode iniciar
+um Tracking e Serving MLflow locais isolados ao habilitar
+`MLFLOW_INTEGRATION_TESTS=1`; isso valida a integração local, não a
+disponibilidade de uma instância remota de produção.
+
 Tracking e Serving são serviços separados. O `npm start` inicia o Tracking local
 em `http://localhost:5000`; após registrar um modelo, o Serving deve ser iniciado
 separadamente em `http://localhost:5001`. Consulte

@@ -6,7 +6,6 @@ import { Explicabilidade } from '../componentes/graficos/Explicabilidade';
 import { GraficoVoosMensais } from '../componentes/graficos/GraficoVoosMensais';
 import { AvisoModelo } from '../componentes/modelo/AvisoModelo';
 import { Cartao } from '../componentes/ui/Cartao';
-import { COR_STATUS_RISCO } from '../componentes/ui/cores';
 import { Icone } from '../componentes/ui/Icone';
 import { Indicador } from '../componentes/ui/Indicador';
 import { Medidor } from '../componentes/ui/Medidor';
@@ -17,11 +16,12 @@ import {
   SeloRisco,
   SeloSentimento,
 } from '../componentes/ui/Selos';
-import { PONTOS_QUALIFICAVEIS_POR_TIER, nivelRisco, proximoTier } from '../configuracao/fidelidade';
+import { PONTOS_QUALIFICAVEIS_POR_TIER, proximoTier } from '../configuracao/fidelidade';
 import { PERSONAS } from '../configuracao/personas';
 import { cidade } from '../configuracao/aeroportos';
 import { useBuscaAssincrona } from '../hooks/useBuscaAssincrona';
 import { servicoCrm } from '../servicos/servicoCrm';
+import { usandoDadosSinteticos } from '../servicos/configuracaoApi';
 import type { Cliente } from '../tipos/crm';
 import {
   formatBRL,
@@ -53,10 +53,15 @@ function Cabecalho({ cliente }: { cliente: Cliente }) {
                 <Icone name="shield" size={14} />
                 Consentimento de marketing
               </span>
-            ) : (
+            ) : cliente.consentimentoMarketing === false ? (
               <span className="badge badge--status badge--warning">
                 <Icone name="lock" size={14} />
                 Sem consentimento de marketing
+              </span>
+            ) : (
+              <span className="badge badge--status badge--warning">
+                <Icone name="info" size={14} />
+                Consentimento não informado
               </span>
             )}
             <SeloDadosSinteticos />
@@ -88,11 +93,22 @@ function Indicadores({ cliente }: { cliente: Cliente }) {
         <Medidor value={cliente.scoreValor / 100} label="Score de alto valor" />
       </Indicador>
       <Indicador
-        label="Risco de evasão (6 meses)"
+        label={usandoDadosSinteticos ? 'Heurística sintética' : 'Score do classificador high_risk_flag'}
         value={formatPercentual(cliente.riscoEvasao)}
-        hint={<SeloRisco risco={cliente.riscoEvasao} mostrarValor={false} />}
+        hint={
+          <SeloRisco
+            risco={cliente.riscoEvasao}
+            origem={usandoDadosSinteticos ? 'heuristica-sintetica' : 'classificador'}
+          />
+        }
       >
-        <Medidor value={cliente.riscoEvasao} label="Risco de evasão" fill={COR_STATUS_RISCO[nivelRisco(cliente.riscoEvasao)]} />
+        {cliente.riscoEvasao !== null && (
+          <Medidor
+            value={cliente.riscoEvasao}
+            label={usandoDadosSinteticos ? 'Heurística sintética' : 'Score high_risk_flag'}
+            fill="var(--series-1)"
+          />
+        )}
       </Indicador>
       <Indicador
         label="Voos nos últimos 12 meses"
@@ -145,15 +161,25 @@ export function PaginaCliente() {
         {/* key: reinicia rascunho e tom ao trocar de cliente */}
         <CartaoRecomendacaoIA key={cliente.id} cliente={cliente} />
         <Cartao
-          title="Por que este risco de evasão?"
-          subtitle={`Taxa base de 18% + contribuição de cada fator = ${formatPercentual(cliente.riscoEvasao)}`}
+          title="Interpretação do score"
+          subtitle={
+            usandoDadosSinteticos
+              ? 'Heurística demonstrativa gerada no navegador; não é uma previsão de churn observável.'
+              : 'O alvo de treino é um rótulo derivado de regras, não churn observado.'
+          }
         >
-          <Explicabilidade
-            fatores={cliente.explicacaoRisco}
-            unidade="p.p."
-            positivoEhBom={false}
-            rotulos={{ bom: 'Reduz o risco', ruim: 'Aumenta o risco' }}
-          />
+          {usandoDadosSinteticos ? (
+            <p>
+              O score exibido é apenas parte da simulação sintética. Não representa desempenho de MLflow.
+            </p>
+          ) : (
+            <p>
+              A Gold define <code>high_risk_flag = 1</code> quando há pelo menos 2 incidentes ou mais de 60 dias
+              de recência. O modelo classifica esse rótulo; o score não é uma probabilidade de evasão observada.
+              {cliente.riscoEvasao === null &&
+                ' Score indisponível até registrar e servir um modelo no MLflow.'}
+            </p>
+          )}
         </Cartao>
       </div>
 

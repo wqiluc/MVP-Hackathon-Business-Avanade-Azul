@@ -26,7 +26,7 @@ function aplicarTom(mensagem: string, tom: Tom): string {
 
 /**
  * Recomendação de próxima melhor ação para a equipe de relacionamento.
- * O backend combina o modelo (MLflow) com IA generativa; aqui o analista
+ * O backend combina o score do modelo com um workflow determinístico; aqui o analista
  * revisa, ajusta e aprova — nada é enviado ao cliente sem aprovação humana.
  */
 export function CartaoRecomendacaoIA({ cliente }: { cliente: Cliente }) {
@@ -37,16 +37,24 @@ export function CartaoRecomendacaoIA({ cliente }: { cliente: Cliente }) {
   const [gerando, setGerando] = useState(false);
   const [aprovada, setAprovada] = useState(false);
   const [copiado, setCopiado] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
 
-  const bloqueada = acao.canal.startsWith('Bloqueado');
+  const bloqueada =
+    acao.canal.startsWith('Bloqueado') || cliente.consentimentoMarketing !== true;
+  const politicaVerificada = acao.regrasFidelidade.some((regra) =>
+    regra.startsWith('Contexto de política marcado como verificado'),
+  );
 
   const regenerar = async () => {
     setGerando(true);
     setAprovada(false);
+    setErro(null);
     try {
       const nova = await servicoCrm.gerarRecomendacao(cliente.id);
       setAcao(nova);
       setTexto(aplicarTom(nova.mensagem, tom));
+    } catch (falha) {
+      setErro((falha as Error).message);
     } finally {
       setGerando(false);
     }
@@ -68,17 +76,33 @@ export function CartaoRecomendacaoIA({ cliente }: { cliente: Cliente }) {
       title={
         <span className="row">
           <Icone name="sparkles" />
-          Recomendação da IA
+          Recomendação assistida
         </span>
       }
-      subtitle="Sugestão para a equipe de relacionamento. Revise antes de aprovar."
+      subtitle="Simulação para a equipe de relacionamento. Valide antes de comunicar ou aplicar."
       actions={
-        <span className="badge badge--synthetic">
-          {acao.origem === 'ia-generativa' ? 'IA generativa' : 'Simulação local'}
+        <span className={`badge ${acao.origem === 'llm' ? 'badge--status' : 'badge--synthetic'}`}>
+          {acao.origem === 'llm'
+            ? 'OpenAI · formato validado (não política)'
+            : acao.origem === 'regras'
+              ? 'Fallback determinístico por regras'
+              : acao.origem === 'llm-indisponivel'
+                ? 'OpenAI indisponível · fallback por regras'
+              : 'Simulação sintética'}
         </span>
       }
     >
       <div className={`acao-ia ${gerando ? 'is-refreshing' : ''}`}>
+        <div className="note note--warning" role="note">
+          <Icone name="alert" size={16} />
+          <span>
+            <strong>Recomendação demonstrativa — não é uma oferta confirmada.</strong>{' '}
+            {politicaVerificada
+              ? 'O contexto de política está marcado como verificado, mas esta proposta não confirma disponibilidade nem elegibilidade individual.'
+              : 'O contexto de política não está verificado; confirme as regras vigentes, disponibilidade e elegibilidade individual.'}{' '}
+            Valide com um analista antes de comunicar ou aplicar qualquer benefício.
+          </span>
+        </div>
         <h3 className="acao-ia__titulo">{acao.titulo}</h3>
 
         <div className="acao-ia__metricas">
@@ -87,12 +111,16 @@ export function CartaoRecomendacaoIA({ cliente }: { cliente: Cliente }) {
             <strong>{bloqueada ? 'Bloqueado' : acao.canal}</strong>
           </div>
           <div>
-            <span>Confiança</span>
-            <strong className="tabular">{formatPercentual(acao.confianca)}</strong>
+            <span>Confiança calibrada</span>
+            <strong className="tabular">{acao.confianca === null ? 'Não disponível' : formatPercentual(acao.confianca)}</strong>
           </div>
           <div>
-            <span>Efeito no risco</span>
-            <strong className="tabular">{formatSinal(-acao.impactoEstimado.reducaoRiscoPp, ' p.p.')}</strong>
+            <span>Efeito causal estimado</span>
+            <strong className="tabular">
+              {acao.impactoEstimado.reducaoRiscoPp === null
+                ? 'Não estimado'
+                : formatSinal(-acao.impactoEstimado.reducaoRiscoPp, ' p.p.')}
+            </strong>
           </div>
           <div>
             <span>Receita protegida</span>
@@ -113,9 +141,16 @@ export function CartaoRecomendacaoIA({ cliente }: { cliente: Cliente }) {
           <div className="note note--warning">
             <Icone name="lock" size={16} />
             <span>
-              Cliente sem consentimento de marketing (LGPD). A mensagem promocional só pode ser enviada após opt-in;
-              até lá, use apenas contato de serviço.
+              {cliente.consentimentoMarketing === false
+                ? 'Consentimento de marketing registrado como ausente. Não envie comunicação promocional.'
+                : 'Consentimento de marketing não está disponível. Verifique a autorização antes de qualquer envio.'}
             </span>
+          </div>
+        )}
+        {erro && (
+          <div className="note note--warning" role="alert">
+            <Icone name="alert" size={16} />
+            <span>Não foi possível gerar nova recomendação: {erro}</span>
           </div>
         )}
 
@@ -175,8 +210,10 @@ export function CartaoRecomendacaoIA({ cliente }: { cliente: Cliente }) {
         )}
 
         <div className="regras">
-          <strong>Base de conhecimento consultada</strong> (regulamento público do Azul Fidelidade, premissas a
-          validar):
+          <strong>Contexto de política</strong>{' '}
+          {politicaVerificada
+            ? '(marcado como verificado; elegibilidade individual não confirmada):'
+            : '(premissas ilustrativas não verificadas):'}
           <ul style={{ fontSize: 12, marginTop: 4 }}>
             {acao.regrasFidelidade.map((r) => (
               <li key={r}>{r}</li>

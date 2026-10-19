@@ -1,12 +1,12 @@
-# AeroShield Snowflake data lake
+# Snowflake data lake
 
-Snowflake is the cloud data-lake backend for the AeroShield integration. DuckDB
+Snowflake is the required cloud data-lake backend for the CRM integration. DuckDB
 remains available for local/offline development. Select the backend explicitly
 with `DATA_LAKE_BACKEND=snowflake` or `DATA_LAKE_BACKEND=duckdb`.
 
 The Python service uses the versioned SQL in this directory. The former SQL
 under `dados/sql/` describes a separate passenger/loyalty data model and is not
-the contract used by the AeroShield backend.
+the contract used by this backend.
 
 ## Canonical medallion contract
 
@@ -21,9 +21,15 @@ The configured database (default `AZUL_DATA_LAKE`) contains these schemas:
 Snowflake identifiers are case-insensitive; results read by Python are normalized
 to lowercase column names.
 
-Silver preserves the DuckDB rules: an `AZ-` prefix plus the first eight lowercase
-hex characters of MD5(`id_cliente`), uppercase/trimmed tier, numeric casts, a
-current ingestion timestamp, and exclusion of null client IDs. Gold calculates
+Before either backend is called, the service replaces source client IDs with
+opaque HMAC-SHA256 identifiers using `JWT_SECRET_KEY` and domain separation.
+The source IDs are therefore not persisted in Bronze. IDs stay stable while
+that key remains unchanged; rotating it requires a coordinated migration of
+stored identifiers and their consumers.
+
+Silver preserves the DuckDB rules: the opaque identifier passed from ingestion,
+uppercase/trimmed tier, numeric casts, a current ingestion timestamp, and
+exclusion of null client IDs. Gold calculates
 `ROUND(total_spend / NULLIF(frequency, 0), 2)` and sets high risk when
 `flight_incidents >= 2 OR recency_days > 60`. ML is not part of the Gold
 transformation.

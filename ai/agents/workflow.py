@@ -9,75 +9,189 @@ class AgentState(TypedDict):
     client_identifier: str
     frequency: int
     total_spend: float
-    incidents: int
-    incident_type: str
+    churn_score: float | None
+    flight_incidents: int
+    incident_type: str | None
     tier: str
-    churn_risk: float
     value_at_risk: float
     graph_rag_context: dict
-    decision_reasoning: str
-    action_proposal: dict
+    decision: dict
     audit_status: str
 
 
 def query_manager_agent(state: AgentState) -> AgentState:
-    """Calculate customer value and risk using the existing deterministic rules."""
+    """Calculate monetary exposure from the supplied model score."""
     spend = state["total_spend"]
-    incidents = state["incidents"]
+    churn_score = state["churn_score"]
+    state["value_at_risk"] = (
+        round(spend * 1.30 * churn_score, 2) if churn_score is not None else 0.0
+    )
 
-    churn_risk = min(0.95, max(0.05, 0.10 + (incidents * 0.25)))
-    future_value = spend * 1.30
-    value_at_risk = future_value * churn_risk
-
-    if spend >= 80000:
-        tier = "VIP World Legend"
-    elif spend >= 35000:
-        tier = "Executive"
-    else:
-        tier = "Premium"
-
-    state["churn_risk"] = round(churn_risk, 2)
-    state["value_at_risk"] = round(value_at_risk, 2)
-    state["tier"] = tier
+    if not state["tier"]:
+        if spend >= 80000:
+            state["tier"] = "VIP World Legend"
+        elif spend >= 35000:
+            state["tier"] = "Executive"
+        else:
+            state["tier"] = "Premium"
     return state
 
 
 def graph_rag_agent(state: AgentState) -> AgentState:
     """Retrieve context from the current NetworkX policy graph."""
-    state["graph_rag_context"] = query_context(state["tier"], state["incident_type"])
+    state["graph_rag_context"] = query_context(
+        state["tier"], state["incident_type"]
+    )
     return state
 
 
 def decision_agent(state: AgentState) -> AgentState:
-    """Choose a retention action using the existing deterministic rules."""
+    """Choose a retention action from the model score, business rules and graph evidence."""
+    graph_context = state["graph_rag_context"]
+    graph_relations = graph_context.get("graph_relations", [])
+    policies_verified = graph_context.get("policies_verified") is True
+    churn_score = state["churn_score"]
     value_at_risk = state["value_at_risk"]
     tier = state["tier"]
+    high_model_score = churn_score is not None and churn_score >= 0.5
+    high_business_risk = (
+        high_model_score
+        or value_at_risk > 5000
+        or tier in {"VIP World Legend", "Diamante"}
+    )
+    incident_needs_review = state["flight_incidents"] >= 2 or (
+        state["flight_incidents"] > 0 and bool(state["incident_type"])
+    )
 
-    if value_at_risk > 5000 or tier == "VIP World Legend":
-        reasoning = "Cliente VIP em elevado risco financeiro. Ativação do protocolo de retenção Trust-First."
+    evidence = [
+        f"Tier CRM: {tier}",
+        f"Incidentes de voo: {state['flight_incidents']}",
+        f"Valor em risco calculado: R$ {value_at_risk:.2f}",
+        (
+            "Contexto de política marcado como verificado; elegibilidade individual "
+            "não confirmada."
+            if policies_verified
+            else "Contexto de política não verificado; proposta apenas demonstrativa."
+        ),
+        *graph_relations,
+    ]
+    if state["incident_type"]:
+        evidence.append(f"Tipo de incidente informado: {state['incident_type']}")
+    policy_context = graph_context.get("policy_context")
+    if policy_context:
+        evidence.append(policy_context)
+    if churn_score is not None:
+        evidence.append(
+            f"Score do classificador para high_risk_flag: {churn_score:.3f}; "
+            "não representa churn observado."
+        )
+
+    if incident_needs_review:
+        reasoning = (
+            "Há incidentes registrados; encaminhar para análise humana antes "
+            "de avaliar qualquer compensação ou benefício. "
+            + (
+                "O contexto de política está marcado como verificado, mas a "
+                "elegibilidade individual ainda precisa ser confirmada."
+                if policies_verified
+                else "A política não foi verificada; não apresentar a proposta "
+                "demonstrativa como oferta vigente."
+            )
+        )
         proposal = {
-            "strategy": "Resolução Preditiva Trust-First",
-            "voucher_value": 250.00,
-            "benefit": "Upgrade para Espaço Azul / Executiva Vacante",
-            "bonus_points": 5000,
+            "strategy": (
+                "Revisão de atendimento — política verificada; validar elegibilidade"
+                if policies_verified
+                else "Revisão de atendimento — simulação; política não verificada"
+            ),
+            "voucher_value": 0.0,
+            "benefit": (
+                "Um analista deve validar o caso e a elegibilidade individual antes "
+                "de comunicar qualquer opção."
+                if policies_verified
+                else "Demonstração não verificada: um analista deve consultar a política "
+                "vigente antes de comunicar qualquer opção."
+            ),
+            "bonus_points": 0,
         }
+        action_code = "recuperacao-servico"
+    elif high_business_risk:
+        reasoning = (
+            "O classificador sinaliza high_risk_flag ou o segmento requer "
+            "priorização; o score não é uma observação de churn. "
+            + (
+                "Usar somente o contexto de política marcado como verificado e "
+                "confirmar elegibilidade individual."
+                if policies_verified
+                else "Qualquer benefício é apenas demonstrativo até a verificação "
+                "da política vigente."
+            )
+        )
+        proposal = {
+            "strategy": (
+                "Contato de relacionamento — política verificada; validar elegibilidade"
+                if policies_verified
+                else "Contato de relacionamento — simulação; política não verificada"
+            ),
+            "voucher_value": 0.0,
+            "benefit": (
+                "Entender a necessidade e confirmar a elegibilidade individual antes "
+                "de apresentar opções."
+                if policies_verified
+                else "Demonstração não verificada: entender a necessidade e consultar "
+                "a política vigente antes de apresentar opções."
+            ),
+            "bonus_points": 0,
+        }
+        action_code = "comunicacao"
     else:
-        reasoning = "Cliente de médio valor. Foco em aceleração de pontos e fidelização."
+        reasoning = (
+            "Não há score do modelo disponível; sugerir contato informativo "
+            "sem presumir risco ou elegibilidade."
+            if churn_score is None
+            else "Sugerir contato informativo com base nos dados de relacionamento."
+        )
+        reasoning += (
+            " O contexto de política está marcado como verificado, mas a elegibilidade "
+            "individual deve ser confirmada."
+            if policies_verified
+            else " A política não foi verificada; a sugestão é demonstrativa."
+        )
         proposal = {
-            "strategy": "Engajamento de Fidelidade",
-            "voucher_value": 100.00,
-            "benefit": "Desconto na próxima viagem",
-            "bonus_points": 1500,
+            "strategy": (
+                "Contato informativo — política verificada; validar elegibilidade"
+                if policies_verified
+                else "Contato informativo — simulação; política não verificada"
+            ),
+            "voucher_value": 0.0,
+            "benefit": (
+                "Apresentar informações e confirmar a elegibilidade individual antes "
+                "de comunicar opções."
+                if policies_verified
+                else "Demonstração não verificada: apresentar informações e validar a "
+                "política vigente antes de comunicar opções."
+            ),
+            "bonus_points": 0,
         }
+        action_code = "comunicacao"
 
-    state["decision_reasoning"] = reasoning
-    state["action_proposal"] = proposal
+    state["decision"] = {
+        "action_code": action_code,
+        "strategy": proposal["strategy"],
+        "reasoning": reasoning,
+        "evidence": evidence,
+        "proposal": {
+            "voucher_value": proposal["voucher_value"],
+            "benefit": proposal["benefit"],
+            "bonus_points": proposal["bonus_points"],
+        },
+    }
     return state
 
 
 def audit_agent(state: AgentState) -> AgentState:
-    """Apply the current audit marker."""
-    state["audit_status"] = "PASSED_TRUST_FIRST_AUDIT"
+    """Mark that the deterministic workflow completed; this is not a compliance audit."""
+    state["audit_status"] = "WORKFLOW_COMPLETE"
     return state
 
 

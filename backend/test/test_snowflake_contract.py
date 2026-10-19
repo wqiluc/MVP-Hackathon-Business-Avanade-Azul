@@ -38,7 +38,8 @@ def test_snowflake_sql_defines_the_canonical_medallion_contract():
         "INGESTED_AT",
     ):
         assert column in silver
-    assert "LOWER(SUBSTR(MD5(TO_VARCHAR(ID_CLIENTE)), 1, 8))" in silver
+    assert "TO_VARCHAR(ID_CLIENTE) AS CLIENT_IDENTIFIER" in silver
+    assert "MD5(" not in silver
     assert "UPPER(TRIM(TIER))" in silver
     assert "WHERE ID_CLIENTE IS NOT NULL" in silver
 
@@ -85,51 +86,51 @@ def test_snowflake_connection_reports_missing_credentials_without_connecting(
         SnowflakeDataLake.get_connection()
 
 
-def test_snowflake_scoring_rejects_missing_serving_without_local_fallback(
-    monkeypatch,
-):
+def test_ingestion_scoring_waits_for_a_registered_model(monkeypatch):
     import pandas as pd
 
-    from ml.inference.churn_predictor import ChurnPredictor
+    from app.services.datalake_service import DataLakeService
 
     monkeypatch.setattr(settings, "MLFLOW_SERVING_URL", "")
-    gold = pd.DataFrame({"frequency": [2]})
+    gold = pd.DataFrame({"frequency": [2], "high_risk_flag": [1]})
+    monkeypatch.setattr("ml.models.mlflow_tracker.configure_tracking", lambda uri: None)
     monkeypatch.setattr(
-        ChurnPredictor,
-        "predict",
-        classmethod(
-            lambda cls, df, serving_url, allow_local_inference=False: pytest.fail(
-                "O predictor não deve ser chamado sem MLflow Serving."
-            )
-        ),
+        "ml.models.mlflow_tracker.get_active_churn_model",
+        lambda: None,
     )
 
-    with pytest.raises(RuntimeError, match="MLFLOW_SERVING_URL"):
-        SnowflakeDataLake._predict_churn(gold)
+    scores, status = DataLakeService.score_gold(gold)
+
+    assert len(scores) == 1 and pd.isna(scores[0])
+    assert status == "awaiting_model_registration"
 
 
-def test_snowflake_scoring_delegates_to_predictor_when_serving_is_configured(
-    monkeypatch,
-):
+def test_ingestion_scoring_uses_the_registered_model_via_serving(monkeypatch):
     import pandas as pd
 
-    from ml.inference.churn_predictor import ChurnPredictor
+    from app.services.datalake_service import DataLakeService
 
     serving_url = "http://mlflow.test/invocations"
     gold = pd.DataFrame({"frequency": [2]})
     calls = []
+    monkeypatch.setattr(settings, "MLFLOW_SERVING_URL", serving_url)
+    monkeypatch.setattr("ml.models.mlflow_tracker.configure_tracking", lambda uri: None)
+    monkeypatch.setattr(
+        "ml.models.mlflow_tracker.get_active_churn_model",
+        lambda: object(),
+    )
 
-    def fake_predict(
-        cls, df, configured_url, allow_local_inference=False
-    ):
-        calls.append((df, configured_url, allow_local_inference))
+    def fake_predict(df):
+        calls.append(df)
         return [0.25]
 
-    monkeypatch.setattr(settings, "MLFLOW_SERVING_URL", serving_url)
-    monkeypatch.setattr(ChurnPredictor, "predict", classmethod(fake_predict))
+    monkeypatch.setattr("app.services.inference_service.predict_churn", fake_predict)
 
-    assert SnowflakeDataLake._predict_churn(gold) == [0.25]
-    assert calls == [(gold, serving_url, False)]
+    scores, status = DataLakeService.score_gold(gold)
+
+    assert scores == [0.25]
+    assert status == "scored"
+    assert calls == [gold]
 
 
 def test_database_bootstrap_sql_creates_the_documented_default_database():
@@ -225,6 +226,14 @@ def test_real_snowflake_pipeline_matches_duckdb_and_mlflow_serving(
         try:
             cursor.execute("SELECT COUNT(*) FROM BRONZE.BRONZE_CLIENTS")
             assert cursor.fetchone()[0] == len(raw)
+            cursor.execute("SELECT * FROM BRONZE.BRONZE_CLIENTS")
+            persisted_bronze = cursor.fetch_pandas_all()
+            persisted_bronze.columns = [
+                str(column).lower() for column in persisted_bronze.columns
+            ]
+            assert set(raw["id_cliente"]).isdisjoint(
+                set(persisted_bronze["id_cliente"])
+            )
             cursor.execute("SELECT COUNT(*) FROM SILVER.CLEANED_CLIENTS")
             assert cursor.fetchone()[0] == len(raw)
         finally:
@@ -237,7 +246,7 @@ def test_real_snowflake_pipeline_matches_duckdb_and_mlflow_serving(
     try:
         for schema in ("bronze", "silver", "gold"):
             duckdb_conn.execute(f"CREATE SCHEMA {schema}")
-        DuckDBBronzeWriter.write_raw_clients(duckdb_conn, raw)
+        DuckDBBronzeWriter.write_raw_clients(duckdb_conn, persisted_bronze)
         DuckDBSilverTransformer.transform_cleaned_clients(duckdb_conn)
         DuckDBGoldTransformer.transform_client_features(duckdb_conn)
         expected = duckdb_conn.execute(

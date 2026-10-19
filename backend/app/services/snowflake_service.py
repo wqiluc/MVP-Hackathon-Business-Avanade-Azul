@@ -14,7 +14,12 @@ class SnowflakeDataLake:
     """Snowflake implementation of the AeroShield medallion data lake."""
 
     @staticmethod
-    def get_connection():
+    def get_connection(
+        *,
+        login_timeout: int | None = None,
+        network_timeout: int | None = None,
+        statement_timeout: int | None = None,
+    ):
         missing = [
             name
             for name in (
@@ -34,6 +39,16 @@ class SnowflakeDataLake:
 
         import snowflake.connector
 
+        connection_options = {}
+        if login_timeout is not None:
+            connection_options["login_timeout"] = login_timeout
+        if network_timeout is not None:
+            connection_options["network_timeout"] = network_timeout
+        if statement_timeout is not None:
+            connection_options["session_parameters"] = {
+                "STATEMENT_TIMEOUT_IN_SECONDS": statement_timeout
+            }
+
         return snowflake.connector.connect(
             account=settings.SNOWFLAKE_ACCOUNT,
             user=settings.SNOWFLAKE_USER,
@@ -41,6 +56,7 @@ class SnowflakeDataLake:
             database=settings.SNOWFLAKE_DATABASE,
             warehouse=settings.SNOWFLAKE_WAREHOUSE,
             role=settings.SNOWFLAKE_ROLE or None,
+            **connection_options,
         )
 
     @staticmethod
@@ -70,18 +86,6 @@ class SnowflakeDataLake:
     @classmethod
     def ensure_schemas(cls, conn) -> None:
         cls._execute_sql_file(conn, "01_schemas.sql")
-
-    @staticmethod
-    def _predict_churn(gold: pd.DataFrame) -> list[float]:
-        if not settings.MLFLOW_SERVING_URL:
-            raise RuntimeError(
-                "MLFLOW_SERVING_URL não está configurado para inferência "
-                "no backend Snowflake."
-            )
-
-        from app.services.inference_service import predict_churn
-
-        return predict_churn(gold)
 
     @classmethod
     def process_ingestion(cls, df_raw: pd.DataFrame) -> dict:
@@ -121,7 +125,9 @@ class SnowflakeDataLake:
             cls._execute_sql_file(conn, "03_transform_gold.sql")
 
             gold = cls.read_gold(conn)
-            gold["churn_score"] = cls._predict_churn(gold)
+            from app.services.datalake_service import DataLakeService
+
+            gold["churn_score"], scoring_status = DataLakeService.score_gold(gold)
             success, _, written_rows, _ = write_pandas(
                 conn,
                 gold.rename(columns=str.upper),
@@ -139,6 +145,7 @@ class SnowflakeDataLake:
             return {
                 "status": "success",
                 "processed_rows": len(gold),
+                "scoring_status": scoring_status,
                 "layers": [
                     "BRONZE.BRONZE_CLIENTS",
                     "SILVER",

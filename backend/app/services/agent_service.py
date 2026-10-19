@@ -21,14 +21,13 @@ def analyze_client(
         "client_identifier": anonymize_identifier(raw_user_id),
         "frequency": frequency,
         "total_spend": total_spend,
-        "incidents": incidents,
+        "churn_score": None,
+        "flight_incidents": incidents,
         "incident_type": incident_type,
         "tier": "",
-        "churn_risk": 0.0,
         "value_at_risk": 0.0,
         "graph_rag_context": {},
-        "decision_reasoning": "",
-        "action_proposal": {},
+        "decision": {},
         "audit_status": "",
     }
     return invoke_agent_workflow(state)

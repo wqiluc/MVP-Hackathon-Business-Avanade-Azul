@@ -1,10 +1,10 @@
 /**
- * AeroShield AI — Universal Environment Setup & One-Command Runner
+ * CRM de Alto Valor — Universal Environment Setup & One-Command Runner
  * Detecta OS, valida ferramentas (Python, Node, npm), configura .venv,
  * instala dependências ausentes e sobe Backend + Frontend em paralelo.
  */
 
-const { execSync, spawn } = require('child_process');
+const { execSync, execFileSync, spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
@@ -42,7 +42,7 @@ function checkRequirement(command, name) {
   }
 }
 
-log(`\n🚀 AeroShield AI — Iniciando Verificação Universal [OS: ${os.platform()}]...`);
+log(`\n🚀 CRM de Alto Valor — Iniciando Verificação Universal [OS: ${os.platform()}]...`);
 
 // Checar Python
 let pythonCmd = 'python3';
@@ -53,6 +53,17 @@ if (!checkRequirement('python3 --version', 'Python 3')) {
     log('❌ Erro: Python não encontrado no sistema. Por favor, instale o Python 3.12+.', colors.red);
     process.exit(1);
   }
+}
+
+const pythonVersion = execFileSync(
+  pythonCmd,
+  ['-c', 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")'],
+  { encoding: 'utf8' }
+).trim();
+const [pythonMajor, pythonMinor] = pythonVersion.split('.').map(Number);
+if (pythonMajor < 3 || (pythonMajor === 3 && pythonMinor < 12)) {
+  log(`❌ Erro: Python 3.12+ é necessário. Versão encontrada: ${pythonVersion}.`, colors.red);
+  process.exit(1);
 }
 
 // Checar Node / npm
@@ -75,6 +86,7 @@ log('   -> Verificando e instalando dependências do Python...', colors.gray);
 const pipCmd = `"${venvPython}" -m pip`;
 execSync(`${pipCmd} install --upgrade pip --quiet`, { stdio: 'inherit' });
 execSync(`${pipCmd} install -r "${path.join(backendDir, 'requirements.txt')}"`, { stdio: 'inherit' });
+execSync(`${pipCmd} install --no-deps -e "${__dirname}"`, { stdio: 'inherit' });
 
 // 3. Configurar Frontend (node_modules)
 log('\n🎨 [2/2] Verificando e Configurando o Frontend (Node.js)...', colors.yellow);

@@ -19,7 +19,8 @@ scikit-learn>=1.5.0
 mlflow>=3.17.1,<4.0
 skops>=0.16.0
 
-# --- Multiagentes, RAG & IA (LangChain / LangGraph / GraphRAG) ---
+# --- Workflow LangGraph, grafo contextual e embeddings opcionais ---
+openai>=1.68.0,<3.0.0
 langchain>=0.2.5
 langchain-community>=0.2.5
 langchain-core>=0.2.9

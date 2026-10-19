@@ -195,7 +195,10 @@ def test_valid_training_preserves_features_split_model_metrics_and_mlflow_contra
     assert result == {
         "run_id": "characterization-run-id",
         **expected_metrics,
-        "status": "Modelo AeroShieldChurnModel v4 registrado como champion no MLflow",
+        "status": (
+            "Classificador high_risk_flag registrado como "
+            "AeroShieldChurnModel v4 (champion). O alvo não é churn observado."
+        ),
     }
     assert all(isinstance(result[metric], float) for metric in ("accuracy", "precision", "recall"))
     assert all(round(result[metric], 4) == result[metric] for metric in ("accuracy", "precision", "recall"))

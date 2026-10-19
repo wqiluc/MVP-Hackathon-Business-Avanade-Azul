@@ -7,6 +7,7 @@ import { Icone, type NomeIcone } from '../componentes/ui/Icone';
 import { useBuscaAssincrona } from '../hooks/useBuscaAssincrona';
 import logo from '../imagens/logo-azul.jpg';
 import { servicoCrm } from '../servicos/servicoCrm';
+import { usandoDadosSinteticos } from '../servicos/configuracaoApi';
 import { formatBRLCompacto, formatNumero } from '../utilitarios/formatacao';
 import './PaginaMenu.css';
 
@@ -20,13 +21,13 @@ interface Modulo {
 const MODULOS: Modulo[] = [
   {
     titulo: 'Dashboard',
-    descricao: 'Visão executiva da base: CLV, risco de evasão, personas, categorias e atritos da jornada.',
+    descricao: 'Visão executiva da base: CLV, score high_risk_flag, personas, categorias e atritos da jornada.',
     icone: 'chart',
     para: '/dashboard',
   },
   {
     titulo: 'Visão do cliente',
-    descricao: 'Perfil 360°, explicação do modelo e recomendação personalizada gerada pela IA.',
+    descricao: 'Perfil demonstrativo, contexto do classificador e recomendação por LLM configurado ou regras.',
     icone: 'user',
     para: '/clientes',
   },
@@ -146,7 +147,10 @@ export function PaginaMenu() {
                 <Link key={c.id} to={`/clientes/${c.id}`} className="atencao__item">
                   <div className="row" style={{ justifyContent: 'space-between' }}>
                     <strong>{c.nome}</strong>
-                    <SeloRisco risco={c.riscoEvasao} />
+                    <SeloRisco
+                      risco={c.riscoEvasao}
+                      origem={usandoDadosSinteticos ? 'heuristica-sintetica' : 'classificador'}
+                    />
                   </div>
                   <div className="row">
                     <SeloPersona persona={c.persona} />

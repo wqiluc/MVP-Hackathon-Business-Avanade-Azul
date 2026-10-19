@@ -1,5 +1,6 @@
 import ast
 from pathlib import Path
+from unittest.mock import patch
 
 from ai.agents.workflow import invoke_agent_workflow
 
@@ -13,25 +14,117 @@ def test_agent_workflow_uses_the_current_deterministic_flow():
             "client_identifier": "AZ-test",
             "frequency": 15,
             "total_spend": 85000.0,
-            "incidents": 2,
+            "churn_score": 0.8,
+            "flight_incidents": 2,
             "incident_type": "Downgrade Involuntário",
-            "tier": "",
-            "churn_risk": 0.0,
+            "tier": "Diamante",
             "value_at_risk": 0.0,
             "graph_rag_context": {},
-            "decision_reasoning": "",
-            "action_proposal": {},
+            "decision": {},
             "audit_status": "",
         }
     )
 
-    assert result["tier"] == "VIP World Legend"
-    assert result["churn_risk"] == 0.6
+    assert result["tier"] == "Diamante"
+    assert result["churn_score"] == 0.8
+    assert result["value_at_risk"] == 88400.0
     assert result["graph_rag_context"]["graph_relations"] == [
-        "Downgrade Involuntário -> Resolução 400 ANAC -> Voucher Trust-First"
+        "Diamante -> categorias",
+        "Downgrade Involuntário -> revisão humana necessária",
     ]
-    assert result["action_proposal"]["voucher_value"] == 250.0
-    assert result["audit_status"] == "PASSED_TRUST_FIRST_AUDIT"
+    assert result["decision"]["action_code"] == "recuperacao-servico"
+    assert result["decision"]["proposal"]["voucher_value"] == 0.0
+    assert result["graph_rag_context"]["policy_context"] in result["decision"]["evidence"]
+    assert result["graph_rag_context"]["policies_verified"] is False
+    assert result["audit_status"] == "WORKFLOW_COMPLETE"
+
+
+def test_agent_keeps_graph_context_separate_and_uses_matching_policy_evidence():
+    result = invoke_agent_workflow(
+        {
+            "client_identifier": "AZ-test",
+            "frequency": 2,
+            "total_spend": 1000.0,
+            "churn_score": 0.1,
+            "flight_incidents": 2,
+            "incident_type": "Downgrade Involuntário",
+            "tier": "Básico",
+            "value_at_risk": 0.0,
+            "graph_rag_context": {},
+            "decision": {},
+            "audit_status": "",
+        }
+    )
+
+    assert result["graph_rag_context"]["graph_relations"]
+    assert result["decision"]["action_code"] == "recuperacao-servico"
+    assert result["graph_rag_context"]["policy_context"] in result["decision"]["evidence"]
+
+
+def test_decision_routes_typed_incident_for_human_review():
+    result = invoke_agent_workflow(
+        {
+            "client_identifier": "AZ-test",
+            "frequency": 2,
+            "total_spend": 1000.0,
+            "churn_score": 0.1,
+            "flight_incidents": 1,
+            "incident_type": "Downgrade Involuntário",
+            "tier": "Básico",
+            "value_at_risk": 0.0,
+            "graph_rag_context": {},
+            "decision": {},
+            "audit_status": "",
+        }
+    )
+
+    assert result["decision"]["action_code"] == "recuperacao-servico"
+    assert any(
+        "Tipo de incidente informado: Downgrade Involuntário" in item
+        for item in result["decision"]["evidence"]
+    )
+
+
+def test_policy_verification_status_changes_recommendation_strategy_and_proposal():
+    def run_with_policy_status(policies_verified):
+        with patch(
+            "ai.agents.workflow.query_context",
+            return_value={
+                "tier": "Safira",
+                "incident_type": None,
+                "graph_relations": ["Safira -> categorias"],
+                "policy_context": "Contexto de política de teste.",
+                "policies_verified": policies_verified,
+            },
+        ):
+            return invoke_agent_workflow(
+                {
+                    "client_identifier": "AZ-test",
+                    "frequency": 2,
+                    "total_spend": 1000.0,
+                    "churn_score": 0.1,
+                    "flight_incidents": 0,
+                    "incident_type": None,
+                    "tier": "Safira",
+                    "value_at_risk": 0.0,
+                    "graph_rag_context": {},
+                    "decision": {},
+                    "audit_status": "",
+                }
+            )["decision"]
+
+    unverified = run_with_policy_status(False)
+    verified = run_with_policy_status(True)
+
+    assert "política não verificada" in unverified["strategy"]
+    assert "Demonstração não verificada" in unverified["proposal"]["benefit"]
+    assert any("não verificado" in item for item in unverified["evidence"])
+    assert "política verificada" in verified["strategy"]
+    assert "confirmar a elegibilidade individual" in verified["proposal"]["benefit"]
+    assert any("marcado como verificado" in item for item in verified["evidence"])
+    assert unverified["proposal"] != verified["proposal"]
+    assert unverified["proposal"]["voucher_value"] == verified["proposal"]["voucher_value"] == 0
+    assert unverified["proposal"]["bonus_points"] == verified["proposal"]["bonus_points"] == 0
 
 
 def test_ai_modules_do_not_import_backend_or_infrastructure_layers():
@@ -61,6 +154,7 @@ def test_ai_framework_dependencies_stay_in_their_modules():
         "langgraph": "agents",
         "networkx": "graphrag",
         "langchain_community": "rag",
+        "openai": "llm",
     }
     for source in (REPOSITORY_ROOT / "ai").rglob("*.py"):
         tree = ast.parse(source.read_text(encoding="utf-8"))

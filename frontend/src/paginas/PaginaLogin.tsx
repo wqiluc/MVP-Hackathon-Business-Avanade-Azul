@@ -1,17 +1,15 @@
 import { useState, type FormEvent } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { SeloDadosSinteticos } from '../componentes/ui/Selos';
 import { Icone } from '../componentes/ui/Icone';
 import { useAutenticacao } from '../hooks/useAutenticacao';
 import logo from '../imagens/logo-azul.jpg';
 import { usandoDadosSinteticos } from '../servicos/configuracaoApi';
-import { ACESSOS_DEMONSTRACAO } from '../servicos/servicoAutenticacao';
 import './PaginaLogin.css';
 
 const DESTAQUES = [
   { icone: 'chart', texto: 'Quem são os clientes de alto valor e quanto valem em 24 meses' },
-  { icone: 'alert', texto: 'Quem está em risco de evasão e por quê, com modelo explicável' },
-  { icone: 'sparkles', texto: 'Qual a próxima melhor ação, redigida por IA e aprovada por você' },
+  { icone: 'alert', texto: 'Classificação de high_risk_flag — não representa churn observado' },
+  { icone: 'sparkles', texto: 'OpenAI estruturada quando configurada; regras como fallback' },
 ] as const;
 
 export function PaginaLogin() {
@@ -44,8 +42,6 @@ export function PaginaLogin() {
       setEnviando(false);
     }
   };
-
-  const demonstracao = ACESSOS_DEMONSTRACAO[0];
 
   return (
     <div className="login">
@@ -132,23 +128,11 @@ export function PaginaLogin() {
             <div className="login__demo">
               <div className="row" style={{ justifyContent: 'space-between' }}>
                 <strong>Ambiente de demonstração</strong>
-                <SeloDadosSinteticos />
               </div>
               <p>
-                Use <code>{demonstracao.email}</code> e a senha <code>{demonstracao.senha}</code>. Também há o perfil
-                gestor: <code>{ACESSOS_DEMONSTRACAO[1].email}</code>.
+                Os dados são sintéticos e a autenticação é simulada localmente. Informe um e-mail e uma senha
+                não vazios; isso não autentica uma conta real.
               </p>
-              <button
-                type="button"
-                className="btn"
-                onClick={() => {
-                  setEmail(demonstracao.email);
-                  setSenha(demonstracao.senha);
-                  setErro(null);
-                }}
-              >
-                Preencher acesso de demonstração
-              </button>
             </div>
           )}
         </form>

@@ -1,6 +1,11 @@
+import logging
 import pandas as pd
+
+from app.config import settings
 from app.services.datalake_service import DataLakeService
 from app.services.agent_service import invoke_agent_workflow
+
+logger = logging.getLogger(__name__)
 
 DATA_REFERENCIA = "2026-09-30"
 MESES = ["out/25", "nov/25", "dez/25", "jan/26", "fev/26", "mar/26",
@@ -9,13 +14,18 @@ TIERS = ["Básico", "Topázio", "Safira", "Diamante"]
 PERSONAS = ["executivo-frequente", "lazer-premium", "regional-conectado", "potencial-ascensao"]
 RISCO_ALTO = 0.5
 SCORE_ALTO_VALOR = 70
+_DEMONSTRATION_NOTICE = (
+    "Demonstração: esta sugestão não confirma oferta vigente nem elegibilidade "
+    "individual. Valide as regras antes de comunicar ou aplicar qualquer benefício."
+)
 
 _TIER_MAP = {"BASICO": "Básico", "BÁSICO": "Básico", "TOPAZIO": "Topázio", "TOPÁZIO": "Topázio",
              "SAFIRA": "Safira", "DIAMANTE": "Diamante"}
 
 
 def _tier(valor) -> str:
-    return _TIER_MAP.get(str(valor).strip().upper(), "Básico")
+    normalized = str(valor).strip()
+    return _TIER_MAP.get(normalized.upper(), normalized.title() or "Não informado")
 
 
 def _persona(row) -> str:
@@ -32,40 +42,56 @@ def _nivel(risco: float) -> str:
     return "critico" if risco >= 0.7 else "alto" if risco >= RISCO_ALTO else "moderado" if risco >= 0.3 else "baixo"
 
 
-def _acao_regras(risco: float, tier: str, incidentes: int) -> dict:
+def _acao_regras(risco: float | None, tier: str, incidentes: int) -> dict:
     if incidentes >= 2:
-        tipo, titulo, canal = "recuperacao-servico", "Recuperação de serviço com voucher e contato ativo", "Telefone"
-    elif risco >= RISCO_ALTO:
-        tipo, titulo, canal = "bonus-pontos", "Bônus de pontos para reativação", "E-mail"
-    elif tier in ("Safira", "Diamante"):
-        tipo, titulo, canal = "upgrade", "Upgrade de cortesia na próxima viagem", "App"
+        tipo, titulo, canal = (
+            "recuperacao-servico",
+            "Revisar incidentes com atendimento",
+            "Telefone",
+        )
+    elif risco is not None and risco >= RISCO_ALTO:
+        tipo, titulo, canal = "comunicacao", "Contato de relacionamento", "E-mail"
     else:
-        tipo, titulo, canal = "comunicacao", "Comunicação de relacionamento personalizada", "E-mail"
+        tipo, titulo, canal = "comunicacao", "Contato informativo", "App"
+    justificativa = (
+        [
+            f"Score de classificação high_risk_flag: {risco:.0%}; "
+            "não é churn observado."
+        ]
+        if risco is not None
+        else ["Score indisponível até o registro e a disponibilização do modelo."]
+    )
     return {
         "tipo": tipo, "titulo": titulo, "canal": canal,
-        "justificativa": [f"Risco de evasão estimado em {risco:.0%}", f"Categoria {tier}"],
-        "mensagem": "Olá! Preparamos uma condição especial para você voar mais com a Azul.",
-        "regrasFidelidade": [], "confianca": 0.7, "origem": "simulacao",
-        "impactoEstimado": {"reducaoRiscoPp": round(min(risco * 40, 25), 1), "receitaProtegida": 0.0},
+        "justificativa": [*justificativa, f"Categoria CRM: {tier}"],
+        "mensagem": (
+            "Um analista pode entender sua necessidade e verificar as opções disponíveis."
+        ),
+        "regrasFidelidade": [],
+        "confianca": None,
+        "origem": "regras",
+        "impactoEstimado": {"reducaoRiscoPp": None, "receitaProtegida": None},
     }
 
 
 def _linha_para_cliente(r) -> dict:
     tier = _tier(r.tier)
-    risco = float(r.churn_score)
+    raw_score = getattr(r, "churn_score", None)
+    risco = float(raw_score) if raw_score is not None and pd.notna(raw_score) else None
     receita = float(r.total_spend)
-    clv = round(receita * 2 * (1 - risco * 0.5), 2)
+    clv = round(receita * 2 * (1 - risco * 0.5), 2) if risco is not None else round(receita * 2, 2)
     score = round(min(100, 100 * (0.4 * min(receita / 60000, 1) + 0.35 * min(r.frequency / 24, 1)
                                   + 0.25 * max(0, 1 - r.recency_days / 180))), 1)
     persona = _persona(type("R", (), {"tier": tier, "frequency": r.frequency, "avg_ticket": float(r.avg_ticket or 0)}))
     pesos = [1 / len(MESES)] * len(MESES)
     acao = _acao_regras(risco, tier, int(r.flight_incidents))
-    acao["impactoEstimado"]["receitaProtegida"] = round(clv * risco, 2)
     return {
         "id": r.client_identifier, "nome": r.client_identifier, "tier": tier, "persona": persona,
         "aeroportoBase": "—", "cidadeBase": "—", "membroDesde": DATA_REFERENCIA,
-        "consentimentoMarketing": True,
-        "clvProjetado": clv, "scoreValor": score, "riscoEvasao": round(risco, 3),
+        "consentimentoMarketing": None,
+        "clvProjetado": clv, "scoreValor": score, "riscoEvasao": round(risco, 3) if risco is not None else None,
+        "_churn_score": risco, "_flight_incidents": int(r.flight_incidents),
+        "_incident_type": None,
         "recenciaDias": int(r.recency_days), "voos12m": int(r.frequency), "receita12m": receita,
         "ticketMedio": float(r.avg_ticket or 0), "saldoPontos": 0, "pontosQualificaveis": 0,
         "sentimentoScore": round(max(-1, 1 - 0.5 * int(r.flight_incidents)), 2),
@@ -90,6 +116,38 @@ def _resumo(c: dict) -> dict:
                               "scoreValor", "riscoEvasao")} | {"proximaAcao": c["proximaAcao"]["titulo"]}
 
 
+def _rotular_recomendacao(
+    acao: dict, policies_verified: bool = False, policy_context: str | None = None
+) -> dict:
+    """Keep every surfaced recommendation explicitly demonstrative."""
+    status = (
+        "Contexto de política marcado como verificado; elegibilidade individual "
+        "não confirmada."
+        if policies_verified
+        else "Contexto de política não verificado; sugestão demonstrativa."
+    )
+    result = acao.copy()
+    title = result.get("titulo", "Recomendação")
+    if "política" not in title.lower() and "simulação" not in title.lower():
+        result["titulo"] = (
+            f"{title} — política verificada; validar elegibilidade"
+            if policies_verified
+            else f"{title} — simulação; política não verificada"
+        )
+    message = result.get("mensagem", "")
+    if _DEMONSTRATION_NOTICE not in message:
+        result["mensagem"] = f"{_DEMONSTRATION_NOTICE}\n\n{message}".strip()
+    justification = result.get("justificativa", [])
+    if status not in justification:
+        result["justificativa"] = [*justification, status]
+    rules = result.get("regrasFidelidade", [])
+    surfaced_rules = [status]
+    if policy_context:
+        surfaced_rules.append(policy_context)
+    result["regrasFidelidade"] = list(dict.fromkeys([*surfaced_rules, *rules]))
+    return result
+
+
 class CrmService:
     @staticmethod
     def carregar_clientes() -> list[dict]:
@@ -97,8 +155,8 @@ class CrmService:
         if df.empty:
             return []
         if "churn_score" not in df.columns:
-            from app.services.inference_service import predict_churn
-            df["churn_score"] = predict_churn(df)
+            scores, _ = DataLakeService.score_gold(df)
+            df["churn_score"] = scores
         return [_linha_para_cliente(r) for r in df.itertuples()]
 
     @classmethod
@@ -119,7 +177,8 @@ class CrmService:
         cs = [c for c in todos if not persona or c["persona"] == persona]
         n = len(cs)
         media = lambda xs: (sum(xs) / len(xs)) if xs else 0
-        risco = [c for c in cs if c["riscoEvasao"] >= RISCO_ALTO]
+        scored = [c for c in cs if c["riscoEvasao"] is not None]
+        risco = [c for c in scored if c["riscoEvasao"] >= RISCO_ALTO]
         atritos = {}
         return {
             "dataReferencia": DATA_REFERENCIA,
@@ -127,7 +186,7 @@ class CrmService:
             "clientesAltoValor": sum(c["scoreValor"] >= SCORE_ALTO_VALOR for c in cs),
             "clvMedio": media([c["clvProjetado"] for c in cs]),
             "receitaEmRisco": sum(c["clvProjetado"] for c in risco),
-            "percentualRiscoAlto": len(risco) / n if n else 0,
+            "percentualRiscoAlto": len(risco) / len(scored) if scored else None,
             "sentimentoMedio": media([c["sentimentoScore"] for c in cs]),
             "receitaMensal": [
                 {"mes": m, "voos": sum(c["historico"][i]["voos"] for c in cs),
@@ -136,35 +195,121 @@ class CrmService:
             ],
             "porPersona": [
                 {"persona": p, "clientes": len(g), "clvTotal": sum(c["clvProjetado"] for c in g),
-                 "riscoMedio": media([c["riscoEvasao"] for c in g])}
+                 "riscoMedio": (
+                     media([c["riscoEvasao"] for c in g if c["riscoEvasao"] is not None])
+                     if any(c["riscoEvasao"] is not None for c in g)
+                     else None
+                 )}
                 for p in PERSONAS for g in [[c for c in todos if c["persona"] == p]]
             ],
             "porTier": [{"tier": t, "clientes": sum(c["tier"] == t for c in cs)} for t in TIERS],
             "atritos": [{"tema": k, "mencoes": v} for k, v in atritos.items()],
             "matriz": [_resumo(c) for c in cs],
             "prioritarios": [_resumo(c) for c in sorted(
-                cs, key=lambda c: c["clvProjetado"] * c["riscoEvasao"], reverse=True)[:10]],
+                cs,
+                key=lambda c: c["clvProjetado"] * (c["riscoEvasao"] or 0),
+                reverse=True,
+            )[:10]],
         }
 
 
 def gerar_recomendacao(cliente: dict) -> dict:
-    """Aciona os agentes (GraphRAG + decisão + auditoria) e converte para ProximaAcao do front."""
+    """Run the graph workflow, optionally augment it with OpenAI, and keep fallback visible."""
     base = cliente["proximaAcao"]
     try:
         final = invoke_agent_workflow({
-            "client_identifier": cliente["id"], "frequency": cliente["voos12m"],
-            "total_spend": cliente["receita12m"], "incidents": round(max(0, 1 - cliente["sentimentoScore"]) * 2),
-            "incident_type": "Downgrade Involuntário", "tier": "", "churn_risk": 0.0, "value_at_risk": 0.0,
-            "graph_rag_context": {}, "decision_reasoning": "", "action_proposal": {}, "audit_status": "",
+            "client_identifier": cliente["id"],
+            "churn_score": cliente["_churn_score"],
+            "frequency": cliente["voos12m"],
+            "total_spend": cliente["receita12m"],
+            "flight_incidents": cliente["_flight_incidents"],
+            "incident_type": cliente["_incident_type"],
+            "tier": cliente["tier"],
+            "value_at_risk": 0.0,
+            "graph_rag_context": {},
+            "decision": {},
+            "audit_status": "",
         })
     except Exception:
-        return base
-    prop = final["action_proposal"]
-    regras = final["graph_rag_context"]
-    return base | {
-        "titulo": prop.get("strategy", base["titulo"]),
-        "justificativa": [final["decision_reasoning"], f"Auditoria: {final['audit_status']}"],
-        "mensagem": f"{prop.get('benefit', '')} + voucher de R$ {prop.get('voucher_value', 0):.2f}".strip(" +"),
-        "regrasFidelidade": [str(v) for v in regras.values()] if isinstance(regras, dict) else [],
-        "confianca": 0.85, "origem": "ia-generativa",
+        logger.exception(
+            "Deterministic recommendation workflow failed; using rules fallback."
+        )
+        return _rotular_recomendacao(base | {"origem": "regras"})
+
+    decision = final["decision"]
+    graph_context = final["graph_rag_context"]
+    regras = [
+        graph_context["policy_context"],
+        *graph_context.get("graph_relations", []),
+    ]
+    deterministic = base | {
+        "tipo": decision["action_code"],
+        "titulo": decision["strategy"],
+        "justificativa": [decision["reasoning"], *decision["evidence"]],
+        "canal": "Telefone" if decision["action_code"] == "recuperacao-servico" else "App",
+        "mensagem": decision["proposal"]["benefit"],
+        "regrasFidelidade": regras,
+        "confianca": None,
+        "origem": "regras",
+        "impactoEstimado": {"reducaoRiscoPp": None, "receitaProtegida": None},
     }
+
+    if settings.LLM_PROVIDER != "openai":
+        logger.info("OpenAI provider disabled; deterministic rules recommendation used.")
+        return _rotular_recomendacao(
+            deterministic,
+            graph_context.get("policies_verified") is True,
+            graph_context.get("policy_context"),
+        )
+
+    from ai.llm.openai_recommendation import (
+        OpenAIRecommendationError,
+        OpenAIRecommendationService,
+    )
+
+    if not settings.OPENAI_API_KEY:
+        logger.info(
+            "OpenAI recommendation not configured; reason=missing_api_key; "
+            "deterministic rules recommendation used."
+        )
+        return _rotular_recomendacao(
+            deterministic,
+            graph_context.get("policies_verified") is True,
+            graph_context.get("policy_context"),
+        )
+
+    try:
+        output = OpenAIRecommendationService(
+            settings.OPENAI_API_KEY,
+            settings.OPENAI_MODEL,
+            settings.OPENAI_TIMEOUT_SECONDS,
+        ).recommend(final)
+    except OpenAIRecommendationError as error:
+        logger.warning(
+            "OpenAI recommendation unavailable; reason=%s; "
+            "deterministic rules fallback used.",
+            error.reason,
+        )
+        return _rotular_recomendacao(
+            deterministic | {"origem": "llm-indisponivel"},
+            graph_context.get("policies_verified") is True,
+            graph_context.get("policy_context"),
+        )
+
+    llm_recommendation = deterministic | {
+        "justificativa": [
+            output.reasoning,
+            *output.evidence,
+            *decision["evidence"],
+        ],
+        "canal": output.channel,
+        "mensagem": output.message,
+        "regrasFidelidade": regras,
+        "confianca": None,
+        "origem": "llm",
+    }
+    return _rotular_recomendacao(
+        llm_recommendation,
+        graph_context.get("policies_verified") is True,
+        graph_context.get("policy_context"),
+    )

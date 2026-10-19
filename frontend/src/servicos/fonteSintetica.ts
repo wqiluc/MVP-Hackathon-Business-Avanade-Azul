@@ -26,13 +26,12 @@ function resumir(c: Cliente): ClienteResumo {
 
 const esperar = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// Sem modelo registrado ainda: o backend preencherá com os dados do MLflow.
 const MODELO_SIMULADO: ModeloInfo = {
-  nome: 'Modelo de evasão (simulação por regras)',
+  nome: 'Heurística sintética demonstrativa',
   versao: '—',
   plataforma: 'MLflow',
   status: 'aguardando-registro',
-  metaAcuracia: 0.9,
+  metaAcuracia: null,
   acuracia: null,
   auc: null,
   treinadoEm: null,
@@ -56,10 +55,10 @@ function calcularResumo(clientes: Cliente[], semFiltroPersona: Cliente[]): Resum
     clientesAltoValor: clientes.filter((c) => c.scoreValor >= SCORE_ALTO_VALOR).length,
     clvMedio: media(clientes.map((c) => c.clvProjetado)),
     receitaEmRisco: clientes
-      .filter((c) => c.riscoEvasao >= RISCO_ALTO)
+      .filter((c) => c.riscoEvasao !== null && c.riscoEvasao >= RISCO_ALTO)
       .reduce((a, c) => a + c.clvProjetado, 0),
     percentualRiscoAlto: clientes.length
-      ? clientes.filter((c) => c.riscoEvasao >= RISCO_ALTO).length / clientes.length
+      ? clientes.filter((c) => c.riscoEvasao !== null && c.riscoEvasao >= RISCO_ALTO).length / clientes.length
       : 0,
     sentimentoMedio: media(clientes.map((c) => c.sentimentoScore)),
     receitaMensal: MESES.map((mes, i) => ({
@@ -73,7 +72,7 @@ function calcularResumo(clientes: Cliente[], semFiltroPersona: Cliente[]): Resum
         persona,
         clientes: grupo.length,
         clvTotal: grupo.reduce((a, c) => a + c.clvProjetado, 0),
-        riscoMedio: media(grupo.map((c) => c.riscoEvasao)),
+        riscoMedio: media(grupo.flatMap((c) => (c.riscoEvasao === null ? [] : [c.riscoEvasao]))),
       };
     }),
     porTier: TIERS.map((tier) => ({ tier, clientes: clientes.filter((c) => c.tier === tier).length })),
@@ -82,7 +81,7 @@ function calcularResumo(clientes: Cliente[], semFiltroPersona: Cliente[]): Resum
       .sort((a, b) => b.mencoes - a.mencoes),
     matriz: clientes.map(resumir),
     prioritarios: [...clientes]
-      .sort((a, b) => b.clvProjetado * b.riscoEvasao - a.clvProjetado * a.riscoEvasao)
+      .sort((a, b) => b.clvProjetado * (b.riscoEvasao ?? 0) - a.clvProjetado * (a.riscoEvasao ?? 0))
       .slice(0, 10)
       .map(resumir),
   };
@@ -92,7 +91,7 @@ export const fonteSintetica: FonteDeDadosCrm = {
   async listarClientes(filtro) {
     return filtrar(filtro)
       .map(resumir)
-      .sort((a, b) => b.clvProjetado * b.riscoEvasao - a.clvProjetado * a.riscoEvasao);
+      .sort((a, b) => b.clvProjetado * (b.riscoEvasao ?? 0) - a.clvProjetado * (a.riscoEvasao ?? 0));
   },
   async obterCliente(id) {
     return CLIENTES.find((c) => c.id === id) ?? null;

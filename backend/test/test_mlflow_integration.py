@@ -126,7 +126,7 @@ def test_mlflow_tracking_registry_serving_and_application_scoring(
         monkeypatch.setitem(
             fastapi_app.dependency_overrides,
             get_current_user,
-            lambda: {"sub": "mlflow-integration-test"},
+            lambda: {"sub": "mlflow-integration-test", "role": "ADMIN"},
         )
         DataLakeService.init_schema()
         connection = DataLakeService.get_connection()
@@ -154,7 +154,8 @@ def test_mlflow_tracking_registry_serving_and_application_scoring(
             training_result = training_response.json()
 
         assert training_result["run_id"]
-        assert "registrado como champion" in training_result["status"]
+        assert f"registrado como {MODEL_NAME} v" in training_result["status"]
+        assert f"({MODEL_ALIAS})" in training_result["status"]
 
         client = MlflowClient(tracking_uri=tracking_uri, registry_uri=tracking_uri)
         experiment = client.get_experiment_by_name(EXPERIMENT_NAME)
@@ -168,8 +169,9 @@ def test_mlflow_tracking_registry_serving_and_application_scoring(
         active_version = client.get_model_version_by_alias(MODEL_NAME, MODEL_ALIAS)
         assert active_version.status == "READY"
         assert active_version.run_id == training_result["run_id"]
-        assert training_result["status"].startswith(
-            f"Modelo {MODEL_NAME} v{active_version.version}"
+        assert (
+            f"registrado como {MODEL_NAME} v{active_version.version}"
+            in training_result["status"]
         )
         with TestClient(fastapi_app) as api_client:
             active_model_response = api_client.get("/api/v1/modelo")

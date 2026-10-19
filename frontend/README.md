@@ -24,22 +24,23 @@ npm run preview   # serve o build localmente
 
 Os filtros do dashboard ficam na URL (`?persona=…&categoria=…`), então uma visão filtrada pode ser compartilhada por link.
 
-## Dados: sintético agora, backend depois
+## Dados: backend ou modo sintético
 
 Todas as telas falam com `servicoCrm` ([src/servicos/servicoCrm.ts](src/servicos/servicoCrm.ts)), que implementa o contrato `FonteDeDadosCrm` ([src/servicos/fonteDeDados.ts](src/servicos/fonteDeDados.ts)):
 
-- **Sem `VITE_API_URL`:** usa a base sintética local ([src/dados/sinteticos/gerarClientes.ts](src/dados/sinteticos/gerarClientes.ts)), com 160 clientes determinísticos, e o login aceita só os acessos de demonstração:
+- **Sem `VITE_API_URL`:** só em desenvolvimento (`npm run dev`) ou com `VITE_ENABLE_DEMO_MODE=true` explícito usa a base sintética local ([src/dados/sinteticos/gerarClientes.ts](src/dados/sinteticos/gerarClientes.ts)), com 160 clientes determinísticos, e o login aceita só os acessos de demonstração:
 
   | Perfil | E-mail | Senha |
   |---|---|---|
   | Analista | `analista@exemplo.com` | `azul2026` |
   | Gestor | `gestor@exemplo.com` | `azul2026` |
 
-- **Com `VITE_API_URL`:** usa o backend real ([src/servicos/fonteApi.ts](src/servicos/fonteApi.ts)).
+- **Com `VITE_API_URL`:** usa o backend real ([src/servicos/fonteApi.ts](src/servicos/fonteApi.ts)). Erros da API nunca caem para dados sintéticos.
+- **Build de produção sem `VITE_API_URL` e sem `VITE_ENABLE_DEMO_MODE=true`:** falha de forma fechada (login e dados retornam erro de configuração). Nunca use chaves de API no frontend.
 
 ```bash
 cp .env.example .env
-# edite VITE_API_URL=http://localhost:8000
+# edite VITE_API_URL=http://localhost:8000/api/v1
 ```
 
 ### Endpoints esperados
@@ -54,7 +55,7 @@ Depois do login, toda chamada leva `Authorization: Bearer <token>`. Uma resposta
 | `GET` | `/clientes/{id}` | `Cliente` (404 → "cliente não encontrado") |
 | `POST` | `/clientes/{id}/recomendacao` | `ProximaAcao` (com `origem: "ia-generativa"`) |
 | `POST` | `/ingestao/clientes` (multipart, campo `arquivo`) | `ReciboIngestao` |
-| `GET` | `/modelo` | `ModeloInfo` (versão e métricas do MLflow/DagsHub) |
+| `GET` | `/modelo` | `ModeloInfo` (versão e métricas do MLflow) |
 
 ## Estrutura
 

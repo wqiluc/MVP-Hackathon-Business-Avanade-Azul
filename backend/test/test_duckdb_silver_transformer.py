@@ -1,5 +1,3 @@
-import hashlib
-
 import duckdb
 import pandas as pd
 
@@ -43,9 +41,7 @@ def test_transform_creates_expected_silver_columns_and_transforms_values(tmp_pat
         "flight_incidents",
         "ingested_at",
     ]
-    assert result.loc[0, "client_identifier"] == (
-        "AZ-" + hashlib.md5(b"123").hexdigest()[:8]
-    )
+    assert result.loc[0, "client_identifier"] == "123"
     assert result.loc[0, "tier"] == "DIAMONDE"
     assert result.loc[0, "frequency"] == 7
     assert result.loc[0, "recency_days"] == 30
@@ -74,9 +70,7 @@ def test_transform_excludes_null_ids_and_preserves_other_null_values(tmp_path):
         conn.close()
 
     assert len(result) == 1
-    assert result.loc[0, "client_identifier"] == (
-        "AZ-" + hashlib.md5(b"456").hexdigest()[:8]
-    )
+    assert result.loc[0, "client_identifier"] == "456"
     for column in ("tier", "frequency", "recency_days", "total_spend", "flight_incidents"):
         assert pd.isna(result.loc[0, column])
     assert pd.notna(result.loc[0, "ingested_at"])

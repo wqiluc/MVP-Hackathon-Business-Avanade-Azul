@@ -3,7 +3,7 @@ import { useAutenticacao } from '../../hooks/useAutenticacao';
 import { iniciais } from '../../utilitarios/formatacao';
 import { Icone } from '../ui/Icone';
 
-const ROTULO_PERFIL = { analista: 'Analista', gestor: 'Gestor' } as const;
+const ROTULO_PERFIL = { analista: 'Analista', gestor: 'Gestor', admin: 'Administrador' } as const;
 
 /** Usuário logado + botão de sair. `variante="escura"` para fundos azul-marinho. */
 export function MenuUsuario({ variante = 'escura' }: { variante?: 'escura' | 'clara' }) {

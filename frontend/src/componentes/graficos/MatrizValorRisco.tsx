@@ -48,7 +48,7 @@ function TooltipMatriz({ active, payload }: TooltipContentProps) {
         <strong>{formatBRLCompacto(ponto.clv)}</strong>
       </div>
       <div className="chart-tooltip__row">
-        <span>Risco de evasão</span>
+        <span>Score high_risk_flag</span>
         <strong>{formatPercentual(ponto.risco / 100)}</strong>
       </div>
       <div className="chart-tooltip__title" style={{ marginTop: 6, marginBottom: 0 }}>
@@ -59,14 +59,23 @@ function TooltipMatriz({ active, payload }: TooltipContentProps) {
 }
 
 export function MatrizValorRisco({ clientes, corteClv, onSelecionar }: MatrizValorRiscoProps) {
-  const pontos = clientes.map((c) => ({
-    id: c.id,
-    nome: c.nome,
-    persona: PERSONAS[c.persona].nome,
-    risco: Math.round(c.riscoEvasao * 1000) / 10,
-    clv: c.clvProjetado,
-    prioritario: c.riscoEvasao >= RISCO_ALTO && c.clvProjetado >= corteClv,
-  }));
+  const pontos = clientes
+    .filter(
+      (cliente): cliente is ClienteResumo & { riscoEvasao: number } =>
+        cliente.riscoEvasao !== null,
+    )
+    .map((c) => ({
+      id: c.id,
+      nome: c.nome,
+      persona: PERSONAS[c.persona].nome,
+      risco: Math.round(c.riscoEvasao * 1000) / 10,
+      clv: c.clvProjetado,
+      prioritario: c.riscoEvasao >= RISCO_ALTO && c.clvProjetado >= corteClv,
+    }));
+
+  if (pontos.length === 0) {
+    return <div className="empty">Score indisponível até o registro do modelo no MLflow.</div>;
+  }
 
   const abrir = (ponto: { payload?: Ponto }) => {
     if (ponto.payload) onSelecionar(ponto.payload.id);
@@ -80,12 +89,12 @@ export function MatrizValorRisco({ clientes, corteClv, onSelecionar }: MatrizVal
           {...eixo}
           type="number"
           dataKey="risco"
-          name="Risco"
+          name="Score high_risk_flag"
           domain={[0, 100]}
           ticks={[0, 25, 50, 75, 100]}
           tickFormatter={(v: number) => `${v}%`}
           height={44}
-          label={{ value: 'Risco de evasão (6 meses)', position: 'insideBottom', offset: 0, fill: 'var(--text-muted)', fontSize: 12 }}
+          label={{ value: 'Score de classificação high_risk_flag', position: 'insideBottom', offset: 0, fill: 'var(--text-muted)', fontSize: 12 }}
         />
         <YAxis
           {...eixo}

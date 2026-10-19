@@ -1,6 +1,7 @@
 import { PERSONAS } from '../../configuracao/personas';
 import type { PersonaId, ResumoDashboard } from '../../tipos/crm';
 import { formatBRLCompacto } from '../../utilitarios/formatacao';
+import { usandoDadosSinteticos } from '../../servicos/configuracaoApi';
 import { SeloRisco } from '../ui/Selos';
 
 interface SegmentosPersonaProps {
@@ -9,7 +10,7 @@ interface SegmentosPersonaProps {
   onSelecionar: (persona: PersonaId | undefined) => void;
 }
 
-/** CLV total por persona (barra de série única) + tamanho e risco médio do segmento. */
+/** CLV total por persona (barra de série única) + tamanho e score médio disponível. */
 export function SegmentosPersona({ dados, selecionada, onSelecionar }: SegmentosPersonaProps) {
   const max = Math.max(1, ...dados.map((d) => d.clvTotal));
   return (
@@ -37,8 +38,11 @@ export function SegmentosPersona({ dados, selecionada, onSelecionar }: Segmentos
               <span className="hbar__value">{formatBRLCompacto(d.clvTotal)}</span>
             </div>
             <div className="segmento__rodape">
-              <span className="muted">Risco médio</span>
-              <SeloRisco risco={d.riscoMedio} />
+              <span className="muted">Score médio</span>
+              <SeloRisco
+                risco={d.riscoMedio}
+                origem={usandoDadosSinteticos ? 'heuristica-sintetica' : 'classificador'}
+              />
               <span className="muted segmento__acao">→ {persona.acaoRecomendada}</span>
             </div>
           </button>

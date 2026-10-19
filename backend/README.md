@@ -1,412 +1,88 @@
+# Backend
 
-# ⚡ Engine BFA & Arquitetura do Backend
+FastAPI exposes the CRM, upload, dashboard, model and health contracts under
+`/api/v1`. Routes validate HTTP input and delegate to application services;
+services coordinate the root-level `data/`, `ml/` and `ai/` packages.
 
-> **Backend for Agents (BFA) orientado a eventos, MLOps e orquestração de IA Multiagente**  
-> *Desenvolvido com FastAPI, Python 3.12, DuckDB (Medallion Data Lake), MLflow, ChromaDB e LangGraph.*
-
----
-
-## 📐 Padrão Arquitetural
-
-O Backend adota a **Modular Layered Architecture** (uma abordagem pragmática da *Clean Architecture* e *Domain-Driven Design*), onde cada diretório possui responsabilidade bem delimitada:
+## Runtime flow
 
 ```text
-backend/app/
-├── api/                       # CAMADA DE APRESENTAÇÃO (Controllers / HTTP Routes)
-│   ├── router.py              # Agregador central de rotas (/api/v1)
-│   └── v1/
-│       ├── auth.py            # Autenticação e emissão de tokens JWT
-│       ├── health.py          # Liveness & Readiness Probes
-│       ├── uploads.py         # Recebimento e validação de arquivos (.xlsx / .json)
-│       ├── ml.py              # MLOps: Treinamento do modelo de risco e MLflow
-│       └── clients.py         # Orquestração de BFA e Análise Preditiva de Clientes
-│
-├── core/                      # INFRAESTRUTURA & SEGURANÇA GLOBAL
-│   ├── security.py            # Validação JWT, Hashing e Anonimização SHA-256
-│   └── exceptions.py          # Centralização e tratamento global de erros HTTP/500
-│
-├── schemas/                   # CONTRATOS & DTOs (Pydantic Schemas)
-│   ├── auth_schema.py         # Contratos de Login e Tokens
-│   ├── upload_schema.py       # Contratos do Data Lake Medalhão
-│   └── client_schema.py       # Contratos de Requisição/Resposta de Análise
-│
-└── services/                  # CAMADA DE DOMÍNIO & REGRAS DE NEGÓCIO
-    ├── datalake_service.py    # Pipeline Medalhão em DuckDB (Bronze -> Silver -> Gold)
-    ├── ml_service.py          # Treinamento de ML (RandomForest) e Tracking via MLflow
-    ├── rag_service.py         # GraphRAG (ANAC Resolução 400 + Regras Azul Fidelidade)
-    ├── agent_service.py       # Orquestrador de Estados LangGraph (Query, RAG, Decision, Audit)
-    └── upload_service.py      # Gestão do ciclo de vida de arquivos temporários
+HTTP routes -> app.services -> data / ml / ai
 ```
 
----
+- `app/api/v1/` contains the HTTP endpoints and response schemas.
+- `app/services/auth_service.py` validates the existing demo/legacy credentials
+  and builds the session; the route maps invalid credentials to HTTP 401.
+- `app/services/datalake_service.py` coordinates FileReader, Bronze, Silver,
+  Gold, scoring and the configured DuckDB or Snowflake data lake. DuckDB is the
+  local backend available for development and tests; Snowflake is the
+  implemented data-lake backend intended for the integration environment.
+  `DATA_LAKE_BACKEND` selects the backend. Snowflake requires an external
+  account and configured credentials; no local Snowflake server is provided.
+- `app/services/ml_service.py` coordinates Gold loading, features, training,
+  evaluation and tracking through `ml/`.
+- `app/services/agent_service.py` adapts API/service inputs to the workflow in
+  `ai/agents/`; graph context is provided by `ai/graphrag/`.
+- `app/config.py` loads `backend/.env` and keeps the local DuckDB default under
+  the repository's `data/processed/`.
 
-## 🗄️ 1. Data Lake & Arquitetura Medalhão (`DataLakeService`)
+The Decision Agent uses deterministic rules and a small static NetworkX graph;
+the graph is not a complete GraphRAG implementation and does not use connected
+embeddings or vector retrieval. The backend may use OpenAI to personalize
+recommendation text after the decision; when OpenAI is disabled, unconfigured,
+or unavailable, it uses an explicitly labeled rules fallback. Requests contain
+no client identifier or direct personal identifiers.
 
-O Data Lake local utiliza **DuckDB** como motor OLAP integrado, operando como um substituto local para ambientes Snowflake sem gerar custos.
+Client identifiers are pseudonymized with keyed HMAC-SHA256 before persistence.
+The key is `JWT_SECRET_KEY`; rotating it requires a coordinated migration.
+Pseudonymization is not anonymization.
 
-### Camada Bronze — Raw
+## Run locally
 
-Ingestão direta de tabelas brutas fornecidas em arquivos:
-
-- Excel (`.xlsx`)
-- JSON
-
-### Camada Prata — Silver / Cleaned
-
-Responsável por:
-
-- Limpeza de valores nulos.
-- Padronização de tipos primitivos.
-- Conversão de identificadores em hashes anonimizados.
-- Formatação dos identificadores no padrão `AZ-XXXXXXXX`.
-- Adequação para conformidade com a LGPD.
-
-### Camada Ouro — Gold / Analytics & Feature Store
-
-Tabela consolidada com cálculo de métricas agregadas, como:
-
-- Ticket Médio.
-- Frequência.
-- Recência.
-- Flags de Alto Risco.
-
-Os dados dessa camada são consumidos diretamente pelo modelo de **Machine Learning** e pelos dashboards de **BI**.
-
----
-
-## 📊 2. Esteira de MLOps (`MLflow` & `Scikit-Learn`)
-
-A predição de **rotatividade (Churn)** e **risco de desengajamento do cliente** é realizada por um classificador treinado sobre a **Camada Ouro**.
-
-### Métricas avaliadas
-
-- **Acurácia:** meta ≥ 90%.
-- **Precisão.**
-- **Recall.**
-- **F1-Score.**
-
-### Tracking de experimentos
-
-Todos os hiperparâmetros e binários do modelo são versionados e registrados através do **MLflow Tracking**.
-
-Execução do pipeline de treinamento via API:
-
-```http
-POST /api/v1/ml/train
-```
-
----
-
-## 🕸️ 3. Engine de IA Multiagente
-
-### BFA com LangGraph & GraphRAG
-
-A orquestração utiliza o **LangGraph** para guiar o fluxo de decisão assíncrono através de quatro agentes especializados:
-
-```text
-[Input Analista]
-       │
-       ▼
-(1. Query Manager Agent)
-       │
-       ▼
-(2. GraphRAG Agent)
-       │
-       ▼
-(3. Decision Engine)
-       │
-       ▼
-(4. Audit Agent)
-       │
-       ▼
-[Ação Aprovada]
-```
-
-### 1. Query Manager Agent
-
-Responsável por:
-
-- Avaliar métricas financeiras.
-- Calcular o *Value-at-Risk (VaR)*.
-- Classificar o Tier do passageiro.
-
-### 2. GraphRAG Agent
-
-Consulta a base de conhecimento estruturada em grafos de relacionamento, incluindo:
-
-- **ANAC Resolução 400.**
-- Regras do **Azul Fidelidade**.
-
-O objetivo é fundamentar juridicamente as compensações e reduzir o risco de alucinações da IA.
-
-### 3. Decision Engine Agent
-
-Define estrategicamente o benefício de retenção.
-
-Exemplo:
-
-> Voucher Trust-First de R$ 250,00 + Upgrade Espaço Azul.
-
-### 4. Audit Agent
-
-Realiza a checagem antifraude das regras de elegibilidade antes da emissão do benefício.
-
----
-
-## 🛠️ 4. Configuração de Variáveis de Ambiente (`.env`)
-
-Crie o arquivo:
-
-```text
-backend/.env
-```
-
-com base no modelo:
-
-```text
-.env.example
-```
-
-Exemplo de configuração:
-
-```ini
-ENVIRONMENT=development
-
-SECRET_KEY=sua_secret_key_hex_32_caracteres
-JWT_SECRET_KEY=sua_jwt_secret_key_hex_32_caracteres
-
-ACCESS_TOKEN_EXPIRE_HOURS=8
-
-# Provedor de IA
-# Modo gratuito/local via Ollama
-LLM_PROVIDER=ollama
-OLLAMA_BASE_URL=http://localhost:11434
-OLLAMA_MODEL=llama3
-
-# Caminhos do Data Lake
-DUCKDB_PATH=../data/processed/azul_datalake.duckdb
-VECTORDB_PATH=../data/vectordb
-```
-
----
-
-## 🔐 5. Como Gerar as Chaves Criptográficas Locais
-
-No terminal, execute:
+From the repository root:
 
 ```bash
-python -c "import secrets; print('SECRET_KEY=' + secrets.token_hex(32)); print('JWT_SECRET_KEY=' + secrets.token_hex(32))"
+npm start
 ```
 
-O comando irá gerar duas chaves aleatórias de 32 bytes:
-
-```text
-SECRET_KEY=...
-JWT_SECRET_KEY=...
-```
-
-Copie os valores gerados para o arquivo `backend/.env`.
-
-> ⚠️ **Importante:** nunca versione o arquivo `.env` no Git. Adicione-o ao `.gitignore`.
-
-Exemplo:
-
-```gitignore
-.env
-*.env
-```
-
----
-
-## 🧪 6. Testes Automatizados
-
-A suíte de testes do backend valida:
-
-- Autenticação.
-- Processamento do Data Lake.
-- Fluxo dos agentes.
-- APIs.
-- Regras de negócio.
-
-Para executar os testes com **Pytest**:
+The setup script creates `backend/.venv`, installs backend requirements and
+installs the monorepo packages in editable mode. Copy `backend/.env.example`
+to `backend/.env` only when local overrides are needed; never commit the local
+file. The backend starts with:
 
 ```bash
-pytest -v tests/test_backend.py
+cd backend
+.venv/bin/python run.py
 ```
 
----
+On Windows, use `.venv\Scripts\python.exe run.py`. The API docs are at
+`http://localhost:8000/docs`.
 
-## 🚀 7. Execução do Backend
+## Tests
 
-A partir do diretório `backend/`, ative o ambiente virtual:
-
-### Linux / macOS
+Run the backend suite from the repository root:
 
 ```bash
-source .venv/bin/activate
+cd backend
+.venv/bin/python -m pytest -q test
 ```
 
-### Windows PowerShell
+For regression runs, set `DUCKDB_PATH` to a temporary database and initialize
+the schemas before executing tests that exercise ingestion. The real
+`data/processed/azul_datalake.duckdb` must not be used as a test database.
 
-```powershell
-.venv\Scripts\Activate.ps1
-```
+## Known limitations
 
-Depois, instale as dependências:
-
-```bash
-pip install -r requirements.txt
-```
-
-Execute a aplicação com:
-
-```bash
-uvicorn app.main:app --reload
-```
-
-O backend estará disponível em:
-
-```text
-http://localhost:8000
-```
-
-### Swagger / OpenAPI
-
-A documentação interativa da API estará disponível em:
-
-```text
-http://localhost:8000/docs
-```
-
-### ReDoc
-
-A documentação alternativa estará disponível em:
-
-```text
-http://localhost:8000/redoc
-```
-
----
-
-## 🏗️ 8. Fluxo Geral da Aplicação
-
-```text
-                    ┌─────────────────────┐
-                    │     Frontend / BI    │
-                    └──────────┬──────────┘
-                               │
-                               ▼
-                    ┌─────────────────────┐
-                    │     FastAPI API     │
-                    │       /api/v1       │
-                    └──────────┬──────────┘
-                               │
-              ┌────────────────┼────────────────┐
-              │                │                │
-              ▼                ▼                ▼
-        ┌──────────┐    ┌──────────────┐   ┌───────────┐
-        │ Uploads  │    │   Clients    │   │    ML     │
-        └────┬─────┘    └──────┬───────┘   └─────┬─────┘
-             │                 │                  │
-             ▼                 ▼                  ▼
-        ┌────────────────────────────────────────────────┐
-        │                  Services                       │
-        │                                                │
-        │ DataLake │ RAG │ Agents │ ML │ Upload         │
-        └───────────────────────┬────────────────────────┘
-                                │
-              ┌─────────────────┼──────────────────┐
-              │                 │                  │
-              ▼                 ▼                  ▼
-        ┌───────────┐     ┌──────────┐      ┌──────────┐
-        │  DuckDB   │     │ ChromaDB │      │ MLflow   │
-        │ Data Lake │     │ GraphRAG │      │  MLOps   │
-        └───────────┘     └──────────┘      └──────────┘
-                                │
-                                ▼
-                         ┌──────────────┐
-                         │   Ollama     │
-                         │     LLM      │
-                         └──────────────┘
-```
-
----
-
-## 📁 9. Estrutura Completa do Projeto
-
-```text
-backend/
-│
-├── app/
-│   ├── __init__.py
-│   ├── main.py
-│   │
-│   ├── api/
-│   │   ├── __init__.py
-│   │   ├── router.py
-│   │   │
-│   │   └── v1/
-│   │       ├── __init__.py
-│   │       ├── auth.py
-│   │       ├── health.py
-│   │       ├── uploads.py
-│   │       ├── ml.py
-│   │       └── clients.py
-│   │
-│   ├── core/
-│   │   ├── __init__.py
-│   │   ├── security.py
-│   │   └── exceptions.py
-│   │
-│   ├── schemas/
-│   │   ├── __init__.py
-│   │   ├── auth_schema.py
-│   │   ├── upload_schema.py
-│   │   └── client_schema.py
-│   │
-│   └── services/
-│       ├── __init__.py
-│       ├── datalake_service.py
-│       ├── ml_service.py
-│       ├── rag_service.py
-│       ├── agent_service.py
-│       └── upload_service.py
-│
-├── tests/
-│   └── test_backend.py
-│
-├── data/
-│   ├── raw/
-│   ├── processed/
-│   │   └── azul_datalake.duckdb
-│   └── vectordb/
-│
-├── .env
-├── .env.example
-├── .gitignore
-├── requirements.txt
-└── README.md
-```
-
----
-
-## 🎯 10. Objetivo Arquitetural
-
-O backend foi projetado para demonstrar uma arquitetura moderna orientada a **IA, dados e agentes**, combinando:
-
-- **FastAPI** para exposição das APIs.
-- **Python 3.12** como linguagem principal.
-- **DuckDB** para processamento analítico local.
-- **Arquitetura Medallion** para organização do Data Lake.
-- **Scikit-Learn** para Machine Learning.
-- **MLflow** para MLOps e rastreamento de experimentos.
-- **ChromaDB** para armazenamento vetorial.
-- **GraphRAG** para recuperação contextual.
-- **LangGraph** para orquestração multiagente.
-- **Ollama** para execução local do LLM.
-- **JWT** para autenticação.
-- **SHA-256** para anonimização de identificadores.
-- **FastAPI + Pydantic** para contratos e validação.
-
-O resultado é um **Backend for Agents (BFA)** capaz de integrar dados estruturados, Machine Learning, RAG e agentes de IA em um fluxo de decisão auditável e orientado a regras de negócio.
-
+- Training parameters, metrics and the sklearn model are sent to MLflow by
+  `ml/models/mlflow_tracker.py`. The model is registered as
+  `AeroShieldChurnModel`, and the `champion` alias identifies the active
+  version. Logging explicitly trusts only scikit-learn's tree storage type
+  required by the in-process RandomForest; failures are propagated. Tracking
+  runs separately from MLflow Serving. See
+  `infrastructure/mlflow/README.md` for local startup and validation commands.
+- `high_risk_flag` is a rule-derived proxy target, not observed churn.
+  `churn_score` is the model score for that proxy target.
+- Snowflake connectivity depends on an external account, permissions and
+  configuration; it is not provided as a local service.
+- Policy context is graph-based and deterministic; external LLM, vector RAG
+  and production GraphRAG behavior are not implemented.

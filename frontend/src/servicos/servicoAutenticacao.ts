@@ -1,5 +1,5 @@
 import type { Sessao, Usuario } from '../tipos/autenticacao';
-import { apiUrl } from './configuracaoApi';
+import { apiUrl, configuracaoAusente, MENSAGEM_CONFIGURACAO_AUSENTE } from './configuracaoApi';
 
 export interface ServicoAutenticacao {
   entrar(email: string, senha: string): Promise<Sessao>;
@@ -13,40 +13,22 @@ export class ErroCredenciais extends Error {
 
 const HORAS_SESSAO = 8;
 
-// Acessos de demonstração, válidos apenas no modo sintético (sem backend).
-export const ACESSOS_DEMONSTRACAO: { email: string; senha: string; usuario: Usuario }[] = [
-  {
-    email: 'analista@exemplo.com',
-    senha: 'azul2026',
-    usuario: {
-      id: 'u-analista',
-      nome: 'Ana Analista',
-      email: 'analista@exemplo.com',
-      perfil: 'analista',
-      equipe: 'CRM e Relacionamento',
-    },
-  },
-  {
-    email: 'gestor@exemplo.com',
-    senha: 'azul2026',
-    usuario: {
-      id: 'u-gestor',
-      nome: 'Gustavo Gestor',
-      email: 'gestor@exemplo.com',
-      perfil: 'gestor',
-      equipe: 'Fidelidade',
-    },
-  },
-];
-
 const autenticacaoDemonstracao: ServicoAutenticacao = {
   async entrar(email, senha) {
     await new Promise((resolve) => setTimeout(resolve, 500));
-    const acesso = ACESSOS_DEMONSTRACAO.find((a) => a.email === email.trim().toLowerCase() && a.senha === senha);
-    if (!acesso) throw new ErroCredenciais();
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!normalizedEmail.includes('@') || !senha) throw new ErroCredenciais();
+    const localPart = normalizedEmail.split('@')[0] || 'Analista';
+    const usuario: Usuario = {
+      id: `synthetic-${crypto.randomUUID()}`,
+      nome: localPart.replace(/[._-]+/g, ' '),
+      email: normalizedEmail,
+      perfil: 'analista',
+      equipe: 'Demonstração sintética',
+    };
     return {
-      token: `demo-${acesso.usuario.id}`,
-      usuario: acesso.usuario,
+      token: `demo-${usuario.id}`,
+      usuario,
       expiraEm: new Date(Date.now() + HORAS_SESSAO * 3_600_000).toISOString(),
     };
   },
@@ -67,6 +49,12 @@ function criarAutenticacaoApi(baseUrl: string): ServicoAutenticacao {
   };
 }
 
+const autenticacaoIndisponivel: ServicoAutenticacao = {
+  entrar: () => Promise.reject(new Error(MENSAGEM_CONFIGURACAO_AUSENTE)),
+};
+
 export const servicoAutenticacao: ServicoAutenticacao = apiUrl
   ? criarAutenticacaoApi(apiUrl)
-  : autenticacaoDemonstracao;
+  : configuracaoAusente
+    ? autenticacaoIndisponivel
+    : autenticacaoDemonstracao;

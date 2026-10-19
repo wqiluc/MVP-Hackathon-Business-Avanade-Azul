@@ -3,8 +3,9 @@ import type { ClienteResumo } from '../../tipos/crm';
 import { formatBRL } from '../../utilitarios/formatacao';
 import { Icone } from '../ui/Icone';
 import { SeloCategoria, SeloPersona, SeloRisco } from '../ui/Selos';
+import { usandoDadosSinteticos } from '../../servicos/configuracaoApi';
 
-/** Clientes ordenados por perda esperada (CLV × risco de evasão). */
+/** Clientes ordenados pela prioridade heurística (CLV × score disponível). */
 export function TabelaPrioritarios({ clientes }: { clientes: ClienteResumo[] }) {
   const navigate = useNavigate();
 
@@ -20,8 +21,8 @@ export function TabelaPrioritarios({ clientes }: { clientes: ClienteResumo[] }) 
             <th>Categoria</th>
             <th className="num">CLV 24m</th>
             <th className="num">Score</th>
-            <th>Risco de evasão</th>
-            <th>Próxima melhor ação (IA)</th>
+            <th>Score de classificação</th>
+            <th>Recomendação</th>
             <th aria-label="Abrir" />
           </tr>
         </thead>
@@ -49,7 +50,10 @@ export function TabelaPrioritarios({ clientes }: { clientes: ClienteResumo[] }) 
               <td className="num">{formatBRL(c.clvProjetado)}</td>
               <td className="num">{c.scoreValor}</td>
               <td>
-                <SeloRisco risco={c.riscoEvasao} />
+                <SeloRisco
+                  risco={c.riscoEvasao}
+                  origem={usandoDadosSinteticos ? 'heuristica-sintetica' : 'classificador'}
+                />
               </td>
               <td style={{ minWidth: 220 }}>{c.proximaAcao}</td>
               <td>

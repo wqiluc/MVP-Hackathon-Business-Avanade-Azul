@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, UploadFile, File
 from app.core.security import get_current_user
-from app.schemas.upload_schema import UploadResponse
+from app.services.schemas.upload_schema import UploadResponse
 from app.services.upload_service import UploadService
 
 router = APIRouter()
@@ -10,9 +10,12 @@ router = APIRouter()
 async def ingerir_clientes(arquivo: UploadFile = File(...), current_user: dict = Depends(get_current_user)):
     """Contrato do front: recebe a base e roda Bronze → Silver → Gold + inferência."""
     resumo, tamanho = await UploadService.process_upload(arquivo)
+    message = f"{resumo['processed_rows']} clientes processados nas camadas Bronze, Silver e Gold."
+    if resumo.get("scoring_status") == "awaiting_model_registration":
+        message += " Score pendente: treine e registre o modelo no MLflow para habilitar inferência."
     return {
         "arquivo": arquivo.filename, "tamanhoBytes": tamanho, "status": "recebido",
-        "mensagem": f"{resumo['processed_rows']} clientes processados nas camadas Bronze, Silver e Gold.",
+        "mensagem": message,
     }
 
 

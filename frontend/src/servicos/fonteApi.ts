@@ -2,6 +2,15 @@ import type { FiltroClientes } from '../tipos/crm';
 import type { FonteDeDadosCrm } from './fonteDeDados';
 import { lerSessao, limparSessao } from './sessao';
 
+export class ErroHttpApi extends Error {
+  readonly status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.status = status;
+  }
+}
+
 function querystring(filtro: FiltroClientes = {}): string {
   const params = new URLSearchParams();
   if (filtro.persona) params.set('persona', filtro.persona);
@@ -25,19 +34,51 @@ async function requisitar<T>(baseUrl: string, caminho: string, init?: RequestIni
     limparSessao();
     window.location.assign('/login');
   }
-  if (!resposta.ok) throw new Error(`Falha em ${caminho} (HTTP ${resposta.status})`);
-  return resposta.json() as Promise<T>;
+  let payload: unknown;
+  try {
+    payload = await resposta.json();
+  } catch {
+    if (!resposta.ok) {
+      throw new ErroHttpApi(`Falha em ${caminho} (HTTP ${resposta.status})`, resposta.status);
+    }
+    throw new Error(`Resposta inválida da API em ${caminho}.`);
+  }
+  if (!resposta.ok) {
+    const body = payload as {
+      message?: unknown;
+      detail?: unknown;
+      missing_columns?: unknown;
+      invalid_columns?: unknown;
+    };
+    const message =
+      typeof body.message === 'string'
+        ? body.message
+        : typeof body.detail === 'string'
+          ? body.detail
+          : `Falha em ${caminho}`;
+    const missing =
+      Array.isArray(body.missing_columns) && body.missing_columns.every((item) => typeof item === 'string')
+        ? ` Colunas ausentes: ${body.missing_columns.join(', ')}.`
+        : '';
+    const invalid =
+      Array.isArray(body.invalid_columns) && body.invalid_columns.every((item) => typeof item === 'string')
+        ? ` Colunas inválidas: ${body.invalid_columns.join(', ')}.`
+        : '';
+    throw new ErroHttpApi(`${message}${missing}${invalid} (HTTP ${resposta.status})`, resposta.status);
+  }
+  return payload as T;
 }
 
-/** Backend real: Snowflake (camada Ouro) + modelo do MLflow + IA generativa. */
+/** Fonte que consome os contratos HTTP do backend FastAPI. */
 export function criarFonteApi(baseUrl: string): FonteDeDadosCrm {
   return {
     listarClientes: (filtro) => requisitar(baseUrl, `/clientes${querystring(filtro)}`),
     async obterCliente(id) {
       try {
         return await requisitar(baseUrl, `/clientes/${encodeURIComponent(id)}`);
-      } catch {
-        return null;
+      } catch (error) {
+        if (error instanceof ErroHttpApi && error.status === 404) return null;
+        throw error;
       }
     },
     obterResumoDashboard: (filtro) => requisitar(baseUrl, `/dashboard/resumo${querystring(filtro)}`),

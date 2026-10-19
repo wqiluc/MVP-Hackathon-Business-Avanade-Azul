@@ -20,9 +20,9 @@ def get_active_model_info() -> dict:
     active = get_active_churn_model()
     if active is None:
         return {
-            "nome": "Modelo de evasão (RandomForest)",
+            "nome": "Classificador high_risk_flag (RandomForest)",
             "plataforma": "MLflow",
-            "metaAcuracia": 0.9,
+            "metaAcuracia": None,
             "versao": "—",
             "status": "aguardando-registro",
             "acuracia": None,
@@ -37,9 +37,13 @@ def get_active_model_info() -> dict:
     return {
         "nome": active.model_name,
         "plataforma": "MLflow",
-        "metaAcuracia": 0.9,
+        "metaAcuracia": None,
         "versao": active.model_version,
-        "status": "em-producao",
+        "status": (
+            "serving-configurado"
+            if settings.MLFLOW_SERVING_URL
+            else "aguardando-serving"
+        ),
         "acuracia": active.metrics.get("accuracy"),
         "auc": active.metrics.get("auc"),
         "treinadoEm": trained_at,
@@ -82,7 +86,8 @@ def train_and_register_churn_model() -> dict:
         "precision": round(metrics["precision"], 4),
         "recall": round(metrics["recall"], 4),
         "status": (
-            f"Modelo {registered.model_name} v{registered.model_version} "
-            f"registrado como {registered.alias} no MLflow"
+            f"Classificador high_risk_flag registrado como "
+            f"{registered.model_name} v{registered.model_version} "
+            f"({registered.alias}). O alvo não é churn observado."
         ),
     }
