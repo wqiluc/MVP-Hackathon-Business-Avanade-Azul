@@ -8,6 +8,7 @@ from app.api.router import api_router
 from app.core.exceptions import register_exception_handlers
 from app.config import settings
 from app.services.datalake_service import DataLakeService
+from app.core.ai_rate_limit import validate_ai_rate_limit_settings
 
 _LOCAL_HOSTS = {"localhost", "127.0.0.1", "::1", "0.0.0.0", ""}
 
@@ -57,6 +58,7 @@ def validate_production_integrations() -> None:
 
 
 def validate_runtime_settings() -> None:
+    validate_ai_rate_limit_settings()
     if settings.MAX_UPLOAD_BYTES <= 0:
         raise RuntimeError("MAX_UPLOAD_BYTES deve ser maior que zero.")
     if settings.OPENAI_TIMEOUT_SECONDS <= 0:
@@ -97,6 +99,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["Authorization", "Content-Type"],
+    expose_headers=["Retry-After"],
 )
 
 # 3. Tratamento Global de Exceções

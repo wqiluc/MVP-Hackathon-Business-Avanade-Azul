@@ -21,6 +21,8 @@ VALID = {
     "MLFLOW_TRACKING_URI": "https://mlflow.example.com",
     "MLFLOW_SERVING_URL": "https://serving.example.com/invocations",
     "MLFLOW_LOCAL_INFERENCE": False,
+    "AI_RATE_LIMIT_ENABLED": True,
+    "REDIS_URL": "redis://redis.example.invalid:6379/0",
 }
 
 

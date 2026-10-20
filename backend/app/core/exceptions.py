@@ -19,7 +19,7 @@ def register_exception_handlers(app: FastAPI) -> None:
         message = detail.get("message", "A requisição não pôde ser processada.") if isinstance(detail, dict) else detail
         content = {
             "success": False,
-            "error": "HTTP_ERROR",
+            "error": detail.get("code", "HTTP_ERROR") if isinstance(detail, dict) else "HTTP_ERROR",
             "message": message,
             "detail": detail,
             "status_code": exc.status_code,
@@ -33,7 +33,7 @@ def register_exception_handlers(app: FastAPI) -> None:
                     if key in detail
                 }
             )
-        return JSONResponse(status_code=exc.status_code, content=content)
+        return JSONResponse(status_code=exc.status_code, content=content, headers=exc.headers)
 
     @app.exception_handler(RequestValidationError)
     async def validation_exception_handler(request: Request, exc: RequestValidationError):

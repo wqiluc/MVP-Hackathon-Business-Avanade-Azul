@@ -1,5 +1,6 @@
 import json
 import logging
+import math
 import time
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
@@ -56,7 +57,8 @@ def _retry_after_seconds(error: Exception) -> float | None:
     if not isinstance(value, str):
         return None
     try:
-        return max(0.0, float(value))
+        seconds = float(value)
+        return max(0.0, seconds) if math.isfinite(seconds) else None
     except ValueError:
         try:
             retry_at = parsedate_to_datetime(value)
@@ -93,10 +95,16 @@ class RecommendationOutput(BaseModel):
 
 
 class OpenAIRecommendationService:
-    def __init__(self, api_key: str, model: str, timeout_seconds: float = 12) -> None:
+    def __init__(
+        self, api_key: str, model: str, timeout_seconds: float = 12,
+        max_retries: int = MAX_RATE_LIMIT_ATTEMPTS - 1,
+    ) -> None:
+        if not 0 <= max_retries <= 2:
+            raise ValueError("max_retries must be between 0 and 2")
         self._api_key = api_key
         self._model = model
         self._timeout_seconds = timeout_seconds
+        self._max_attempts = max_retries + 1
 
     def recommend(self, state: dict) -> RecommendationOutput:
         if not self._api_key:
@@ -153,7 +161,7 @@ class OpenAIRecommendationService:
             ],
             "text_format": RecommendationOutput,
         }
-        for attempt in range(1, MAX_RATE_LIMIT_ATTEMPTS + 1):
+        for attempt in range(1, self._max_attempts + 1):
             try:
                 response = client.responses.parse(**request)
                 break
@@ -161,14 +169,17 @@ class OpenAIRecommendationService:
                 if _is_quota_error(error):
                     logger.warning("OpenAI request rejected for quota/billing.")
                     raise OpenAIRecommendationError("quota_billing") from error
-                if attempt == MAX_RATE_LIMIT_ATTEMPTS:
+                if attempt == self._max_attempts:
                     logger.warning("OpenAI rate limit persisted after bounded retries.")
                     raise OpenAIRecommendationError("rate_limit") from error
                 delay = _rate_limit_delay(error, attempt)
+                if delay > self._timeout_seconds:
+                    logger.warning("OpenAI retry delay exceeds request wait budget; using fallback.")
+                    raise OpenAIRecommendationError("rate_limit") from error
                 logger.info(
                     "OpenAI temporary rate limit; retry %d/%d after %.2f seconds.",
                     attempt,
-                    MAX_RATE_LIMIT_ATTEMPTS - 1,
+                    self._max_attempts - 1,
                     delay,
                 )
                 time.sleep(delay)

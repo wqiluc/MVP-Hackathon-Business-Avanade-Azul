@@ -3,12 +3,19 @@ from fastapi import APIRouter, Depends, HTTPException
 from app.services.schemas.client_schema import ClientAnalysisRequest, ClientAnalysisResponse
 from app.services.crm_service import CrmService, gerar_recomendacao
 from app.core.security import get_current_user
+from app.core.ai_rate_limit import enforce_ai_rate_limit
 from app.services.agent_service import analyze_client as analyze_client_service
 
 router = APIRouter()
 
-@router.post("/analyze-client", include_in_schema=False)
-@router.post("/analyze", response_model=ClientAnalysisResponse)
+@router.post(
+    "/analyze-client", include_in_schema=False,
+    dependencies=[Depends(enforce_ai_rate_limit)],
+)
+@router.post(
+    "/analyze", response_model=ClientAnalysisResponse,
+    dependencies=[Depends(enforce_ai_rate_limit)],
+)
 def analyze_client(req: ClientAnalysisRequest, current_user: dict = Depends(get_current_user)):
     final_state = analyze_client_service(
         req.raw_user_id,
@@ -53,7 +60,12 @@ def obter_cliente(cliente_id: str, current_user: dict = Depends(get_current_user
     return {key: value for key, value in cliente.items() if key not in internal_fields}
 
 
-@router.post("/{cliente_id}/recomendacao")
+@router.post(
+    "/{cliente_id}/recomendacao",
+    dependencies=[Depends(enforce_ai_rate_limit)],
+    responses={429: {"description": "Limite de IA excedido; consulte Retry-After."},
+               503: {"description": "Proteção de IA indisponível."}},
+)
 def recomendar(cliente_id: str, current_user: dict = Depends(get_current_user)):
     cliente = CrmService.obter(cliente_id)
     if not cliente:

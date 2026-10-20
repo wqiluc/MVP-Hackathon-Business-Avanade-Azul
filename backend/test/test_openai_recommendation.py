@@ -1,5 +1,7 @@
 import json
 import sys
+from datetime import datetime, timedelta, timezone
+from email.utils import format_datetime
 from types import SimpleNamespace
 
 import pytest
@@ -10,6 +12,7 @@ from ai.llm.openai_recommendation import (
     OpenAIRecommendationError,
     OpenAIRecommendationService,
     RecommendationOutput,
+    _retry_after_seconds,
 )
 
 
@@ -229,6 +232,71 @@ def test_quota_error_falls_back_without_retry(monkeypatch):
     assert exc.value.reason == "quota_billing"
     assert len(calls) == 1
     assert sleeps == []
+
+
+@pytest.mark.parametrize("retries", [0, 1, 2])
+def test_configured_retries_bound_total_provider_calls(monkeypatch, retries):
+    calls = []
+    sleeps = []
+
+    def parse(_request, _captured):
+        calls.append(None)
+        raise FakeRateLimitError("temporary")
+
+    _install_openai(monkeypatch, parse)
+    monkeypatch.setattr("ai.llm.openai_recommendation.time.sleep", sleeps.append)
+    service = OpenAIRecommendationService("test-key", "gpt-test", max_retries=retries)
+    state = _state()
+    with pytest.raises(OpenAIRecommendationError, match="rate_limit"):
+        service.recommend(state)
+    assert len(calls) == retries + 1
+    assert len(sleeps) == retries
+
+
+def test_long_retry_after_uses_fallback_without_retrying_early(monkeypatch):
+    calls = []
+    sleeps = []
+
+    def parse(_request, _captured):
+        calls.append(None)
+        error = FakeRateLimitError("temporary")
+        error.response = SimpleNamespace(headers={"retry-after": "3600"})
+        raise error
+
+    _install_openai(monkeypatch, parse)
+    monkeypatch.setattr("ai.llm.openai_recommendation.time.sleep", sleeps.append)
+    service = OpenAIRecommendationService("test-key", "gpt-test")
+    state = _state()
+    with pytest.raises(OpenAIRecommendationError, match="rate_limit"):
+        service.recommend(state)
+    assert len(calls) == 1
+    assert sleeps == []
+
+
+def test_http_date_retry_after_is_respected(monkeypatch):
+    now = datetime(2026, 10, 20, 18, 0, tzinfo=timezone.utc)
+    monkeypatch.setattr(
+        "ai.llm.openai_recommendation.datetime",
+        SimpleNamespace(now=lambda _timezone: now),
+    )
+    error = FakeRateLimitError("temporary")
+    error.response = SimpleNamespace(
+        headers={"retry-after": format_datetime(now + timedelta(seconds=5), usegmt=True)}
+    )
+    assert _retry_after_seconds(error) == 5
+
+
+@pytest.mark.parametrize("header", ["not-a-date", "nan", "inf"])
+def test_invalid_retry_after_cannot_cause_unbounded_wait(header):
+    error = FakeRateLimitError("temporary")
+    error.response = SimpleNamespace(headers={"retry-after": header})
+    assert _retry_after_seconds(error) is None
+
+
+@pytest.mark.parametrize("retries", [-1, 3])
+def test_excessive_or_negative_retries_are_rejected(retries):
+    with pytest.raises(ValueError):
+        OpenAIRecommendationService("test-key", "gpt-test", max_retries=retries)
 
 
 @pytest.mark.parametrize(

@@ -29,6 +29,12 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
     OPENAI_MODEL: str = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
     OPENAI_TIMEOUT_SECONDS: float = float(os.getenv("OPENAI_TIMEOUT_SECONDS", "12"))
+    AI_RATE_LIMIT_ENABLED: bool = True
+    AI_RATE_LIMIT_REQUESTS: int = 10
+    AI_RATE_LIMIT_WINDOW_SECONDS: int = 60
+    AI_RATE_LIMIT_IP_REQUESTS: int = 100
+    AI_OPENAI_MAX_RETRIES: int = 2
+    REDIS_URL: str = ""
     
     # Observabilidade (LangSmith Rate-Limited)
     LANGCHAIN_TRACING_V2: str = os.getenv("LANGCHAIN_TRACING_V2", "false")

@@ -283,6 +283,7 @@ def gerar_recomendacao(cliente: dict) -> dict:
             settings.OPENAI_API_KEY,
             settings.OPENAI_MODEL,
             settings.OPENAI_TIMEOUT_SECONDS,
+            max_retries=settings.AI_OPENAI_MAX_RETRIES,
         ).recommend(final)
     except OpenAIRecommendationError as error:
         logger.warning(
