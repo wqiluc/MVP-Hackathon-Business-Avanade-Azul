@@ -56,35 +56,33 @@
   --shadow: 0 1px 2px rgba(17, 29, 64, 0.05), 0 4px 16px rgba(17, 29, 64, 0.04);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
-    color-scheme: dark;
-    /* Mesmo azul-marinho do fundo do logotipo, para não aparecer "caixa" ao redor dele */
-    --navy: #111d40;
-    --navy-2: #1b2a58;
-    --page: #0a1022;
-    --surface: #121a33;
-    --surface-2: #18213d;
-    --border: rgba(255, 255, 255, 0.1);
-    --border-strong: rgba(255, 255, 255, 0.18);
-    --text-primary: #eef1f8;
-    --text-secondary: #b6bdd0;
-    --text-muted: #8a92a8;
-    --accent: #5cc4f2;
-    --accent-wash: rgba(92, 196, 242, 0.12);
-    --grid: #232c47;
-    --axis: #343e5c;
-    --series-1: #3987e5;
-    --series-1-wash: rgba(57, 135, 229, 0.14);
-    --deemphasis: #3a4462;
-    --div-pos: #3987e5;
-    --div-neg: #e66767;
-    --ord-1: #184f95;
-    --ord-2: #256abf;
-    --ord-3: #5598e7;
-    --ord-4: #9ec5f4;
-    --shadow: none;
-  }
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  /* Mesmo azul-marinho do fundo do logotipo, para não aparecer "caixa" ao redor dele */
+  --navy: #111d40;
+  --navy-2: #1b2a58;
+  --page: #0a1022;
+  --surface: #121a33;
+  --surface-2: #18213d;
+  --border: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.18);
+  --text-primary: #eef1f8;
+  --text-secondary: #b6bdd0;
+  --text-muted: #8a92a8;
+  --accent: #5cc4f2;
+  --accent-wash: rgba(92, 196, 242, 0.12);
+  --grid: #232c47;
+  --axis: #343e5c;
+  --series-1: #3987e5;
+  --series-1-wash: rgba(57, 135, 229, 0.14);
+  --deemphasis: #3a4462;
+  --div-pos: #3987e5;
+  --div-neg: #e66767;
+  --ord-1: #184f95;
+  --ord-2: #256abf;
+  --ord-3: #5598e7;
+  --ord-4: #9ec5f4;
+  --shadow: none;
 }
 
 /* ==========================================================================
@@ -215,6 +213,14 @@ textarea {
   background: var(--navy-2);
   color: #fff;
   box-shadow: inset 3px 0 0 var(--brand);
+}
+
+.theme-toggle {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
 }
 
 .sidebar__footer {
@@ -510,13 +516,11 @@ textarea {
   color: var(--critical);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) .badge--warning svg {
-    color: var(--warning);
-  }
-  :root:not([data-theme='light']) .badge--serious svg {
-    color: var(--serious);
-  }
+:root[data-theme='dark'] .badge--warning svg {
+  color: var(--warning);
+}
+:root[data-theme='dark'] .badge--serious svg {
+  color: var(--serious);
 }
 
 .badge--synthetic {
@@ -557,17 +561,15 @@ textarea {
   background: var(--navy-2);
 }
 
-@media (prefers-color-scheme: dark) {
-  /* No tema escuro o azul-marinho some no fundo: o botão principal usa o azul da marca */
-  :root:not([data-theme='light']) .btn--primary {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: #0b1430;
-  }
+/* No tema escuro o azul-marinho some no fundo: o botão principal usa o azul da marca */
+:root[data-theme='dark'] .btn--primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #0b1430;
+}
 
-  :root:not([data-theme='light']) .btn--primary:hover {
-    background: #8ad5f6;
-  }
+:root[data-theme='dark'] .btn--primary:hover {
+  background: #8ad5f6;
 }
 
 .btn:disabled {

@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { Icone } from '../componentes/ui/Icone';
+import { AlternadorTema } from '../componentes/estrutura/AlternadorTema';
 import { useAutenticacao } from '../hooks/useAutenticacao';
 import logo from '../imagens/logo-azul.jpg';
 import { usandoDadosSinteticos } from '../servicos/configuracaoApi';
@@ -65,6 +66,7 @@ export function PaginaLogin() {
 
       <main className="login__painel">
         <form className="login__form" onSubmit={enviar} noValidate>
+          <AlternadorTema />
           <div>
             <h2>Entrar</h2>
             <p className="login__subtitulo">Acesso restrito às equipes internas da Azul.</p>

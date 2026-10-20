@@ -4,11 +4,13 @@ import { usandoDadosSinteticos } from '../../servicos/servicoCrm';
 import { Icone, type NomeIcone } from '../ui/Icone';
 import { BuscaCliente } from './BuscaCliente';
 import { MenuUsuario } from './MenuUsuario';
+import { AlternadorTema } from './AlternadorTema';
 
 const NAVEGACAO: { para: string; rotulo: string; icone: NomeIcone; fim?: boolean }[] = [
   { para: '/', rotulo: 'Menu', icone: 'grid', fim: true },
   { para: '/dashboard', rotulo: 'Dashboard', icone: 'chart' },
-  { para: '/clientes', rotulo: 'Cliente', icone: 'user' },
+  { para: '/clientes/lista', rotulo: 'Clientes', icone: 'users' },
+  { para: '/clientes', rotulo: 'Cliente prioritário', icone: 'user', fim: true },
 ];
 
 const TITULOS: Record<string, string> = {
@@ -18,7 +20,7 @@ const TITULOS: Record<string, string> = {
 
 export function LayoutPrincipal() {
   const { pathname } = useLocation();
-  const secao = TITULOS[pathname.split('/')[1]] ?? '';
+  const secao = pathname === '/clientes/lista' ? 'Clientes' : TITULOS[pathname.split('/')[1]] ?? '';
 
   return (
     <div className="app-shell">
@@ -35,6 +37,7 @@ export function LayoutPrincipal() {
             </NavLink>
           ))}
         </nav>
+        <AlternadorTema lateral />
         <div className="sidebar__footer">
           <Icone name="shield" size={16} />
           <span>

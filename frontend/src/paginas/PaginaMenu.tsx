@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { BuscaCliente } from '../componentes/estrutura/BuscaCliente';
 import { MenuUsuario } from '../componentes/estrutura/MenuUsuario';
+import { AlternadorTema } from '../componentes/estrutura/AlternadorTema';
 import { EnvioBaseClientes } from '../componentes/ingestao/EnvioBaseClientes';
 import { SeloDadosSinteticos, SeloPersona, SeloRisco } from '../componentes/ui/Selos';
 import { Icone, type NomeIcone } from '../componentes/ui/Icone';
@@ -26,10 +27,10 @@ const MODULOS: Modulo[] = [
     para: '/dashboard',
   },
   {
-    titulo: 'Visão do cliente',
-    descricao: 'Perfil demonstrativo, contexto do classificador e recomendação por LLM configurado ou regras.',
+    titulo: 'Visão dos clientes',
+    descricao: 'Lista de clientes, filtros e acesso ao perfil, contexto do classificador e recomendação por LLM configurado ou regras.',
     icone: 'user',
-    para: '/clientes',
+    para: '/clientes/lista',
   },
   {
     titulo: 'Personas e segmentação',
@@ -97,6 +98,7 @@ export function PaginaMenu() {
             <img className="menu__logo" src={logo} alt="Azul Linhas Aéreas Brasileiras" />
             <MenuUsuario />
           </div>
+          <AlternadorTema />
           <div>
             <h1>CRM de Alto Valor</h1>
             <p style={{ marginTop: 10 }}>
