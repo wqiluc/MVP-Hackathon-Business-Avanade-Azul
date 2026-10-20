@@ -1,0 +1,16 @@
+{
+  "registros_bronze": 10150,
+  "categoria_padronizada": 400,
+  "uf_padronizada": 300,
+  "email_minusculo": 300,
+  "email_invalido_sinalizado": 0,
+  "decimal_com_virgula_corrigido": 500,
+  "nps_fora_da_faixa_anulado": 50,
+  "tarifa_vazia_imputada_pela_moda_do_motivo": 100,
+  "duplicatas_removidas_mantendo_mais_recente": 150,
+  "email_compartilhado_entre_clientes_sinalizado": 8,
+  "pontos_a_expirar_limitados_ao_saldo": 0,
+  "comentarios_com_dado_pessoal_mascarado": 227,
+  "registros_invalidos_descartados": 0,
+  "registros_silver": 10000
+}

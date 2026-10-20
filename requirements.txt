@@ -1,0 +1,8 @@
+pandas>=2.2
+numpy>=1.26
+fastapi>=0.110
+uvicorn>=0.29
+python-dotenv>=1.0
+snowflake-connector-python[pandas]>=3.10
+pytest>=8.0
+httpx>=0.27

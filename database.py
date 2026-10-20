@@ -10,6 +10,7 @@ def get_snowflake_connection():
         password=os.getenv("SNOWFLAKE_PASSWORD"),
         account=os.getenv("SNOWFLAKE_ACCOUNT"),
         warehouse=os.getenv("SNOWFLAKE_WAREHOUSE", "COMPUTE_WH"),
-        database=os.getenv("SNOWFLAKE_DATABASE", "AZUL_DB"),
-        schema=os.getenv("SNOWFLAKE_SCHEMA", "GOLD") # Camada agregada/Gold
+        database=os.getenv("SNOWFLAKE_DATABASE", "AZUL_DATA_LAKE"),
+        schema=os.getenv("SNOWFLAKE_SCHEMA", "GOLD"), # Camada agregada/Gold
+        role=os.getenv("SNOWFLAKE_ROLE"),
     )

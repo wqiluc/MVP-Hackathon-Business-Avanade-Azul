@@ -1,0 +1,32 @@
+{
+  "data_referencia": "2026-10-20",
+  "clientes": 10000,
+  "alto_valor": 2000,
+  "receita_12m_total": 44190819.81,
+  "pct_receita_alto_valor": 0.555,
+  "por_persona": {
+    "Ocasional": 4200,
+    "Lazer & Família": 2519,
+    "Caçador de Pontos": 1658,
+    "Executivo Frequente": 1623
+  },
+  "por_acao": {
+    "RELACIONAMENTO": 4263,
+    "UPGRADE_CATEGORIA": 2161,
+    "RESGATE_PONTOS": 1101,
+    "PROTECAO_CATEGORIA": 803,
+    "PACOTE_AZUL_VIAGENS": 652,
+    "WINBACK": 563,
+    "UPSELL_MAIS_AZUL": 182,
+    "RECUPERACAO_SERVICO": 139,
+    "CARTAO_COBRANDED": 136
+  },
+  "prob_churn_media_por_risco_origem": {
+    "Alto": 0.431,
+    "Baixo": 0.161,
+    "Medio": 0.203
+  },
+  "ticket_medio_domestico": 783.54,
+  "referencia_anac_tarifa_media": 648.0,
+  "clientes_da_base": 10000
+}

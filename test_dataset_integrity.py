@@ -3,7 +3,7 @@ import pandas as pd
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent
-CSV_PATH = BASE_DIR / "clientes_sinteticos_snowflake_2000.csv"
+CSV_PATH = BASE_DIR / "clientes_sinteticos_snowflake_10000.csv"
 
 @pytest.fixture(scope="module")
 def dataset():
@@ -12,12 +12,12 @@ def dataset():
     return df
 
 def test_quantidade_exata_de_clientes(dataset):
-    """Garante que a base possui exatamente 2.000 clientes."""
-    assert len(dataset) == 2000, f"Esperado 2000 clientes, encontrado {len(dataset)}"
+    """Garante que a base possui exatamente 10.000 clientes."""
+    assert len(dataset) == 10000, f"Esperado 10000 clientes, encontrado {len(dataset)}"
 
 def test_unicidade_de_ids(dataset):
     """Garante que não existem clientes duplicados (ID único)."""
-    assert dataset["CUSTOMER_ID"].nunique() == 2000, "Existem CUSTOMER_ID duplicados na base"
+    assert dataset["CUSTOMER_ID"].nunique() == 10000, "Existem CUSTOMER_ID duplicados na base"
 
 def test_ausencia_de_valores_nulos(dataset):
     """Garante que não há nenhum campo ausente ou NaN na base."""
