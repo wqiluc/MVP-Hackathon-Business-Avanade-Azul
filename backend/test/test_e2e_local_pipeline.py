@@ -1,7 +1,15 @@
+import subprocess
+import sys
+from pathlib import Path
+
 from fastapi.testclient import TestClient
 
 from app.config import settings
+from app.services.datalake_service import DataLakeService
 from run import app
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+SYNTHETIC_GENERATOR = PROJECT_ROOT / "scripts" / "generate_synthetic_clients.py"
 
 
 def test_upload_to_decision_recommendation_api_with_local_duckdb(
@@ -36,11 +44,21 @@ def test_upload_to_decision_recommendation_api_with_local_duckdb(
         predict_churn,
     )
 
-    csv_content = (
-        "id_cliente,tier,frequencia,recencia_dias,gasto_total,incidentes\n"
-        "customer-e2e-1,DIAMANTE,10,30,50000,2\n"
-        "customer-e2e-2,SAFIRA,5,80,15000,0\n"
+    csv_path = tmp_path / "synthetic_clients.csv"
+    subprocess.run(
+        [
+            sys.executable,
+            str(SYNTHETIC_GENERATOR),
+            "--output",
+            str(csv_path),
+            "--rows",
+            "8",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
     )
+    csv_content = csv_path.read_bytes()
     with TestClient(app) as api:
         login = api.post(
             "/api/v1/auth/login",
@@ -57,8 +75,8 @@ def test_upload_to_decision_recommendation_api_with_local_duckdb(
             headers=headers,
             files={
                 "arquivo": (
-                    "clients.csv",
-                    csv_content.encode("utf-8"),
+                    csv_path.name,
+                    csv_content,
                     "text/csv",
                 )
             },
@@ -66,8 +84,29 @@ def test_upload_to_decision_recommendation_api_with_local_duckdb(
         assert upload.status_code == 200
         assert upload.json()["status"] == "recebido"
         assert len(predictions) == 1
-        assert len(predictions[0]) == 2
-        assert "customer-e2e-1" not in predictions[0]["client_identifier"].to_list()
+        assert len(predictions[0]) == 8
+        assert not any(
+            identifier.startswith("synthetic-")
+            for identifier in predictions[0]["client_identifier"].to_list()
+        )
+
+        connection = DataLakeService.get_connection()
+        try:
+            assert connection.execute(
+                "SELECT COUNT(*) FROM bronze.raw_clients"
+            ).fetchone()[0] == 8
+            assert connection.execute(
+                "SELECT COUNT(*) FROM silver.cleaned_clients"
+            ).fetchone()[0] == 8
+            assert connection.execute(
+                "SELECT COUNT(*) FROM gold.client_features"
+            ).fetchone()[0] == 8
+            scores = connection.execute(
+                "SELECT churn_score FROM gold.client_features"
+            ).fetchall()
+            assert [score[0] for score in scores] == [0.82] * 8
+        finally:
+            connection.close()
 
         clients = api.get("/api/v1/clientes", headers=headers)
         assert clients.status_code == 200
@@ -76,7 +115,7 @@ def test_upload_to_decision_recommendation_api_with_local_duckdb(
             for item in clients.json()
             if item["tier"] == "Diamante" and item["riscoEvasao"] == 0.82
         )
-        assert not client["id"].startswith("customer-")
+        assert not client["id"].startswith("synthetic-")
 
         recommendation_response = api.post(
             f"/api/v1/clientes/{client['id']}/recomendacao",
