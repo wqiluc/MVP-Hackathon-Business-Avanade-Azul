@@ -1,4 +1,4 @@
--- Gerado por `python pipeline_datalake.py ddl` (fonte: pipeline_datalake.py). Complementa 05_setup_snowflake_medalhao.sql.
+-- Gerado por `python pipeline_datalake.py ddl` (fonte: pipeline_datalake.py).
 CREATE DATABASE IF NOT EXISTS AZUL_DATA_LAKE;
 CREATE SCHEMA IF NOT EXISTS AZUL_DATA_LAKE.BRONZE;
 CREATE SCHEMA IF NOT EXISTS AZUL_DATA_LAKE.SILVER;

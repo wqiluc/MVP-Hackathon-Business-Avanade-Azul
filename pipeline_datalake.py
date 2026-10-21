@@ -41,18 +41,24 @@ TOTAL_PADRAO = 10_000
 
 # --- Calibração por fontes públicas (ver datalake/README.md) ---
 TARIFA_MEDIA_ANAC = 648.0  # ANAC, Anuário 2025: tarifa média doméstica (R$)
-# Azul Fidelidade 2026, ano-calendário (fonte pública; validar no site oficial)
 REGRAS_CATEGORIA = {  # categoria: (trechos, pontos qualificáveis, regra, gasto alternativo)
     "Topazio": (6, 6_000, "OU", None),
     "Safira": (10, 10_000, "OU", None),
     "Diamante": (12, 12_000, "E", 25_000),
 }
 ORDEM_CATEGORIA = ["Basico", "Topazio", "Safira", "Diamante"]
-CATEGORIA_POR_PRODUTO = {"GOLD": "Topazio", "PLATINUM": "Safira", "INFINITE": "Diamante",
-                         "CLUBE_10000": "Safira", "CLUBE_20000": "Diamante"}
+CATEGORIA_POR_PRODUTO = {
+    "GOLD": "Topazio",
+    "PLATINUM": "Safira",
+    "INFINITE": "Diamante",
+    "CLUBE_10000": "Safira",
+    "CLUBE_20000": "Diamante",
+}
 
-COLUNAS_ORIGINAIS = ["CUSTOMER_ID", "NOME", "EMAIL", "ESTADO", "CATEGORIA_TIER",
-                     "PONTOS_ACUMULADOS", "VOOS_ANO", "RISCO_CHURN", "DATA_CADASTRO"]
+COLUNAS_ORIGINAIS = [
+    "CUSTOMER_ID", "NOME", "EMAIL", "ESTADO", "CATEGORIA_TIER",
+    "PONTOS_ACUMULADOS", "VOOS_ANO", "RISCO_CHURN", "DATA_CADASTRO"
+]
 COLUNAS_NOVAS = [
     "AEROPORTO_BASE", "ROTA_FAVORITA", "MOTIVO_VIAGEM", "TARIFA_PREFERIDA", "USA_ESPACO_AZUL",
     "VIAJA_INTERNACIONAL", "ANTECEDENCIA_MEDIA_DIAS", "DIA_SEMANA_PREFERIDO", "ACOMPANHANTES_MEDIA",
@@ -81,47 +87,37 @@ TIPOS_SILVER = {
 }
 
 TIPOS_GOLD = {
-    # identificação (NOME/EMAIL só para o operador de CRM no front-end, nunca para a IA)
     "CUSTOMER_ID": "VARCHAR(20)", "NOME": "VARCHAR(150)", "EMAIL": "VARCHAR(150)", "ESTADO": "VARCHAR(2)",
     "AEROPORTO_BASE": "VARCHAR(3)", "CATEGORIA_TIER": "VARCHAR(20)", "MESES_RELACIONAMENTO": "NUMBER(5,0)",
-    # valor (RFM + CLV)
     "VOOS_ANO": "NUMBER(5,0)", "VOOS_ANO_ANTERIOR": "NUMBER(5,0)", "TENDENCIA_VOOS": "FLOAT",
     "GASTO_TOTAL_12M": "NUMBER(12,2)", "TICKET_MEDIO": "NUMBER(10,2)", "DIAS_DESDE_ULTIMO_VOO": "NUMBER(5,0)",
     "SCORE_VALOR": "NUMBER(5,1)", "CLV_ESTIMADO_36M": "NUMBER(12,2)", "SEGMENTO_VALOR": "VARCHAR(10)",
     "ALTO_VALOR": "BOOLEAN",
-    # risco de evasão com explicabilidade
     "RISCO_CHURN": "VARCHAR(10)", "PROB_CHURN_90D": "FLOAT", "FATORES_RISCO": "VARCHAR(500)",
-    # persona e padrão de viagem
     "PERSONA": "VARCHAR(30)", "PERSONA_MOTIVO": "VARCHAR(200)", "MOTIVO_VIAGEM": "VARCHAR(20)",
     "ROTA_FAVORITA": "VARCHAR(7)", "TARIFA_PREFERIDA": "VARCHAR(20)", "USA_ESPACO_AZUL": "BOOLEAN",
     "VIAJA_INTERNACIONAL": "BOOLEAN", "ANTECEDENCIA_MEDIA_DIAS": "NUMBER(5,0)",
     "DIA_SEMANA_PREFERIDO": "VARCHAR(3)", "ACOMPANHANTES_MEDIA": "NUMBER(4,1)", "CANAL_COMPRA": "VARCHAR(20)",
-    # previsão da próxima viagem
     "PROXIMA_VIAGEM_DATA": "DATE", "PROXIMA_VIAGEM_JANELA_COMPRA": "DATE", "PROXIMA_VIAGEM_ROTA": "VARCHAR(7)",
     "PROXIMA_VIAGEM_TARIFA": "VARCHAR(20)", "PROXIMA_VIAGEM_PAGAMENTO": "VARCHAR(10)",
     "PROXIMA_VIAGEM_CONFIANCA": "VARCHAR(15)",
-    # fidelidade
     "PONTOS_ACUMULADOS": "NUMBER(10,0)", "PONTOS_A_EXPIRAR_90D": "NUMBER(10,0)", "RESGATES_PONTOS_12M": "NUMBER(5,0)",
     "CARTAO_AZUL_ITAU": "VARCHAR(10)", "CLUBE_AZUL": "VARCHAR(15)", "CATEGORIA_PROJETADA": "VARCHAR(20)",
     "RISCO_REBAIXAMENTO": "BOOLEAN", "PROXIMA_CATEGORIA": "VARCHAR(20)", "FALTAM_TRECHOS_PROXIMA": "NUMBER(5,0)",
-    # experiência
     "ATRASOS_SOFRIDOS_12M": "NUMBER(5,0)", "RECLAMACOES_12M": "NUMBER(5,0)", "NPS_ULTIMO": "NUMBER(2,0)",
     "SENTIMENTO_ULTIMO_CONTATO": "VARCHAR(10)", "COMENTARIO_ULTIMO_CONTATO": "VARCHAR(500)",
-    # próxima melhor ação
     "ACAO_RECOMENDADA": "VARCHAR(30)", "ACAO_DESCRICAO": "VARCHAR(300)", "CANAL_CONTATO": "VARCHAR(25)",
     "PRIORIDADE_CRM": "NUMBER(5,1)", "DATA_REFERENCIA": "DATE",
 }
 
-# Campos da Gold que vão para o agente de IA: sem nome, e-mail ou texto livre (LGPD).
 COLUNAS_CONTEXTO_IA = [c for c in TIPOS_GOLD if c not in ("NOME", "EMAIL", "COMENTARIO_ULTIMO_CONTATO")]
 
-CAMADAS_SNOWFLAKE = [  # (schema, tabela, arquivo)
+CAMADAS_SNOWFLAKE = [
     ("BRONZE", "CLIENTES_AZUL_RAW", BRONZE_CSV),
     ("SILVER", "CLIENTES_AZUL", SILVER_CSV),
     ("GOLD", "CLIENTES_AZUL", GOLD_CSV),
 ]
 
-# ---------------------------------------------------------------- perfis de geração
 AEROPORTOS_UF = {
     "SP": (["VCP", "GRU", "CGH"], [0.55, 0.25, 0.20]), "PE": (["REC"], [1.0]),
     "RJ": (["SDU", "GIG"], [0.6, 0.4]), "MG": (["CNF"], [1.0]), "BA": (["SSA"], [1.0]),
@@ -137,10 +133,10 @@ DESTINOS = {
     "NEGOCIOS": ["VCP", "CNF", "REC", "SDU", "CGH", "BSB", "POA", "CWB", "SSA", "GRU"],
     "LAZER": ["REC", "SSA", "FOR", "NAT", "MCZ", "FEN", "BPS", "FLN", "IGU", "JPA"],
 }
-HUB_INTERNACIONAL = {"SP": "VCP", "MG": "CNF", "PE": "REC"}  # demais estados conectam via VCP
+HUB_INTERNACIONAL = {"SP": "VCP", "MG": "CNF", "PE": "REC"}
 DESTINOS_INTERNACIONAIS = ["MCO", "FLL", "LIS"]
 
-PERFIS = {  # comportamento por perfil latente (não sai na base; a Gold infere a persona dos dados)
+PERFIS = {
     "EXECUTIVO": dict(motivo={"CORPORATIVO": .8, "MISTO": .2}, tarifa={"MAIS_AZUL": .6, "AZUL": .3, "BUSINESS": .1},
                       espaco=.45, intl=.15, antecedencia=7, dias=["SEG", "TER", "QUI"], acomp=.1,
                       canal={"CORPORATIVO": .5, "APP": .35, "SITE": .15}, resgate=.05, clube=.08, destinos="NEGOCIOS"),
@@ -154,10 +150,10 @@ PERFIS = {  # comportamento por perfil latente (não sai na base; a Gold infere 
                       espaco=.05, intl=.03, antecedencia=25, dias=["SEX", "SAB", "DOM"], acomp=.9,
                       canal={"SITE": .45, "APP": .3, "AGENCIA": .25}, resgate=.05, clube=.02, destinos="LAZER"),
 }
-PESOS_PERFIL_POR_TIER = {  # EXECUTIVO, LAZER, CACADOR (OCASIONAL depende da frequência)
+PESOS_PERFIL_POR_TIER = {
     "Diamante": [.72, .18, .10], "Safira": [.50, .30, .20], "Topazio": [.25, .45, .30], "Basico": [.10, .55, .35],
 }
-CARTAO_POR_TIER = {  # NENHUM, GOLD, PLATINUM, INFINITE (o cartão nunca dá categoria acima da atual)
+CARTAO_POR_TIER = {
     "Basico": [1.0, 0, 0, 0], "Topazio": [.65, .35, 0, 0], "Safira": [.45, .25, .30, 0], "Diamante": [.30, .10, .30, .30],
 }
 CLUBES_POR_TIER = {
@@ -208,11 +204,6 @@ def _escolher(rng: np.random.Generator, pesos: dict[str, float]) -> str:
 
 # ================================================================ BRONZE
 def expandir_base(original: pd.DataFrame, total: int, rng: np.random.Generator, seed: int = SEED) -> pd.DataFrame:
-    """Completa a base até ``total`` clientes por bootstrap dos clientes existentes.
-
-    Os clientes existentes são mantidos; os novos herdam tier, estado e risco de um
-    cliente sorteado, com variação em pontos, voos e data de cadastro.
-    """
     base = original[COLUNAS_ORIGINAIS].copy()
     base["ORIGEM_REGISTRO"] = CSV_BASE.name
 
@@ -221,14 +212,20 @@ def expandir_base(original: pd.DataFrame, total: int, rng: np.random.Generator, 
         modelo = base.sample(n=novos, replace=True, random_state=seed).reset_index(drop=True)
         primeiros = original["NOME"].str.split().str[0].unique()
         sobrenomes = original["NOME"].str.split().str[-1].unique()
-        inicio_id = int(original["CUSTOMER_ID"].str[4:].astype(int).max()) + 1
+        
+        # Extrai número com segurança via regex
+        max_id_num = original["CUSTOMER_ID"].str.extract(r"(\d+)")[0].astype(int).max()
+        inicio_id = int(max_id_num) + 1 if pd.notna(max_id_num) else 100000
+
         nomes, emails = [], []
         for i in range(novos):
             p, s = rng.choice(primeiros), rng.choice(sobrenomes)
             nomes.append(f"{p} {s}")
             emails.append(f"{_sem_acento(p).lower()}.{_sem_acento(s).lower()}.{inicio_id + i}@emailmock.com")
+            
         cadastro = pd.to_datetime(modelo["DATA_CADASTRO"]) + pd.to_timedelta(rng.integers(-120, 121, novos), unit="D")
         cadastro = cadastro.clip(upper=pd.Timestamp(DATA_REFERENCIA) - pd.Timedelta(days=30))
+        
         modelo = modelo.assign(
             CUSTOMER_ID=[f"CLI-{inicio_id + i}" for i in range(novos)],
             NOME=nomes,
@@ -243,7 +240,6 @@ def expandir_base(original: pd.DataFrame, total: int, rng: np.random.Generator, 
 
 
 def gerar_bronze(clientes: pd.DataFrame, total: int = TOTAL_PADRAO, seed: int = SEED) -> pd.DataFrame:
-    """Enriquece a base de clientes com comportamento de viagem e simula a ingestão bruta."""
     rng = np.random.default_rng(seed)
     base = expandir_base(clientes, total, rng, seed)
 
@@ -276,7 +272,6 @@ def _gerar_comportamento(c, rng: np.random.Generator) -> dict:
     if tarifa == "BUSINESS" and not intl:
         tarifa = "MAIS_AZUL"
 
-    # frequência, recência e tendência coerentes com o risco de evasão
     cadastro = date.fromisoformat(c.DATA_CADASTRO)
     dias_membro = (DATA_REFERENCIA - cadastro).days
     fator_anterior = {"Alto": (1.3, 2.2), "Medio": (0.9, 1.4), "Baixo": (0.75, 1.15)}[c.RISCO_CHURN]
@@ -294,7 +289,6 @@ def _gerar_comportamento(c, rng: np.random.Generator) -> dict:
 
     resgates = int(rng.binomial(voos, perfil["resgate"])) if voos else 0
     acomp = round(max(0.0, rng.normal(perfil["acomp"], 0.4)), 1)
-    # tarifa ANAC ajustada por família, compra em cima da hora (executivo) e rota internacional
     ticket = (TARIFA_MEDIA_ANAC * MULT_TARIFA[tarifa] * (1.15 if perfil_nome == "EXECUTIVO" else 1.0)
               * (1.6 if rota.split("-")[1] in DESTINOS_INTERNACIONAIS else 1.0) * rng.lognormal(0, 0.2))
     gasto = round((voos - resgates) * ticket, 2)
@@ -323,7 +317,7 @@ def _gerar_comportamento(c, rng: np.random.Generator) -> dict:
         comentario = rng.choice(COMENTARIOS["NEUTRO"])
     if comentario:
         comentario = comentario.format(rota=rota)
-        if rng.random() < 0.06:  # clientes escrevem dados pessoais no texto livre; a Silver mascara
+        if rng.random() < 0.06:
             comentario += rng.choice([" Meu CPF é 123.456.789-09.", " Me liguem no (11) 98765-4321.",
                                       " Respondam em contato.cliente@emailmock.com."])
 
@@ -362,7 +356,6 @@ def _gerar_comportamento(c, rng: np.random.Generator) -> dict:
 
 
 def _aplicar_ruido_de_ingestao(df: pd.DataFrame, rng: np.random.Generator) -> pd.DataFrame:
-    """Simula problemas comuns de ingestão para a Silver tratar (ver relatório de qualidade)."""
     df = df.astype(object).copy()
     n = len(df)
     novos = np.flatnonzero(df["ORIGEM_REGISTRO"] != CSV_BASE.name)
@@ -371,7 +364,6 @@ def _aplicar_ruido_de_ingestao(df: pd.DataFrame, rng: np.random.Generator) -> pd
         linhas = np.arange(n) if linhas is None else linhas
         return rng.choice(linhas, size=min(len(linhas), max(1, int(n * frac))), replace=False)
 
-    # snapshot antigo do mesmo cliente (duplicata com data de atualização anterior)
     dup = df.iloc[amostra(0.015)].copy()
     dup["DATA_ATUALIZACAO"] = [
         (datetime.fromisoformat(d) - timedelta(days=int(rng.integers(30, 200)))).isoformat(timespec="seconds")
@@ -387,7 +379,7 @@ def _aplicar_ruido_de_ingestao(df: pd.DataFrame, rng: np.random.Generator) -> pd
         df.at[i, "ESTADO"] = f" {str(df.at[i, 'ESTADO']).lower()}"
     for i in amostra(0.03):
         df.at[i, "EMAIL"] = str(df.at[i, "EMAIL"]).upper()
-    for i in amostra(0.004, novos):  # irreversível: só nos clientes da expansão, nunca nos originais
+    for i in amostra(0.004, novos):
         df.at[i, "EMAIL"] = str(df.at[i, "EMAIL"]).replace("@", "")
     for i in amostra(0.05):
         df.at[i, "GASTO_TOTAL_12M"] = f"{float(df.at[i, 'GASTO_TOTAL_12M']):.2f}".replace(".", ",")
@@ -400,7 +392,6 @@ def _aplicar_ruido_de_ingestao(df: pd.DataFrame, rng: np.random.Generator) -> pd
 
 # ================================================================ SILVER
 def tratar_silver(bronze: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
-    """Limpa, tipa, deduplica e anonimiza o texto livre. Retorna (silver, relatório)."""
     df = bronze.copy()
     regras: dict[str, int] = {"registros_bronze": len(df)}
     df = df.apply(lambda s: s.str.strip())
@@ -431,6 +422,7 @@ def tratar_silver(bronze: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
         df[col] = pd.to_numeric(df[col], errors="coerce")
     for col in ["USA_ESPACO_AZUL", "VIAJA_INTERNACIONAL", "OPT_IN_MARKETING"]:
         df[col] = df[col].str.lower().eq("true")
+        
     nps_fora = df["NPS_ULTIMO"].notna() & ~df["NPS_ULTIMO"].between(0, 10)
     regras["nps_fora_da_faixa_anulado"] = int(nps_fora.sum())
     df.loc[nps_fora, "NPS_ULTIMO"] = pd.NA
@@ -480,7 +472,6 @@ def _mascarar_pii(texto: str) -> str:
 
 
 def _sentimento(texto: str) -> float | None:
-    """Sentimento léxico simples em PT-BR (-1 a 1). Linha de base, substituível por um LLM."""
     if not texto:
         return None
     tokens = re.findall(r"[a-z]+", _sem_acento(texto).lower())
@@ -496,7 +487,6 @@ def _sentimento(texto: str) -> float | None:
 
 # ================================================================ GOLD
 def construir_gold(silver: pd.DataFrame) -> pd.DataFrame:
-    """Calcula valor (RFM/CLV), risco com fatores explicáveis, persona, próxima viagem e ação."""
     df = silver.copy()
     ref = pd.Timestamp(DATA_REFERENCIA)
     voos = df["VOOS_ANO"].astype(float)
@@ -508,7 +498,7 @@ def construir_gold(silver: pd.DataFrame) -> pd.DataFrame:
     df["TICKET_MEDIO"] = (df["GASTO_TOTAL_12M"] / pagos.where(pagos > 0)).round(2).fillna(0.0)
     pct_resgate = (df["RESGATES_PONTOS_12M"] / voos.where(voos > 0)).fillna(0.0).astype(float)
 
-    # --- risco de evasão: scorecard logístico com contribuição de cada fator
+    # --- Risco de evasão
     intervalo = 365 / voos.clip(lower=1)
     recencia_rel = (df["DIAS_DESDE_ULTIMO_VOO"].astype(float).fillna(730) / intervalo).clip(upper=4)
     nps = df["NPS_ULTIMO"].astype(float)
@@ -521,8 +511,9 @@ def construir_gold(silver: pd.DataFrame) -> pd.DataFrame:
         "sentimento": 0.6 * df["SENTIMENTO_ULTIMO_CONTATO"].eq("NEGATIVO").astype(float),
         "cartao": -0.5 * df["CARTAO_AZUL_ITAU"].ne("NENHUM").astype(float),
         "clube": -0.4 * df["CLUBE_AZUL"].ne("NENHUM").astype(float),
-    })
+    }, index=df.index)
     df["PROB_CHURN_90D"] = (1 / (1 + np.exp(-(-2.2 + contrib.sum(axis=1))))).round(3)
+
     textos = {
         "recencia": lambda r: f"Sem voar há {r.DIAS_DESDE_ULTIMO_VOO if pd.notna(r.DIAS_DESDE_ULTIMO_VOO) else 'mais de 730'} dias",
         "queda": lambda r: f"Voos caíram de {r.VOOS_ANO_ANTERIOR} para {r.VOOS_ANO} no ano",
@@ -531,13 +522,16 @@ def construir_gold(silver: pd.DataFrame) -> pd.DataFrame:
         "nps": lambda r: f"Último NPS {r.NPS_ULTIMO} (detrator)",
         "sentimento": lambda r: "Último contato com sentimento negativo",
     }
+    
+    # Otimizado: itertuples direto para evitar overhead de 10k linhas com iterrows
+    contrib_dict = contrib.to_dict(orient="records")
     fatores = []
-    for (_, linha), (_, c) in zip(df.iterrows(), contrib.iterrows()):
-        top = [k for k, v in c.sort_values(ascending=False).items() if v > 0.15 and k in textos][:3]
-        fatores.append("; ".join(textos[k](linha) for k in top) or "Sem fatores de risco relevantes")
+    for r, c_dict in zip(df.itertuples(index=False), contrib_dict):
+        top = [k for k, v in sorted(c_dict.items(), key=lambda x: x[1], reverse=True) if v > 0.15 and k in textos][:3]
+        fatores.append("; ".join(textos[k](r) for k in top) or "Sem fatores de risco relevantes")
     df["FATORES_RISCO"] = fatores
 
-    # --- valor: RFM + potencial e CLV de 36 meses descontado
+    # --- Valor
     rank = lambda s: s.rank(pct=True)  # noqa: E731
     potencial = (df["CATEGORIA_TIER"].map(ORDEM_CATEGORIA.index) / 3 + df["CARTAO_AZUL_ITAU"].ne("NENHUM")
                  + df["CLUBE_AZUL"].ne("NENHUM") + rank(df["TICKET_MEDIO"]) + df["MOTIVO_VIAGEM"].eq("CORPORATIVO")) / 5
@@ -551,7 +545,7 @@ def construir_gold(silver: pd.DataFrame) -> pd.DataFrame:
     df["ALTO_VALOR"] = pct_clv > 0.80
     df["SEGMENTO_VALOR"] = np.select([pct_clv > 0.80, pct_clv > 0.40], ["ALTO", "MEDIO"], "BAIXO")
 
-    # --- persona (regra explicável sobre o comportamento observado)
+    # --- Persona
     personas = []
     for r, resg in zip(df.itertuples(index=False), pct_resgate):
         if r.VOOS_ANO <= 2:
@@ -564,13 +558,13 @@ def construir_gold(silver: pd.DataFrame) -> pd.DataFrame:
             personas.append(("Lazer & Família", f"{r.MOTIVO_VIAGEM.lower()}, {r.ACOMPANHANTES_MEDIA} acompanhante(s), internacional={r.VIAJA_INTERNACIONAL}"))
     df["PERSONA"], df["PERSONA_MOTIVO"] = zip(*personas)
 
-    # --- previsão da próxima viagem (como e quando o cliente vai viajar)
+    # --- Previsão da próxima viagem
     ultimo = pd.to_datetime(df["DATA_ULTIMO_VOO"])
     estimada = (ultimo + pd.to_timedelta(intervalo, unit="D")).clip(lower=ref + pd.Timedelta(days=3))
     tem_historico = voos > 0
-    df["PROXIMA_VIAGEM_DATA"] = estimada.where(tem_historico).dt.date
+    df["PROXIMA_VIAGEM_DATA"] = estimada.where(tem_historico).dt.strftime("%Y-%m-%d")
     janela = (estimada - pd.to_timedelta(df["ANTECEDENCIA_MEDIA_DIAS"].astype(float), unit="D")).clip(lower=ref)
-    df["PROXIMA_VIAGEM_JANELA_COMPRA"] = janela.where(tem_historico).dt.date
+    df["PROXIMA_VIAGEM_JANELA_COMPRA"] = janela.where(tem_historico).dt.strftime("%Y-%m-%d")
     df["PROXIMA_VIAGEM_ROTA"] = df["ROTA_FAVORITA"].where(tem_historico)
     df["PROXIMA_VIAGEM_TARIFA"] = df["TARIFA_PREFERIDA"].where(tem_historico)
     df["PROXIMA_VIAGEM_PAGAMENTO"] = np.where(pct_resgate >= 0.5, "PONTOS", "DINHEIRO")
@@ -578,7 +572,7 @@ def construir_gold(silver: pd.DataFrame) -> pd.DataFrame:
     df["PROXIMA_VIAGEM_CONFIANCA"] = np.select(
         [~tem_historico, (voos >= 8) & (recencia_rel <= 1.2), voos >= 3], ["SEM_HISTORICO", "ALTA", "MEDIA"], "BAIXA")
 
-    # --- fidelidade: projeção de categoria pelas regras 2026
+    # --- Fidelidade: projeção de categoria
     projecao, proxima, faltam = [], [], []
     for r in df.itertuples(index=False):
         cat = _categoria_por_atividade(r.VOOS_ANO, r.GASTO_TOTAL_12M)
@@ -593,16 +587,17 @@ def construir_gold(silver: pd.DataFrame) -> pd.DataFrame:
         else:
             proxima.append(None)
             faltam.append(None)
+            
     df["CATEGORIA_PROJETADA"], df["PROXIMA_CATEGORIA"] = projecao, proxima
     df["FALTAM_TRECHOS_PROXIMA"] = pd.array(faltam, dtype="Int64")
     df["RISCO_REBAIXAMENTO"] = df["CATEGORIA_PROJETADA"].map(ORDEM_CATEGORIA.index) < df["CATEGORIA_TIER"].map(ORDEM_CATEGORIA.index)
 
-    # --- próxima melhor ação (regras de negócio; o agente de IA redige a mensagem)
+    # --- Próxima melhor ação
     acoes = [_proxima_acao(r) for r in df.itertuples(index=False)]
     df["ACAO_RECOMENDADA"], df["ACAO_DESCRICAO"] = zip(*acoes)
     df["CANAL_CONTATO"] = np.where(df["OPT_IN_MARKETING"], df["CANAL_CONTATO_PREFERIDO"], "SOMENTE_SERVICO")
     df["PRIORIDADE_CRM"] = (100 * rank(df["CLV_ESTIMADO_36M"] * df["PROB_CHURN_90D"])).round(1)
-    df["DATA_REFERENCIA"] = DATA_REFERENCIA
+    df["DATA_REFERENCIA"] = DATA_REFERENCIA.strftime("%Y-%m-%d")
 
     return df.sort_values("PRIORIDADE_CRM", ascending=False)[list(TIPOS_GOLD)].reset_index(drop=True)
 
@@ -610,7 +605,7 @@ def construir_gold(silver: pd.DataFrame) -> pd.DataFrame:
 def _categoria_por_atividade(trechos: int, gasto: float) -> str:
     atingida = "Basico"
     for cat, (min_trechos, min_pontos, regra, gasto_alt) in REGRAS_CATEGORIA.items():
-        pontos = gasto  # R$ 1 em passagens = 1 ponto qualificável
+        pontos = gasto
         ok = (trechos >= min_trechos or pontos >= min_pontos) if regra == "OU" else (trechos >= min_trechos and pontos >= min_pontos)
         if ok or (gasto_alt and gasto >= gasto_alt):
             atingida = cat
@@ -665,8 +660,9 @@ def gerar_ddl(database: str = "AZUL_DATA_LAKE") -> str:
 
     contexto_ia = ",\n       ".join(COLUNAS_CONTEXTO_IA)
     return "\n".join([
-        "-- Gerado por `python pipeline_datalake.py ddl` (fonte: pipeline_datalake.py). Complementa 05_setup_snowflake_medalhao.sql.",
-        f"CREATE DATABASE IF NOT EXISTS {database};",
+        "-- Gerado por `python pipeline_datalake.py ddl` (fonte: pipeline_datalake.py).",
+        # f"CREATE DATABASE IF NOT EXISTS {database};",  <-- Removido/Comentado para não exigir privilégio de ACCOUNT
+        f"USE DATABASE {database};",
         *(f"CREATE SCHEMA IF NOT EXISTS {database}.{s};" for s in ("BRONZE", "SILVER", "GOLD")),
         "",
         create("BRONZE", "CLIENTES_AZUL_RAW", {c: "VARCHAR" for c in COLUNAS_BRONZE}, "Base expandida como chegou (texto bruto)"),
@@ -677,24 +673,56 @@ def gerar_ddl(database: str = "AZUL_DATA_LAKE") -> str:
         "",
     ])
 
-
 def enviar_snowflake() -> None:
-    from snowflake.connector.pandas_tools import write_pandas
     from database import get_snowflake_connection
 
     database = os.getenv("SNOWFLAKE_DATABASE", "AZUL_DATA_LAKE")
     conn = get_snowflake_connection()
     try:
         conn.execute_string(gerar_ddl(database))
+        cur = conn.cursor()
+
         for schema, tabela, arquivo in CAMADAS_SNOWFLAKE:
-            df = pd.read_csv(arquivo, dtype=str, keep_default_na=False) if schema == "BRONZE" else pd.read_csv(arquivo)
-            ok, _, linhas, _ = write_pandas(conn, df, tabela, database=database, schema=schema,
-                                            overwrite=True, quote_identifiers=False, use_logical_type=True)
-            print(f"{schema}.{tabela}: {linhas} linhas enviadas ({'ok' if ok else 'falhou'})")
+            if schema == "BRONZE":
+                df = pd.read_csv(arquivo, dtype=str, keep_default_na=False)
+            else:
+                df = pd.read_csv(arquivo)
+
+            # 1. Substitui pd.NA e np.nan por None nativo do Python
+            # Usar .astype(object).where(pd.notna(df), None) garante que tipos numéricos não retenham float('nan')
+            df_limpo = df.astype(object).where(pd.notna(df), None)
+
+            # 2. Converte explicitamente tipos numpy/pandas para primitivos puros do Python
+            registros = [
+                tuple(
+                    None if val is None or (isinstance(val, float) and np.isnan(val))
+                    else bool(val) if isinstance(val, (np.bool_, bool))
+                    else int(val) if isinstance(val, (np.integer, int)) and not isinstance(val, bool)
+                    else float(val) if isinstance(val, (np.floating, float))
+                    else str(val)
+                    for val in row
+                )
+                for row in df_limpo.to_numpy()
+            ]
+
+            colunas = list(df.columns)
+            cols_str = ", ".join(colunas)
+            placeholders = ", ".join(["%s"] * len(colunas))
+            insert_sql = f"INSERT INTO {database}.{schema}.{tabela} ({cols_str}) VALUES ({placeholders})"
+
+            # Trunca tabela para carga limpa (idempotente)
+            cur.execute(f"TRUNCATE TABLE IF EXISTS {database}.{schema}.{tabela}")
+
+            # Envia em lotes
+            tamanho_lote = 2000
+            for i in range(0, len(registros), tamanho_lote):
+                cur.executemany(insert_sql, registros[i:i + tamanho_lote])
+
+            print(f"{schema}.{tabela}: {len(registros)} linhas enviadas (ok)")
     finally:
         conn.close()
-
-
+        
+        
 def trazer_gold() -> None:
     from database import get_snowflake_connection
 
@@ -710,6 +738,8 @@ def trazer_gold() -> None:
     for col, tipo in TIPOS_GOLD.items():
         if tipo.endswith(",0)"):
             gold[col] = gold[col].astype("Int64")
+    
+    GOLD_CSV.parent.mkdir(parents=True, exist_ok=True)
     gold[list(TIPOS_GOLD)].to_csv(GOLD_CSV, index=False)
     print(f"GOLD.CLIENTES_AZUL -> {GOLD_CSV.relative_to(BASE_DIR)} ({len(gold)} clientes)")
 
@@ -721,26 +751,35 @@ def main() -> None:
     parser.add_argument("--total", type=int, default=TOTAL_PADRAO, help="clientes na base expandida")
     args = parser.parse_args()
 
+    # Garante estrutura de diretórios do lake
+    for camada in (BRONZE_CSV, SILVER_CSV, GOLD_CSV, DDL_SQL):
+        camada.parent.mkdir(parents=True, exist_ok=True)
+
     if args.etapa == "gerar":
         bronze = gerar_bronze(pd.read_csv(CSV_BASE), total=args.total)
-        BRONZE_CSV.parent.mkdir(parents=True, exist_ok=True)
         bronze.to_csv(BRONZE_CSV, index=False)
         print(f"Bronze: {len(bronze)} registros -> {BRONZE_CSV.relative_to(BASE_DIR)}")
+        
     elif args.etapa == "tratar":
         bronze = pd.read_csv(BRONZE_CSV, dtype=str, keep_default_na=False)
         silver, relatorio = tratar_silver(bronze)
         silver.to_csv(SILVER_CSV, index=False)
         RELATORIO_SILVER.write_text(json.dumps(relatorio, indent=2, ensure_ascii=False), encoding="utf-8")
+        
         gold = construir_gold(silver)
         gold.to_csv(GOLD_CSV, index=False)
         RESUMO_GOLD.write_text(json.dumps(resumo_gold(gold, silver), indent=2, ensure_ascii=False), encoding="utf-8")
+        
         print(f"Silver: {len(silver)} clientes | Gold: {len(gold)} clientes")
         print(json.dumps(relatorio, indent=2, ensure_ascii=False))
+        
     elif args.etapa == "ddl":
         DDL_SQL.write_text(gerar_ddl(), encoding="utf-8")
         print(f"DDL -> {DDL_SQL.relative_to(BASE_DIR)}")
+        
     elif args.etapa == "enviar":
         enviar_snowflake()
+        
     elif args.etapa == "trazer":
         trazer_gold()
 
