@@ -36,6 +36,49 @@ no client identifier or direct personal identifiers.
 Client identifiers are pseudonymized with keyed HMAC-SHA256 before persistence.
 The key is `JWT_SECRET_KEY`; rotating it requires a coordinated migration.
 Pseudonymization is not anonymization.
+The legacy HMAC domain is intentionally stable: it is a cryptographic
+compatibility identifier, not application branding. Renaming it would change
+persisted client identifiers and requires a separate migration.
+
+## Production configuration safeguards
+
+Set `ENVIRONMENT=production` in the process environment before starting the API.
+In this mode, local dotenv files are not loaded. Inject credentials through the
+deployment environment; never copy development credentials into production.
+Unknown environment names fail startup instead of bypassing production checks.
+
+- `JWT_SECRET_KEY` must be persistent, randomly generated, at least 32 characters,
+  and not an example or low-diversity value. Diversity checks reject obvious weak
+  inputs but cannot prove entropy; use a cryptographically secure generator.
+- `ADMIN_EMAIL` and `ADMIN_PASSWORD` are required. The password must have at least
+  16 characters with adequate diversity and cannot be an example/default.
+- Leave both `DEMO_EMAIL` and `DEMO_PASSWORD` empty in production. Startup rejects
+  demo configuration, and login independently refuses demo accounts there.
+  Development/test still allow the existing configured demo login.
+- CORS origins must be explicit HTTP(S) origins without wildcards or credentials.
+- With AI admission enabled, production requires Redis. Readiness probes it using
+  the same bounded client as admission control; liveness never probes dependencies.
+  Redis failure does not enable in-memory admission in production.
+
+The frontend uses one HTTP client for login and CRM calls, with a 60-second
+timeout (120 seconds for upload), cancellation support, no automatic retries,
+and safe status-specific errors. A 429 retains `Retry-After` as seconds (numeric
+or HTTP-date) and shows the wait to the user. Aborting a client request does not
+roll back processing already started by the server; verify an upload's result
+before resubmitting it.
+
+Session persistence is fail-closed: blocked or invalid session storage rejects
+login rather than keeping an unpersisted token. Expired/invalid sessions are
+cleared; the authentication context follows expiry and rechecks on window focus.
+
+`MAX_UPLOAD_BYTES` limits the file content, not the full multipart body. A future
+reverse proxy must account for multipart overhead and enforce its own request
+limit. The authenticated upload, canonical CSV contract, pseudonymization and
+temporary-file cleanup remain unchanged.
+
+Frontend service regression tests use Node's built-in test runner and the
+existing TypeScript compiler: `cd frontend && npm test`. They are unit tests,
+not browser E2E or real-provider smoke tests.
 
 ## AI request budgets and provider retries
 
@@ -204,24 +247,122 @@ cd backend
 On Windows, use `.venv\Scripts\python.exe run.py`. The API docs are at
 `http://localhost:8000/docs`.
 
+For local development, select `DATA_LAKE_BACKEND=duckdb`, set
+`LLM_PROVIDER=disabled`, leave `REDIS_URL`, `MLFLOW_TRACKING_URI`,
+`MLFLOW_MODEL_NAME` and `MLFLOW_SERVING_URL` empty, and configure your own
+`DEMO_EMAIL`/`DEMO_PASSWORD`. No default backend login is provided. Use a
+persistent random `JWT_SECRET_KEY` to keep HMAC identifiers stable across
+restarts. An empty development key is ephemeral, not suitable for retained data.
+
+MLflow is optional locally. Without Tracking or a model name, `GET /modelo`
+returns `aguardando-configuracao` with null metrics; uploads without Tracking
+or a registered model keep null scores with `awaiting_model_registration`.
+No heuristic substitutes a model score, including with the legacy
+`MLFLOW_LOCAL_INFERENCE` flag. Training is an explicit admin operation requiring
+Tracking and `MLFLOW_MODEL_NAME`; it is never performed at startup.
+Configured dependencies fail explicitly if unavailable; only unconfigured
+MLflow is omitted from local readiness requirements. Production still requires
+remote Tracking, an explicit model name and Serving.
+
 ## Tests
 
 Run the backend suite from the repository root:
 
 ```bash
 cd backend
-.venv/bin/python -m pytest -q test
+SNOWFLAKE_INTEGRATION_TESTS=0 MLFLOW_INTEGRATION_TESTS=0 \
+  DATA_LAKE_BACKEND=duckdb MLFLOW_TRACKING_URI= MLFLOW_SERVING_URL= \
+  LLM_PROVIDER=disabled OPENAI_API_KEY= \
+  .venv/bin/python -m pytest -q -p no:cacheprovider
 ```
 
 For regression runs, set `DUCKDB_PATH` to a temporary database and initialize
 the schemas before executing tests that exercise ingestion. The real
 `data/processed/azul_datalake.duckdb` must not be used as a test database.
 
+## Upload snapshot publication and recovery
+
+Uploads replace the entire current client base; they do not append records.
+The canonical header remains, in this order:
+
+```csv
+id_cliente,tier,frequencia,recencia_dias,gasto_total,incidentes
+```
+
+Existing header case/whitespace normalization is retained, but extra, missing,
+duplicate or reordered canonical columns are rejected. The existing legacy
+adapter remains separate; `CUSTOMER_ID` is not the canonical contract.
+Every dataset is limited to 100,000 rows as well as `MAX_UPLOAD_BYTES` (10 MiB
+by default). Canonical IDs must be nonempty and unique after trimming, without
+control characters. Tiers are Basico/Básico, Topazio/Topázio, Safira or Diamante
+(case-insensitive). Counts/recency must be integers from 0 to 2,147,483,647;
+spend must be finite and nonnegative. Source IDs are still HMAC-pseudonymized
+before persistence. Numeric-looking text IDs retain leading zeros.
+
+- **Current:** the last committed Bronze/Silver/Gold tables.
+- **Candidate:** uncommitted DuckDB changes, or session-local Snowflake staging
+  tables. Candidate layers and persisted scores are checked before publication.
+- **Published:** one commit makes all three layers and the execution ID visible.
+  `gold.snapshot_publication` records the active execution ID and publication
+  time, not historical client data. Existing snapshots receive this metadata on
+  their next successful upload.
+- **Failed:** DuckDB rolls back the transaction; Snowflake discards its staging
+  session or rolls back publication DML. The previous committed base stays active.
+  A first failed upload does not publish a candidate base.
+
+DuckDB uses native transactional DDL, including the existing transformations.
+Readers keep seeing the previous committed Gold during processing. A nonblocking
+writer lock keyed by database path rejects a second upload in the same process
+with HTTP 409. Run local DuckDB with one backend process; this is **not** a
+distributed lock and DuckDB does not support independent read/write application
+processes sharing this database. Transactions still protect against partial
+publication if another connection encounters a write conflict.
+
+Snowflake stages the candidate in temporary tables and serializes publication
+using an UPDATE of a singleton database control row. Only DML and reads occur
+between BEGIN and COMMIT; no table swaps or CREATE OR REPLACE of active tables.
+See [Snowflake publication details](../infrastructure/snowflake/README.md).
+The last successfully committed publication wins, not necessarily the upload
+that arrived last. A publication lock wait over five seconds fails the request;
+there is no automatic retry or Redis lease.
+
+Ingestion runs in a worker thread so the async API event loop remains available.
+One execution ID follows upload processing, publication/rollback and duration
+logs; filenames, original IDs, CSV contents and credentials are not logged.
+Health/liveness remains dependency-free. Readiness checks the selected data
+backend and required Redis. Locally, Tracking and Serving are optional when
+unconfigured; configured endpoints are checked. Production still requires both.
+Optional OpenAI is not a readiness dependency.
+
+Recovery here means rollback **before successful publication**, not keeping
+multiple historical snapshots. After an ambiguous network failure during COMMIT,
+do not assume the previous version won: inspect `snapshot_publication` after
+connectivity returns. The outcome may be the complete old or complete new base,
+not a partially committed base. This change does not provide backups, restore
+history, upload cancellation, or cross-request snapshot pinning. Each CRM read
+sees a committed Gold; separate API requests may straddle a publication.
+
+Focused tests:
+
+```bash
+cd backend
+.venv/bin/python -m pytest -q -p no:cacheprovider \
+  test/test_file_reader.py test/test_snapshot_publication.py \
+  test/test_snowflake_publication.py test/test_e2e_local_pipeline.py \
+  test/test_health_readiness.py
+```
+
+Snapshot concurrency/rollback tests exercise real disposable DuckDB databases.
+Snowflake publication tests simulate the connector and SQL dialect locally;
+they verify orchestration and SQL boundaries, **not** real Snowflake locking,
+permissions, isolation or network behavior. The separately gated real Snowflake
+integration remains opt-in and requires a dedicated test database.
+
 ## Known limitations
 
 - Training parameters, metrics and the sklearn model are sent to MLflow by
-  `ml/models/mlflow_tracker.py`. The model is registered as
-  `AeroShieldChurnModel`, and the `champion` alias identifies the active
+  `ml/models/mlflow_tracker.py`. The exact registered model name is supplied by
+  `MLFLOW_MODEL_NAME`, and the `champion` alias identifies the active
   version. Logging explicitly trusts only scikit-learn's tree storage type
   required by the in-process RandomForest; failures are propagated. Tracking
   runs separately from MLflow Serving. See

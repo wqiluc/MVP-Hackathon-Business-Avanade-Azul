@@ -23,6 +23,8 @@ ADMIN_PASSWORD = "test-admin-password"
 
 @pytest.fixture(autouse=True)
 def configure_test_auth(monkeypatch):
+    monkeypatch.setattr(settings, "MLFLOW_TRACKING_URI", "http://mlflow.test")
+    monkeypatch.setattr("ml.models.mlflow_tracker.MODEL_NAME", "crm-test-model")
     monkeypatch.setattr(settings, "DEMO_EMAIL", TEST_EMAIL)
     monkeypatch.setattr(settings, "DEMO_PASSWORD", TEST_PASSWORD)
     monkeypatch.setattr(settings, "ADMIN_EMAIL", ADMIN_EMAIL)
@@ -504,7 +506,7 @@ def test_openai_personalizes_text_without_replacing_decision_action(monkeypatch)
 def test_model_endpoint_returns_existing_mlflow_run_contract():
     started = datetime(2026, 10, 17, 12, 30, tzinfo=timezone.utc)
     active = SimpleNamespace(
-        model_name="AeroShieldChurnModel",
+        model_name="crm-test-model",
         model_version="3",
         alias="champion",
         run_id="12345678abcdefgh",
@@ -521,7 +523,7 @@ def test_model_endpoint_returns_existing_mlflow_run_contract():
 
     assert response.status_code == 200
     assert response.json() == {
-        "nome": "AeroShieldChurnModel",
+        "nome": "crm-test-model",
         "plataforma": "MLflow",
         "metaAcuracia": None,
         "versao": "3",
@@ -548,6 +550,21 @@ def test_model_endpoint_returns_fallback_when_mlflow_has_no_runs():
         "auc": None,
         "treinadoEm": None,
     }
+
+
+@pytest.mark.parametrize("missing", ["tracking", "model"])
+def test_model_endpoint_without_configuration_does_not_query_registry(monkeypatch, missing):
+    if missing == "tracking":
+        monkeypatch.setattr(settings, "MLFLOW_TRACKING_URI", "")
+    else:
+        monkeypatch.setattr("ml.models.mlflow_tracker.MODEL_NAME", "")
+    with patch("app.services.ml_service.get_active_churn_model") as registry:
+        response = client.get("/api/v1/modelo", headers=_authenticated_headers())
+    assert response.status_code == 200
+    assert response.json()["status"] == "aguardando-configuracao"
+    assert response.json()["acuracia"] is None
+    assert response.json()["versao"] == "—"
+    registry.assert_not_called()
 
 
 def test_model_endpoint_returns_fallback_when_mlflow_query_raises():
@@ -674,7 +691,7 @@ def test_health_endpoint_is_available_without_authentication():
     assert response.status_code == 200
     assert response.json() == {
         "status": "online",
-        "service": "AeroShield AI BFA",
+        "service": "CRM de Alto Valor",
         "version": "2.0.0",
     }
 
@@ -732,7 +749,7 @@ def test_datalake_value_error_returns_http_422():
         )
 
     assert response.status_code == 422
-    assert response.json()["message"] == "ingestion rejected"
+    assert response.json()["message"] == "Não foi possível processar os dados enviados. Verifique o arquivo."
 
 
 def test_upload_save_failure_preserves_http_500(monkeypatch):
@@ -747,7 +764,7 @@ def test_upload_save_failure_preserves_http_500(monkeypatch):
     )
 
     assert response.status_code == 500
-    assert response.json()["message"] == "Falha ao guardar o arquivo enviado."
+    assert response.json()["message"] == "Erro interno do servidor."
 
 
 def test_upload_temp_file_is_removed_when_ingestion_raises(tmp_path, monkeypatch):

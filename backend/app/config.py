@@ -2,24 +2,24 @@ import os
 import secrets
 from pathlib import Path
 from dotenv import load_dotenv
+from pydantic import Field, ValidationInfo, field_validator
 from pydantic_settings import BaseSettings
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
-load_dotenv(BASE_DIR / "backend" / ".env")
-load_dotenv(BASE_DIR / ".env")
+if os.getenv("ENVIRONMENT", "development").strip().lower() != "production":
+    load_dotenv(BASE_DIR / "backend" / ".env")
+    load_dotenv(BASE_DIR / ".env")
 
 class Settings(BaseSettings):
     ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
     
     # Segurança e Autenticação
-    JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY", secrets.token_urlsafe(32))
+    JWT_SECRET_KEY: str = Field(default="", validate_default=True)
     JWT_SECRET_CONFIGURED: bool = bool(os.getenv("JWT_SECRET_KEY"))
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_HOURS: int = 8
-    CORS_ORIGINS: str = os.getenv(
-        "CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173"
-    )
+    CORS_ORIGINS: str = Field(default="", validate_default=True)
     MAX_UPLOAD_BYTES: int = int(os.getenv("MAX_UPLOAD_BYTES", str(10 * 1024 * 1024)))
     
     # Provedores de IA (Modo Free vs Produção)  
@@ -58,7 +58,7 @@ class Settings(BaseSettings):
     # MLflow Tracking and Serving are separate processes.
     MLFLOW_TRACKING_URI: str = os.getenv(
         "MLFLOW_TRACKING_URI",
-        "http://localhost:5000",
+        "",
     )
     MLFLOW_SERVING_URL: str = os.getenv("MLFLOW_SERVING_URL", "")
     MLFLOW_LOCAL_INFERENCE: bool = (
@@ -71,8 +71,22 @@ class Settings(BaseSettings):
     ADMIN_EMAIL: str = os.getenv("ADMIN_EMAIL", "")
     ADMIN_PASSWORD: str = os.getenv("ADMIN_PASSWORD", "")
 
-    # class Config:
-    #     env_file = ".env"
-    #     env_file_encoding = "utf-8"
+    @field_validator("JWT_SECRET_KEY", mode="before")
+    @classmethod
+    def local_signing_key(cls, value: str, info: ValidationInfo) -> str:
+        production = info.data.get("ENVIRONMENT", "development").strip().lower() == "production"
+        return value if value or production else secrets.token_urlsafe(32)
+
+    @field_validator("CORS_ORIGINS", mode="before")
+    @classmethod
+    def local_cors_origins(cls, value: str, info: ValidationInfo) -> str:
+        production = info.data.get("ENVIRONMENT", "development").strip().lower() == "production"
+        if not value and not production:
+            return "http://localhost:5173,http://127.0.0.1:5173"
+        return value
+
+    @property
+    def is_production(self) -> bool:
+        return self.ENVIRONMENT.strip().lower() == "production"
 
 settings = Settings()

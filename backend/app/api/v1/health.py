@@ -1,9 +1,11 @@
 from urllib.parse import urlparse, urlunparse
 
 import requests
+from redis.exceptions import RedisError
 from fastapi import APIRouter, HTTPException, status
 
 from app.config import settings
+from app.core.ai_rate_limit import redis_client, validate_ai_rate_limit_settings
 
 router = APIRouter()
 _DEPENDENCY_TIMEOUT_SECONDS = 2
@@ -13,7 +15,7 @@ _DEPENDENCY_TIMEOUT_SECONDS = 2
 def check_health():
     return {
         "status": "online",
-        "service": "AeroShield AI BFA",
+        "service": "CRM de Alto Valor",
         "version": "2.0.0"
     }
 
@@ -104,6 +106,16 @@ def _check_http_health(uri: str, endpoint: str) -> str:
         return "failed"
 
 
+def _check_redis() -> str:
+    try:
+        validate_ai_rate_limit_settings()
+        if not settings.REDIS_URL:
+            return "failed"
+        return "ready" if redis_client(settings.REDIS_URL).ping() else "failed"
+    except (RedisError, RuntimeError, ValueError):
+        return "failed"
+
+
 @router.get("/ready")
 def readiness():
     checks = {
@@ -135,20 +147,31 @@ def readiness():
 
     tracking_uri = settings.MLFLOW_TRACKING_URI.strip()
     dependencies["mlflow_tracking"] = (
-        _check_http_health(tracking_uri, "health") if tracking_uri else "failed"
+        _check_http_health(tracking_uri, "health") if tracking_uri
+        else "failed" if settings.is_production else "not_configured"
     )
 
     serving_url = settings.MLFLOW_SERVING_URL.strip()
-    production = settings.ENVIRONMENT.lower() == "production"
+    production = settings.is_production
     if serving_url:
         dependencies["mlflow_serving"] = _check_http_health(serving_url, "ping")
     else:
         dependencies["mlflow_serving"] = "failed" if production else "not_configured"
 
-    required_dependencies = ("data_lake", "mlflow_tracking")
+    required_dependencies = ("data_lake",)
+    if tracking_uri or production:
+        required_dependencies += ("mlflow_tracking",)
     if serving_url or production:
         required_dependencies += ("mlflow_serving",)
-    ready = all(checks.values()) and all(
+    if settings.AI_RATE_LIMIT_ENABLED and (production or settings.REDIS_URL):
+        dependencies["redis"] = _check_redis()
+        required_dependencies += ("redis",)
+    required_checks = ["data_lake_backend", "upload_limit_configured"]
+    if settings.DATA_LAKE_BACKEND == "snowflake":
+        required_checks.append("snowflake_credentials_configured")
+    if production:
+        required_checks.append("mlflow_tracking_configured")
+    ready = all(checks[name] for name in required_checks) and all(
         dependencies[name] == "ready" for name in required_dependencies
     )
     if not ready:

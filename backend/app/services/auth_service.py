@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+from hmac import compare_digest
 
 from app.config import settings
 from app.core.security import create_jwt_token
@@ -37,10 +38,12 @@ class AuthService:
             (
                 configured
                 for configured in configured_accounts
-                if configured[0]
+                if (not settings.is_production or configured[2] == "ADMIN")
+                and configured[0]
                 and configured[1]
                 and login_id == configured[0]
-                and password == configured[1]
+                and password is not None
+                and compare_digest(password.encode("utf-8"), configured[1].encode("utf-8"))
             ),
             None,
         )

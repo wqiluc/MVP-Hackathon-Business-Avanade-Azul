@@ -92,6 +92,7 @@ def test_ingestion_scoring_waits_for_a_registered_model(monkeypatch):
     from app.services.datalake_service import DataLakeService
 
     monkeypatch.setattr(settings, "MLFLOW_SERVING_URL", "")
+    monkeypatch.setattr(settings, "MLFLOW_TRACKING_URI", "http://mlflow.test")
     gold = pd.DataFrame({"frequency": [2], "high_risk_flag": [1]})
     monkeypatch.setattr("ml.models.mlflow_tracker.configure_tracking", lambda uri: None)
     monkeypatch.setattr(
@@ -114,6 +115,7 @@ def test_ingestion_scoring_uses_the_registered_model_via_serving(monkeypatch):
     gold = pd.DataFrame({"frequency": [2]})
     calls = []
     monkeypatch.setattr(settings, "MLFLOW_SERVING_URL", serving_url)
+    monkeypatch.setattr(settings, "MLFLOW_TRACKING_URI", "http://mlflow.test")
     monkeypatch.setattr("ml.models.mlflow_tracker.configure_tracking", lambda uri: None)
     monkeypatch.setattr(
         "ml.models.mlflow_tracker.get_active_churn_model",
@@ -133,6 +135,21 @@ def test_ingestion_scoring_uses_the_registered_model_via_serving(monkeypatch):
     assert calls == [gold]
 
 
+def test_ingestion_without_tracking_keeps_scores_missing_without_external_calls(monkeypatch):
+    import pandas as pd
+    from unittest.mock import Mock
+    from app.services.datalake_service import DataLakeService
+
+    monkeypatch.setattr(settings, "MLFLOW_TRACKING_URI", "")
+    registry = Mock(side_effect=AssertionError("Registry must not be contacted"))
+    monkeypatch.setattr("ml.models.mlflow_tracker.get_active_churn_model", registry)
+    scores, status = DataLakeService.score_gold(pd.DataFrame({"frequency": [2]}))
+
+    assert pd.isna(scores[0])
+    assert status == "awaiting_model_registration"
+    registry.assert_not_called()
+
+
 def test_database_bootstrap_sql_creates_the_documented_default_database():
     sql = _sql("00_create_database.sql")
     assert "CREATE DATABASE IF NOT EXISTS AZUL_DATA_LAKE" in sql
@@ -143,7 +160,7 @@ def test_real_snowflake_pipeline_matches_duckdb_and_mlflow_serving(
     tmp_path, monkeypatch
 ):
     import os
-    import re
+    from ml.models.mlflow_tracker import MODEL_NAME
 
     required = (
         settings.SNOWFLAKE_ACCOUNT,
@@ -151,6 +168,8 @@ def test_real_snowflake_pipeline_matches_duckdb_and_mlflow_serving(
         settings.SNOWFLAKE_PASSWORD,
         settings.SNOWFLAKE_WAREHOUSE,
         settings.MLFLOW_SERVING_URL,
+        settings.MLFLOW_TRACKING_URI,
+        MODEL_NAME,
     )
     test_database = settings.SNOWFLAKE_TEST_DATABASE
     if (
@@ -162,9 +181,9 @@ def test_real_snowflake_pipeline_matches_duckdb_and_mlflow_serving(
             "Habilite explicitamente Snowflake real, banco de teste dedicado e "
             "MLflow Serving para executar esta integração."
         )
-    if not re.fullmatch(r"AEROSHIELD_TEST_[A-Z0-9_]+", test_database):
+    if test_database != "CRM_TEST_E2E":
         pytest.fail(
-            "SNOWFLAKE_TEST_DATABASE deve começar com AEROSHIELD_TEST_; "
+            "SNOWFLAKE_TEST_DATABASE deve ser CRM_TEST_E2E; "
             "a integração não aceita banco de produção."
         )
 
@@ -194,7 +213,7 @@ def test_real_snowflake_pipeline_matches_duckdb_and_mlflow_serving(
     raw = pd.DataFrame(
         {
             "id_cliente": ["integration-incident", "integration-recency", "zero-frequency"],
-            "tier": ["  diamante ", "OURO", "prata"],
+            "tier": ["  diamante ", "SAFIRA", "básico"],
             "frequencia": [2, 4, 0],
             "recencia_dias": [20, 61, 10],
             "gasto_total": [200.0, 400.0, 25.0],
@@ -213,6 +232,7 @@ def test_real_snowflake_pipeline_matches_duckdb_and_mlflow_serving(
     assert result == {
         "status": "success",
         "processed_rows": len(raw),
+        "scoring_status": "scored",
         "layers": [
             "BRONZE.BRONZE_CLIENTS",
             "SILVER",

@@ -16,6 +16,24 @@ from ml.training import churn_trainer
 FEATURES = ["frequency", "recency_days", "total_spend", "flight_incidents", "avg_ticket"]
 
 
+@pytest.fixture(autouse=True)
+def configured_mlflow(monkeypatch):
+    monkeypatch.setattr(ml_service.settings, "MLFLOW_TRACKING_URI", "http://mlflow.test")
+    monkeypatch.setattr("ml.models.mlflow_tracker.MODEL_NAME", "crm-test-model")
+
+
+def test_training_without_configuration_stops_before_data_or_tracking(monkeypatch):
+    monkeypatch.setattr("ml.models.mlflow_tracker.MODEL_NAME", "")
+    with (
+        patch("app.services.ml_service.configure_tracking") as tracking,
+        patch("app.services.ml_service.DataLakeService.read_gold") as read,
+        pytest.raises(ValueError, match="MLFLOW_MODEL_NAME"),
+    ):
+        ml_service.train_and_register_churn_model()
+    tracking.assert_not_called()
+    read.assert_not_called()
+
+
 def _training_frame(row_count: int = 10) -> pd.DataFrame:
     return pd.DataFrame(
         {
@@ -48,7 +66,7 @@ def _mock_mlflow():
         "register": patch(
             "app.services.ml_service.register_churn_model",
             return_value=SimpleNamespace(
-                model_name="AeroShieldChurnModel",
+                model_name="crm-test-model",
                 model_version="4",
                 alias="champion",
                 run_id="characterization-run-id",
@@ -197,7 +215,7 @@ def test_valid_training_preserves_features_split_model_metrics_and_mlflow_contra
         **expected_metrics,
         "status": (
             "Classificador high_risk_flag registrado como "
-            "AeroShieldChurnModel v4 (champion). O alvo não é churn observado."
+            "crm-test-model v4 (champion). O alvo não é churn observado."
         ),
     }
     assert all(isinstance(result[metric], float) for metric in ("accuracy", "precision", "recall"))

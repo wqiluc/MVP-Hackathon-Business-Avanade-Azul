@@ -7,6 +7,39 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 logger = logging.getLogger(__name__)
 
+
+def _safe_server_detail(request: Request, exc: StarletteHTTPException):
+    detail = exc.detail
+    if exc.status_code == 503 and isinstance(detail, dict):
+        if detail.get("code") == "AI_RATE_LIMIT_UNAVAILABLE":
+            return {
+                "code": "AI_RATE_LIMIT_UNAVAILABLE",
+                "message": "Proteção de IA temporariamente indisponível. Tente novamente.",
+            }
+        if request.url.path == "/api/v1/health/ready":
+            checks = {
+                key: detail[key]
+                for key in (
+                    "data_lake_backend", "mlflow_tracking_configured",
+                    "upload_limit_configured", "snowflake_credentials_configured",
+                )
+                if isinstance(detail.get(key), bool)
+            }
+            dependencies = detail.get("dependencies", {})
+            return {
+                "message": "Dependências ou configurações obrigatórias indisponíveis.",
+                **checks,
+                "dependencies": {
+                    key: value
+                    for key, value in dependencies.items()
+                    if key in {"data_lake", "mlflow_tracking", "mlflow_serving", "redis"}
+                    and isinstance(value, str)
+                    and value in {"ready", "failed", "unverified", "not_configured"}
+                } if isinstance(dependencies, dict) else {},
+            }
+    return "Erro interno do servidor."
+
+
 def register_exception_handlers(app: FastAPI) -> None:
     """
     Registra os manipuladores globais de exceção na aplicação FastAPI.
@@ -16,6 +49,8 @@ def register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(StarletteHTTPException)
     async def http_exception_handler(request: Request, exc: StarletteHTTPException):
         detail = exc.detail
+        if exc.status_code >= 500:
+            detail = _safe_server_detail(request, exc)
         message = detail.get("message", "A requisição não pôde ser processada.") if isinstance(detail, dict) else detail
         content = {
             "success": False,
@@ -57,7 +92,7 @@ def register_exception_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(Exception)
     async def global_exception_handler(request: Request, exc: Exception):
-        logger.exception("Unhandled API error for %s", request.url.path)
+        logger.error("Unhandled API error; type=%s", type(exc).__name__)
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={
@@ -67,3 +102,11 @@ def register_exception_handlers(app: FastAPI) -> None:
                 "path": request.url.path,
             },
         )
+
+    @app.middleware("http")
+    async def contain_internal_errors(request: Request, call_next):
+        try:
+            return await call_next(request)
+        except Exception as error:
+            # Contain the exception before the server logs its raw message/traceback.
+            return await global_exception_handler(request, error)

@@ -230,9 +230,10 @@ def gerar_recomendacao(cliente: dict) -> dict:
             "decision": {},
             "audit_status": "",
         })
-    except Exception:
-        logger.exception(
-            "Deterministic recommendation workflow failed; using rules fallback."
+    except Exception as error:
+        logger.error(
+            "Deterministic recommendation workflow failed; type=%s; using rules fallback.",
+            type(error).__name__,
         )
         return _rotular_recomendacao(base | {"origem": "regras"})
 

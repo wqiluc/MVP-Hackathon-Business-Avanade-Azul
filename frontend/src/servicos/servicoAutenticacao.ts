@@ -1,5 +1,6 @@
 import type { Sessao, Usuario } from '../tipos/autenticacao';
 import { apiUrl, configuracaoAusente, MENSAGEM_CONFIGURACAO_AUSENTE } from './configuracaoApi';
+import { ErroHttpApi, requisitarJson } from './http';
 
 export interface ServicoAutenticacao {
   entrar(email: string, senha: string): Promise<Sessao>;
@@ -37,14 +38,16 @@ const autenticacaoDemonstracao: ServicoAutenticacao = {
 function criarAutenticacaoApi(baseUrl: string): ServicoAutenticacao {
   return {
     async entrar(email, senha) {
-      const resposta = await fetch(`${baseUrl}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({ email: email.trim(), senha }),
-      });
-      if (resposta.status === 401) throw new ErroCredenciais();
-      if (!resposta.ok) throw new Error(`Não foi possível entrar agora (HTTP ${resposta.status}).`);
-      return resposta.json() as Promise<Sessao>;
+      try {
+        return await requisitarJson<Sessao>(`${baseUrl}/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({ email: email.trim(), senha }),
+        });
+      } catch (erro) {
+        if (erro instanceof ErroHttpApi && erro.status === 401) throw new ErroCredenciais();
+        throw erro;
+      }
     },
   };
 }

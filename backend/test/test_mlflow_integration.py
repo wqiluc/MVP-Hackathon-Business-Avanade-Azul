@@ -18,7 +18,9 @@ from app.services.datalake_service import DataLakeService
 from app.services.inference_service import predict_churn
 from run import app as fastapi_app
 from data.storage.duckdb_adapter import DuckDBAdapter
-from ml.models.mlflow_tracker import EXPERIMENT_NAME, MODEL_ALIAS, MODEL_NAME
+from ml.models.mlflow_tracker import EXPERIMENT_NAME, MODEL_ALIAS
+
+MODEL_NAME = "crm-integration-test-model"
 
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
@@ -68,6 +70,7 @@ def test_mlflow_tracking_registry_serving_and_application_scoring(
 ) -> None:
     if os.getenv("MLFLOW_INTEGRATION_TESTS") != "1":
         pytest.skip("Set MLFLOW_INTEGRATION_TESTS=1 to run real MLflow services.")
+    monkeypatch.setattr("ml.models.mlflow_tracker.MODEL_NAME", MODEL_NAME)
 
     tracking_port = _available_port()
     serving_port = _available_port()

@@ -28,6 +28,22 @@ SQL canônico e as transformações versionadas estão em
 [`infrastructure/snowflake/`](../../infrastructure/snowflake/README.md) e
 requerem uma conta Snowflake externa configurada.
 
+## Fixture local para upload
+
+O gerador de teste fica fora da UI em
+[`scripts/generate_synthetic_clients.py`](../../scripts/generate_synthetic_clients.py).
+Ele escreve somente as colunas canônicas `id_cliente`, `tier`, `frequencia`,
+`recencia_dias`, `gasto_total` e `incidentes`, aceitas pelo `FileReader`; não
+altera nem flexibiliza o contrato de ingestão. Gere um fixture local com:
+
+```bash
+backend/.venv/bin/python scripts/generate_synthetic_clients.py \
+  --output /tmp/synthetic_clients.csv --rows 20
+```
+
+Esse arquivo é para desenvolvimento e testes locais. Não há botão para gerá-lo
+na interface de produção.
+
 O diretório legado `dados/` foi removido. Seus SQL antigos, inclusive os que
 estavam em `dados/sql/`, são apenas uma referência histórica: não existem mais
 no checkout atual e não há dependência funcional deles.

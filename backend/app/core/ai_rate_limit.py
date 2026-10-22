@@ -102,7 +102,7 @@ def validate_ai_rate_limit_settings() -> None:
             valid = False
         if not valid:
             raise RuntimeError("REDIS_URL deve ser uma URL redis:// ou rediss:// válida.")
-    elif settings.ENVIRONMENT.lower() == "production":
+    elif settings.is_production:
         raise RuntimeError("REDIS_URL é obrigatório para AI_RATE_LIMIT em produção.")
 
 

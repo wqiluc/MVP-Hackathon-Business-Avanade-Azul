@@ -1,1 +1,1 @@
-"""Data architecture package for the AeroShield AI monorepo."""
+"""Data architecture package for the CRM monorepo."""

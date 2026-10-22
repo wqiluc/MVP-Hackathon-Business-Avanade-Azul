@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 
 from app.config import settings
 from app.services.datalake_service import DataLakeService
+from ml.models import mlflow_tracker
 from ml.features.training_dataset import prepare_training_dataset
 from ml.evaluation.metrics import calculate_classification_metrics
 from ml.models.mlflow_tracker import (
@@ -16,15 +17,18 @@ from ml.training.churn_trainer import CHURN_MODEL_PARAMETERS, train_churn_classi
 
 def get_active_model_info() -> dict:
     """Return the model information represented by the active Registry alias."""
-    configure_tracking(settings.MLFLOW_TRACKING_URI)
-    active = get_active_churn_model()
+    configured = bool(settings.MLFLOW_TRACKING_URI.strip() and mlflow_tracker.MODEL_NAME)
+    active = None
+    if configured:
+        configure_tracking(settings.MLFLOW_TRACKING_URI)
+        active = get_active_churn_model()
     if active is None:
         return {
             "nome": "Classificador high_risk_flag (RandomForest)",
             "plataforma": "MLflow",
             "metaAcuracia": None,
             "versao": "—",
-            "status": "aguardando-registro",
+            "status": "aguardando-registro" if configured else "aguardando-configuracao",
             "acuracia": None,
             "auc": None,
             "treinadoEm": None,
@@ -55,6 +59,8 @@ def train_and_register_churn_model() -> dict:
     Treina o modelo RandomForest sobre a camada Ouro e o publica no Model
     Registry do MLflow sob o alias ativo.
     """
+    if not settings.MLFLOW_TRACKING_URI.strip() or not mlflow_tracker.MODEL_NAME:
+        raise ValueError("Configure MLFLOW_TRACKING_URI e MLFLOW_MODEL_NAME para treinar.")
     configure_tracking(settings.MLFLOW_TRACKING_URI)
     set_churn_experiment()
 

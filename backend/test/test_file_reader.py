@@ -140,3 +140,95 @@ def test_synthetic_adapter_uses_only_explicit_safe_feature_columns(tmp_path):
         875.5,
         2.0,
     ]
+
+
+@pytest.mark.parametrize("column,value", [
+    ("id_cliente", ""), ("id_cliente", " \t "), ("id_cliente", "c\x00bad"),
+    ("tier", "OURO"), ("tier", ""), ("frequencia", "text"),
+    ("frequencia", 1.5), ("frequencia", -1), ("frequencia", 2_147_483_648),
+    ("recencia_dias", -1), ("recencia_dias", 1.5),
+    ("gasto_total", -1), ("gasto_total", "Infinity"), ("gasto_total", "NaN"),
+    ("incidentes", 0.5), ("incidentes", -1),
+])
+def test_rejects_invalid_canonical_values(tmp_path, column, value):
+    frame = pd.DataFrame(VALID_COLUMNS).astype(object)
+    frame.loc[0, column] = value
+    path = tmp_path / "invalid.csv"
+    frame.to_csv(path, index=False)
+    with pytest.raises(FileContractError) as error:
+        FileReader.read_file(str(path), "csv")
+    assert error.value.invalid_columns == [column]
+
+
+@pytest.mark.parametrize("content", [
+    "id_cliente,tier,frequencia,recencia_dias,gasto_total,incidentes,extra\nc,Diamante,1,2,3,0,x\n",
+    "tier,id_cliente,frequencia,recencia_dias,gasto_total,incidentes\nDiamante,c,1,2,3,0\n",
+    "id_cliente,tier,frequencia,recencia_dias,gasto_total,incidentes,id_cliente\nc,Diamante,1,2,3,0,c\n",
+    "id_cliente,tier,frequencia,recencia_dias,gasto_total,incidentes\nc,Diamante,1,2,3,0,extra\n",
+    'id_cliente,tier,frequencia,recencia_dias,gasto_total,incidentes\n"unclosed,Diamante,1,2,3,0\n',
+])
+def test_rejects_extra_reordered_duplicate_or_malformed_csv_columns(tmp_path, content):
+    path = tmp_path / "invalid-header.csv"
+    path.write_text(content, encoding="utf-8")
+    with pytest.raises(FileContractError):
+        FileReader.read_file(str(path), "csv")
+
+
+def test_preserves_leading_zero_identifiers(tmp_path):
+    path = tmp_path / "identifiers.csv"
+    path.write_text(
+        ",".join(FileReader.CANONICAL_COLUMNS) + "\n0001,Diamante,1,2,3,0\n",
+        encoding="utf-8",
+    )
+    assert FileReader.read_file(str(path), "csv")["id_cliente"].tolist() == ["0001"]
+
+
+def test_duplicate_ids_are_rejected_after_trimming(tmp_path):
+    frame = pd.DataFrame(VALID_COLUMNS)
+    frame = pd.concat([frame, frame], ignore_index=True)
+    frame["id_cliente"] = ["c-1", " c-1 "]
+    path = tmp_path / "duplicates.csv"
+    frame.to_csv(path, index=False)
+    with pytest.raises(FileContractError, match="único"):
+        FileReader.read_file(str(path), "csv")
+
+
+@pytest.mark.parametrize("kind", ["csv", "json", "xlsx"])
+def test_row_limit_is_enforced_at_boundary(tmp_path, monkeypatch, kind):
+    monkeypatch.setattr(FileReader, "MAX_ROWS", 2)
+    path = tmp_path / f"volume.{kind}"
+    frame = pd.concat([pd.DataFrame(VALID_COLUMNS)] * 3, ignore_index=True)
+    frame["id_cliente"] = ["c-1", "c-2", "c-3"]
+    writer = {
+        "csv": lambda data: data.to_csv(path, index=False),
+        "json": lambda data: data.to_json(path, orient="records"),
+        "xlsx": lambda data: data.to_excel(path, index=False),
+    }[kind]
+    writer(frame.iloc[:2])
+    assert len(FileReader.read_file(str(path), kind)) == 2
+    writer(frame)
+    with pytest.raises(FileContractError, match="limite de 2"):
+        FileReader.read_file(str(path), kind)
+
+
+def test_json_boolean_is_not_a_numeric_feature(tmp_path):
+    frame = pd.DataFrame(VALID_COLUMNS)
+    frame["frequencia"] = True
+    path = tmp_path / "bool.json"
+    frame.to_json(path, orient="records")
+    with pytest.raises(FileContractError, match="booleanos"):
+        FileReader.read_file(str(path), "json")
+
+
+def test_default_100000_row_limit_accepts_boundary_and_rejects_next_row(tmp_path):
+    assert FileReader.MAX_ROWS == 100_000
+    path = tmp_path / "default-volume.csv"
+    with path.open("w", encoding="utf-8") as output:
+        output.write(",".join(FileReader.CANONICAL_COLUMNS) + "\n")
+        for index in range(100_000):
+            output.write(f"C-{index},Diamante,1,2,3,0\n")
+    assert len(FileReader.read_file(str(path), "csv")) == 100_000
+    with path.open("a", encoding="utf-8") as output:
+        output.write("C-100000,Diamante,1,2,3,0\n")
+    with pytest.raises(FileContractError, match="limite de 100000"):
+        FileReader.read_file(str(path), "csv")

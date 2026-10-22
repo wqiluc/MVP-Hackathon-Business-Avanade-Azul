@@ -5,10 +5,17 @@ import { Icone } from '../ui/Icone';
 
 /** Transparência: qual modelo gerou os scores exibidos e como ele performa. */
 export function AvisoModelo() {
-  const { data: modelo } = useBuscaAssincrona(() => servicoCrm.obterModelo(), []);
+  const { data: modelo, erro } = useBuscaAssincrona(() => servicoCrm.obterModelo(), []);
+  if (erro) {
+    return (
+      <div className="note note--warning" role="alert">
+        Não foi possível consultar o modelo: {erro.message}
+      </div>
+    );
+  }
   if (!modelo) return null;
 
-  const registrado = modelo.status !== 'aguardando-registro';
+  const registrado = modelo.status === 'serving-configurado' || modelo.status === 'aguardando-serving';
   const servingConfigurado = modelo.status === 'serving-configurado';
   return (
     <div className={`note ${servingConfigurado ? '' : 'note--warning'}`}>
@@ -26,6 +33,8 @@ export function AvisoModelo() {
               ? ' · URL de Serving configurada (disponibilidade não verificada)'
               : ' · aguardando configuração do MLflow Serving'}
           </>
+        ) : modelo.status === 'aguardando-configuracao' ? (
+          <> · integração MLflow não configurada. Os scores ficam indisponíveis.</>
         ) : (
           <>
             {' '}

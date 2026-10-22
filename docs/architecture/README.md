@@ -64,7 +64,8 @@ não uma previsão financeira calibrada.
 
 Com `ENVIRONMENT=production`, o startup do backend aborta se faltar qualquer item:
 `DATA_LAKE_BACKEND=snowflake`; `SNOWFLAKE_ACCOUNT/USER/PASSWORD/DATABASE/WAREHOUSE`;
-`MLFLOW_TRACKING_URI` remoto (não localhost/arquivo); `MLFLOW_SERVING_URL` http(s) não vazia;
+`MLFLOW_TRACKING_URI` remoto (não localhost/arquivo); `MLFLOW_MODEL_NAME` fornecido pelo ambiente;
+`MLFLOW_SERVING_URL` http(s) não vazia;
 `MLFLOW_LOCAL_INFERENCE=false`; além de `JWT_SECRET_KEY`, `ADMIN_EMAIL` e `ADMIN_PASSWORD`.
 Mensagens de erro nunca incluem valores de segredos. Desenvolvimento e testes mantêm os defaults (DuckDB/local).
 

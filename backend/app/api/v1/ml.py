@@ -1,9 +1,12 @@
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from app.core.security import get_current_user, require_admin
 from app.services.schemas.ml_schema import MLTrainResponse
 from app.services.ml_service import get_active_model_info, train_and_register_churn_model
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 @router.get("")
 @router.get("/")
@@ -17,4 +20,8 @@ def train_model(current_user: dict = Depends(require_admin)):
     try:
         return MLTrainResponse(**train_and_register_churn_model())
     except ValueError as ve:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ve))
+        logger.warning("Training request rejected; type=%s", type(ve).__name__)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Não foi possível iniciar o treinamento. Verifique os dados e a configuração.",
+        ) from ve

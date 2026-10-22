@@ -9,7 +9,6 @@ from ml.models.mlflow_tracker import (
     EXPERIMENT_NAME,
     MODEL_ALIAS,
     MODEL_ARTIFACT_PATH,
-    MODEL_NAME,
     SKOPS_TRUSTED_TYPES,
     ActiveChurnModel,
     MLflowChurnRun,
@@ -18,6 +17,30 @@ from ml.models.mlflow_tracker import (
     register_churn_model,
     start_churn_run,
 )
+
+MODEL_NAME = "crm-test-model"
+
+
+@pytest.fixture(autouse=True)
+def configured_model(monkeypatch):
+    monkeypatch.setattr("ml.models.mlflow_tracker.MODEL_NAME", MODEL_NAME)
+
+
+def test_missing_model_name_does_not_query_registry(monkeypatch):
+    monkeypatch.setattr("ml.models.mlflow_tracker.MODEL_NAME", "")
+    with patch("ml.models.mlflow_tracker._client") as client:
+        assert get_active_churn_model() is None
+    client.assert_not_called()
+
+
+def test_registration_requires_an_explicit_model_name(monkeypatch):
+    monkeypatch.setattr("ml.models.mlflow_tracker.MODEL_NAME", "")
+    with (
+        patch("ml.models.mlflow_tracker.mlflow.register_model") as register,
+        pytest.raises(ValueError, match="MLFLOW_MODEL_NAME"),
+    ):
+        register_churn_model("runs:/test/model", "test")
+    register.assert_not_called()
 
 
 def test_configure_tracking_sets_tracking_and_registry_uris():

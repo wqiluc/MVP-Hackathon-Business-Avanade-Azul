@@ -55,8 +55,7 @@ MVP-Hackathon-Business-Avanade-Azul/
 ├── frontend/                  # Aplicação React + TypeScript + Vite
 ├── infrastructure/            # SQL versionado de MLflow e Snowflake
 ├── ml/                        # Features, inferência, treino, avaliação e MLflow
-├── pyproject.toml             # Registro dos pacotes do monorepo
-└── setup.js                   # Ambiente Python/Node e inicialização local
+└── pyproject.toml             # Registro dos pacotes do monorepo
 ```
 
 ---
@@ -66,13 +65,13 @@ MVP-Hackathon-Business-Avanade-Azul/
 Disponibilizamos um orquestrador universal em Node.js (`setup.js`) que:
 
 1. **Identifica automaticamente o Sistema Operacional** (Windows, Linux ou macOS).
-2. **Valida a presença dos requisitos**: Python 3.12+ e Node.js v18+.
+2. **Valida a presença dos requisitos**: Python 3.12+ e Node.js compatível com Vite.
 3. **Configura o ambiente isolado**: Cria o ambiente virtual Python (`backend/.venv`) e atualiza o `pip`.
 4. **Gerencia dependências**: Instala requirements do Backend, registra o monorepo em modo editável e instala dependências npm do Frontend.
-5. **Execução integrada**: Inicia MLflow Tracking local (quando configurado para localhost), Backend e Frontend; encerra os processos ao usar `CTRL+C`. MLflow Serving é separado e deve ser iniciado após o primeiro modelo ser registrado.
+5. **Execução local**: Inicia Backend e Frontend; encerra os processos ao usar `CTRL+C`. Tracking só é iniciado quando explicitamente configurado para localhost. Serving é uma integração separada e opcional no desenvolvimento.
 
 ### 📋 Pré-requisitos
-* **Node.js**: v18+ e **npm**
+* **Node.js**: 20.19+ na linha 20 ou 22.12+ (recomendado: 24 LTS), e **npm**
 * **Python**: 3.12+
 
 ### 🚀 Passo Único de Execução
@@ -83,6 +82,61 @@ Na raiz do repositório clonado, execute o seguinte comando no terminal:
 npm start
 ```
 
+Antes de iniciar, copie `backend/.env.example` para `backend/.env` apenas se o
+arquivo ainda não existir. Configure uma conta local com `DEMO_EMAIL` e
+`DEMO_PASSWORD` (ou `ADMIN_EMAIL` e `ADMIN_PASSWORD` para testar funções
+administrativas). Não há credenciais de login padrão no backend.
+
+Para desenvolvimento sem serviços externos, use `ENVIRONMENT=development`,
+`DATA_LAKE_BACKEND=duckdb`, `LLM_PROVIDER=disabled`, `REDIS_URL=` e deixe
+`MLFLOW_TRACKING_URI`, `MLFLOW_MODEL_NAME` e `MLFLOW_SERVING_URL` vazios.
+Não altere arquivos locais existentes automaticamente. Gere uma
+`JWT_SECRET_KEY` aleatória e persistente para manter sessões e pseudônimos entre
+reinícios; sem ela, desenvolvimento usa uma chave efêmera por processo.
+O frontend usa `VITE_API_URL=http://localhost:8000/api/v1`; nenhuma credencial
+de provedor deve estar em `VITE_*`.
+
+Sem modelo configurado, o upload local continua validando e publicando
+Bronze/Silver/Gold no DuckDB; `churn_score` permanece nulo e a interface informa
+que o score está indisponível. O upload substitui a base local inteira:
+use somente dados de desenvolvimento. O gerador CSV em `scripts/` é ferramenta
+de desenvolvimento, não um botão da interface de produção.
+
+### Testes locais
+
+```bash
+cd backend
+SNOWFLAKE_INTEGRATION_TESTS=0 MLFLOW_INTEGRATION_TESTS=0 \
+  DATA_LAKE_BACKEND=duckdb MLFLOW_TRACKING_URI= MLFLOW_SERVING_URL= \
+  LLM_PROVIDER=disabled OPENAI_API_KEY= \
+  .venv/bin/python -m pytest -q -p no:cacheprovider
+```
+
+Em outro terminal: `cd frontend && npm test && npm run lint && npm run build`.
+Os comandos acima usam sintaxe POSIX; no PowerShell, defina as mesmas variáveis
+com `$env:NOME="valor"` antes de executar o Python.
+As integrações reais são opt-in e não fazem parte do fluxo normal de testes.
+
+### Integrações externas
+
+| Integração | Configuração | Desenvolvimento local e indisponibilidade |
+|---|---|---|
+| Snowflake | `DATA_LAKE_BACKEND=snowflake`, `SNOWFLAKE_ACCOUNT/USER/PASSWORD/DATABASE/WAREHOUSE/ROLE` | Opcional; DuckDB é o default. Selecionar Snowflake exige conta/permissões provisionadas; falhas não trocam silenciosamente de backend. |
+| MLflow | `MLFLOW_TRACKING_URI`, `MLFLOW_MODEL_NAME`, `MLFLOW_SERVING_URL` | Opcional; nome exato do Registry vem do ambiente, alias `champion`. Sem Tracking/nome, não consulta modelo e não inventa métricas ou scores. Uma integração configurada, mas indisponível, sinaliza erro; readiness verifica os endpoints configurados. |
+| OpenAI | `LLM_PROVIDER=openai`, `OPENAI_API_KEY`, `OPENAI_MODEL` | Opcional, só no backend. Sem configuração usa `regras`; falha do provedor usa `llm-indisponivel`. |
+| Redis | `REDIS_URL`, `AI_RATE_LIMIT_*` | Sem URL, development/test usa limitador em memória por processo. Produção exige Redis quando o limitador está ativo e falha de forma fechada. |
+
+Chroma/recuperação vetorial e GraphRAG externo não estão conectados: o grafo
+atual é estático e local, sem serviço adicional obrigatório.
+
+O E2E real depende de infraestrutura externa previamente provisionada e não é
+executado no fluxo normal de desenvolvimento local. O teste Snowflake exige
+`SNOWFLAKE_INTEGRATION_TESTS=1` e
+`SNOWFLAKE_TEST_DATABASE=CRM_TEST_E2E`, além de MLflow configurado. O bootstrap
+atual ainda executa `CREATE DATABASE IF NOT EXISTS`; um database pré-criado não
+dispensa validar esse requisito de permissão. Não execute com a role sem
+permissão/autorização e nunca use `AZUL_DATA_LAKE` como destino E2E.
+
 ## 🌐 Serviços Disponibilizados Após Inicialização
 
 | Serviço | Endereço Local | Descrição |
@@ -90,8 +144,8 @@ npm start
 | **🎨 Frontend Dashboard** | [http://localhost:5173](http://localhost:5173) | Painel operacional do analista de CRM Azul |
 | **⚡ Backend FastAPI BFA** | [http://localhost:8000](http://localhost:8000) | Motor de APIs, Data Lake e orquestração de IA |
 | **📄 Swagger UI Docs** | [http://localhost:8000/docs](http://localhost:8000/docs) | Documentação interativa e especificação OpenAPI |
-| **📈 MLflow Tracking** | [http://localhost:5000](http://localhost:5000) | Experimentos, runs, artefatos e Model Registry |
-| **❄️ Snowflake Data Lake** | Conta configurada | Bronze, Silver e Gold na conta Snowflake configurada |
+| **📈 MLflow Tracking (opcional)** | [http://localhost:5000](http://localhost:5000) | Somente quando explicitamente habilitado; disponibilidade depende do ambiente |
+| **❄️ Snowflake Data Lake (externo)** | Conta configurada | Não iniciado no desenvolvimento padrão |
 
 ---
 
@@ -102,8 +156,8 @@ O backend cria os schemas de camada e executa o SQL versionado em
 [`infrastructure/snowflake/README.md`](infrastructure/snowflake/README.md).
 Snowflake não é iniciado pelo `setup.js` porque é um serviço externo.
 
-O MLflow Serving é iniciado separadamente em `http://localhost:5001` depois do
-treino inicial. Consulte
+O MLflow Serving pode ser habilitado separadamente em `http://localhost:5001`,
+quando houver modelo registrado e autorização para essa integração. Consulte
 [`infrastructure/mlflow/README.md`](infrastructure/mlflow/README.md) para os
 comandos e configuração de inferência.
 

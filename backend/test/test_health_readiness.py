@@ -2,6 +2,7 @@ from unittest.mock import Mock
 
 import pytest
 import requests
+from redis.exceptions import ConnectionError as RedisConnectionError
 from fastapi.testclient import TestClient
 
 from app.api.v1 import health
@@ -36,6 +37,19 @@ def test_readiness_returns_ready_when_required_dependencies_are_healthy(
         "mlflow_tracking": "ready",
         "mlflow_serving": "not_configured",
     }
+
+
+def test_local_readiness_without_mlflow_does_not_probe_external_services(
+    local_readiness, monkeypatch
+):
+    monkeypatch.setattr(settings, "MLFLOW_TRACKING_URI", "")
+    probe = Mock(side_effect=AssertionError("External health must not be probed"))
+    monkeypatch.setattr(health, "_check_http_health", probe)
+    response = client.get("/api/v1/health/ready")
+    assert response.status_code == 200
+    assert response.json()["checks"]["mlflow_tracking_configured"] is False
+    assert response.json()["dependencies"]["mlflow_tracking"] == "not_configured"
+    probe.assert_not_called()
 
 
 @pytest.mark.parametrize(
@@ -137,11 +151,14 @@ def test_serving_health_check_does_not_guess_an_undocumented_endpoint():
 
 
 def test_liveness_does_not_check_external_dependencies(monkeypatch):
+    monkeypatch.setattr(settings, "ENVIRONMENT", "production")
+    monkeypatch.setattr(settings, "AI_RATE_LIMIT_ENABLED", True)
     def unexpected_check(*args, **kwargs):
         raise AssertionError("liveness must not probe dependencies")
 
     monkeypatch.setattr(health, "_check_duckdb", unexpected_check)
     monkeypatch.setattr(health, "_check_http_health", unexpected_check)
+    monkeypatch.setattr(health, "_check_redis", unexpected_check)
 
     response = client.get("/api/v1/health/live")
 
@@ -192,3 +209,79 @@ def test_http_request_failure_does_not_expose_exception(monkeypatch):
 
     assert response.status_code == 503
     assert secret_error not in response.text
+
+
+@pytest.mark.parametrize("redis_status,expected", [("ready", 200), ("failed", 503)])
+def test_production_readiness_requires_redis(
+    local_readiness, monkeypatch, redis_status, expected
+):
+    monkeypatch.setattr(settings, "ENVIRONMENT", "production")
+    monkeypatch.setattr(settings, "AI_RATE_LIMIT_ENABLED", True)
+    monkeypatch.setattr(settings, "REDIS_URL", "redis://redis.test:6379/0")
+    monkeypatch.setattr(settings, "MLFLOW_SERVING_URL", "https://serving.test/invocations")
+    monkeypatch.setattr(health, "_check_redis", lambda: redis_status)
+    response = client.get("/api/v1/health/ready")
+    assert response.status_code == expected
+    payload = response.json()
+    dependencies = payload.get("dependencies", payload.get("detail", {}).get("dependencies"))
+    assert dependencies["redis"] == redis_status
+
+
+def test_disabled_rate_limit_does_not_probe_redis(local_readiness, monkeypatch):
+    monkeypatch.setattr(settings, "ENVIRONMENT", "production")
+    monkeypatch.setattr(settings, "AI_RATE_LIMIT_ENABLED", False)
+    monkeypatch.setattr(settings, "MLFLOW_SERVING_URL", "https://serving.test/invocations")
+    probe = Mock(side_effect=AssertionError("Redis must not be probed"))
+    monkeypatch.setattr(health, "_check_redis", probe)
+    response = client.get("/api/v1/health/ready")
+    assert response.status_code == 200
+    probe.assert_not_called()
+
+
+@pytest.mark.parametrize("available", [True, False])
+def test_redis_probe_uses_existing_bounded_client(monkeypatch, available):
+    monkeypatch.setattr(settings, "AI_RATE_LIMIT_ENABLED", True)
+    monkeypatch.setattr(settings, "REDIS_URL", "redis://redis.test:6379/0")
+    store = Mock()
+    store.ping.return_value = True
+    if not available:
+        store.ping.side_effect = RedisConnectionError("sensitive connection details")
+    factory = Mock(return_value=store)
+    monkeypatch.setattr(health, "redis_client", factory)
+    assert health._check_redis() == ("ready" if available else "failed")
+    factory.assert_called_once_with(settings.REDIS_URL)
+
+
+def test_missing_required_redis_fails_probe(monkeypatch):
+    monkeypatch.setattr(settings, "ENVIRONMENT", "production")
+    monkeypatch.setattr(settings, "AI_RATE_LIMIT_ENABLED", True)
+    monkeypatch.setattr(settings, "REDIS_URL", "")
+    assert health._check_redis() == "failed"
+
+
+def test_missing_production_redis_fails_readiness(local_readiness, monkeypatch):
+    monkeypatch.setattr(settings, "ENVIRONMENT", "production")
+    monkeypatch.setattr(settings, "AI_RATE_LIMIT_ENABLED", True)
+    monkeypatch.setattr(settings, "REDIS_URL", "")
+    monkeypatch.setattr(settings, "MLFLOW_SERVING_URL", "https://serving.test/invocations")
+    response = client.get("/api/v1/health/ready")
+    assert response.status_code == 503
+    assert response.json()["detail"]["dependencies"]["redis"] == "failed"
+
+
+def test_duckdb_readiness_does_not_probe_snowflake_or_optional_ai(local_readiness, monkeypatch):
+    probe = Mock(side_effect=AssertionError("optional dependency must not be probed"))
+    monkeypatch.setattr(health, "_check_snowflake", probe)
+    monkeypatch.setattr(settings, "OPENAI_API_KEY", "")
+    monkeypatch.setattr(settings, "LLM_PROVIDER", "disabled")
+    assert client.get("/api/v1/health/ready").status_code == 200
+    probe.assert_not_called()
+
+
+def test_readiness_requires_selected_snowflake_backend(local_readiness, monkeypatch):
+    monkeypatch.setattr(settings, "DATA_LAKE_BACKEND", "snowflake")
+    monkeypatch.setattr(settings, "SNOWFLAKE_ACCOUNT", "")
+    monkeypatch.setattr(health, "_check_duckdb", Mock(side_effect=AssertionError("wrong backend")))
+    response = client.get("/api/v1/health/ready")
+    assert response.status_code == 503
+    assert response.json()["detail"]["dependencies"]["data_lake"] == "failed"

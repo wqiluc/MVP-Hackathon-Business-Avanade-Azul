@@ -160,6 +160,7 @@ export interface ModeloInfo {
   status:
     | 'em-producao'
     | 'aguardando-registro'
+    | 'aguardando-configuracao'
     | 'aguardando-serving'
     | 'serving-configurado';
   /** Meta de acurácia acordada na mentoria. */

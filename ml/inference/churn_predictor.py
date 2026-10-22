@@ -6,17 +6,6 @@ import requests
 class ChurnPredictor:
     FEATURES = ["frequency", "recency_days", "total_spend", "flight_incidents", "avg_ticket"]
 
-    @staticmethod
-    def _rules(df: pd.DataFrame) -> np.ndarray:
-        """Probabilidade de evasão (0–1) por regras, usada sem MLflow Serving."""
-        risco = (
-            0.08
-            + 0.45 * np.clip(df["recency_days"].fillna(0) / 180, 0, 1)
-            + 0.12 * np.clip(df["flight_incidents"].fillna(0), 0, 3)
-            - 0.15 * np.clip(df["frequency"].fillna(0) / 24, 0, 1)
-        )
-        return np.clip(risco, 0.01, 0.99).round(3).to_numpy()
-
     @classmethod
     def predict(
         cls,
@@ -24,15 +13,13 @@ class ChurnPredictor:
         mlflow_serving_url: str,
         allow_local_inference: bool = False,
     ) -> list[float]:
-        """Return scores from MLflow Serving, or rules only in explicit local mode."""
+        """Return model scores only; the legacy local flag never fabricates scores."""
         if df.empty:
             return []
         if not mlflow_serving_url:
-            if allow_local_inference:
-                return cls._rules(df).tolist()
             raise RuntimeError(
-                "MLflow Serving não está configurado. Defina MLFLOW_SERVING_URL "
-                "ou habilite explicitamente MLFLOW_LOCAL_INFERENCE para uso local."
+                "MLflow Serving não está configurado. Defina MLFLOW_SERVING_URL; "
+                "MLFLOW_LOCAL_INFERENCE não substitui um modelo registrado."
             )
 
         try:

@@ -1,5 +1,6 @@
 from contextlib import contextmanager
 from dataclasses import dataclass
+import os
 from typing import Iterator
 
 import mlflow
@@ -10,7 +11,7 @@ from mlflow.tracking import MlflowClient
 
 EXPERIMENT_NAME = "Azul_CRM_Churn_Prediction"
 MODEL_ARTIFACT_PATH = "churn_rf_model"
-MODEL_NAME = "AeroShieldChurnModel"
+MODEL_NAME = os.getenv("MLFLOW_MODEL_NAME", "").strip()
 MODEL_ALIAS = "champion"
 SKOPS_TRUSTED_TYPES = ["sklearn.tree._tree.Tree"]
 
@@ -87,6 +88,8 @@ def search_latest_churn_runs():
 
 
 def register_churn_model(model_uri: str, run_id: str) -> RegisteredChurnModel:
+    if not MODEL_NAME:
+        raise ValueError("MLFLOW_MODEL_NAME deve estar configurado.")
     version = mlflow.register_model(model_uri, MODEL_NAME, await_registration_for=300)
     if version.status != "READY":
         raise RuntimeError(
@@ -113,6 +116,8 @@ def register_churn_model(model_uri: str, run_id: str) -> RegisteredChurnModel:
 
 
 def get_active_churn_model() -> ActiveChurnModel | None:
+    if not MODEL_NAME:
+        return None
     client = _client()
     try:
         version = client.get_model_version_by_alias(MODEL_NAME, MODEL_ALIAS)

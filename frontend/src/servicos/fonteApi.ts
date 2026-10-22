@@ -1,15 +1,9 @@
 import type { FiltroClientes } from '../tipos/crm';
 import type { FonteDeDadosCrm } from './fonteDeDados';
 import { lerSessao, limparSessao } from './sessao';
+import { ErroHttpApi, requisitarJson, TIMEOUT_UPLOAD_MS } from './http';
 
-export class ErroHttpApi extends Error {
-  readonly status: number;
-
-  constructor(message: string, status: number) {
-    super(message);
-    this.status = status;
-  }
-}
+export { ErroHttpApi } from './http';
 
 function querystring(filtro: FiltroClientes = {}): string {
   const params = new URLSearchParams();
@@ -19,54 +13,24 @@ function querystring(filtro: FiltroClientes = {}): string {
   return qs ? `?${qs}` : '';
 }
 
-async function requisitar<T>(baseUrl: string, caminho: string, init?: RequestInit): Promise<T> {
+async function requisitar<T>(baseUrl: string, caminho: string, init?: RequestInit, timeoutMs?: number): Promise<T> {
   const token = lerSessao()?.token;
-  const resposta = await fetch(`${baseUrl}${caminho}`, {
+  const encerrarSessao = () => {
+    limparSessao();
+    if (window.location.pathname !== '/login') window.location.assign('/login');
+  };
+  if (!token) {
+    encerrarSessao();
+    throw new ErroHttpApi('Sua sessão expirou. Entre novamente.', 401);
+  }
+  return requisitarJson<T>(`${baseUrl}${caminho}`, {
     ...init,
     headers: {
       Accept: 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...init?.headers,
     },
-  });
-  if (resposta.status === 401) {
-    // Sessão expirada ou inválida no backend: volta para o login.
-    limparSessao();
-    window.location.assign('/login');
-  }
-  let payload: unknown;
-  try {
-    payload = await resposta.json();
-  } catch {
-    if (!resposta.ok) {
-      throw new ErroHttpApi(`Falha em ${caminho} (HTTP ${resposta.status})`, resposta.status);
-    }
-    throw new Error(`Resposta inválida da API em ${caminho}.`);
-  }
-  if (!resposta.ok) {
-    const body = payload as {
-      message?: unknown;
-      detail?: unknown;
-      missing_columns?: unknown;
-      invalid_columns?: unknown;
-    };
-    const message =
-      typeof body.message === 'string'
-        ? body.message
-        : typeof body.detail === 'string'
-          ? body.detail
-          : `Falha em ${caminho}`;
-    const missing =
-      Array.isArray(body.missing_columns) && body.missing_columns.every((item) => typeof item === 'string')
-        ? ` Colunas ausentes: ${body.missing_columns.join(', ')}.`
-        : '';
-    const invalid =
-      Array.isArray(body.invalid_columns) && body.invalid_columns.every((item) => typeof item === 'string')
-        ? ` Colunas inválidas: ${body.invalid_columns.join(', ')}.`
-        : '';
-    throw new ErroHttpApi(`${message}${missing}${invalid} (HTTP ${resposta.status})`, resposta.status);
-  }
-  return payload as T;
+  }, { timeoutMs, onUnauthorized: encerrarSessao });
 }
 
 /** Fonte que consome os contratos HTTP do backend FastAPI. */
@@ -87,7 +51,7 @@ export function criarFonteApi(baseUrl: string): FonteDeDadosCrm {
     enviarBaseClientes(arquivo) {
       const corpo = new FormData();
       corpo.append('arquivo', arquivo);
-      return requisitar(baseUrl, '/ingestao/clientes', { method: 'POST', body: corpo });
+      return requisitar(baseUrl, '/ingestao/clientes', { method: 'POST', body: corpo }, TIMEOUT_UPLOAD_MS);
     },
     obterModelo: () => requisitar(baseUrl, '/modelo'),
   };

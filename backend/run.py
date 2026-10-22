@@ -1,14 +1,15 @@
 from urllib.parse import urlparse
 
 import uvicorn
-from fastapi import FastAPI, Request, status
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.router import api_router
 from app.core.exceptions import register_exception_handlers
 from app.config import settings
 from app.services.datalake_service import DataLakeService
 from app.core.ai_rate_limit import validate_ai_rate_limit_settings
+from app.core.security import validate_production_auth_settings
+from ml.models import mlflow_tracker
 
 _LOCAL_HOSTS = {"localhost", "127.0.0.1", "::1", "0.0.0.0", ""}
 
@@ -44,6 +45,8 @@ def validate_production_integrations() -> None:
     tracking = (settings.MLFLOW_TRACKING_URI or "").strip()
     if not tracking or _is_local_uri(tracking):
         problems.append("MLFLOW_TRACKING_URI deve apontar para um servidor remoto")
+    if not mlflow_tracker.MODEL_NAME:
+        problems.append("MLFLOW_MODEL_NAME é obrigatório")
     serving = (settings.MLFLOW_SERVING_URL or "").strip()
     if not serving:
         problems.append("MLFLOW_SERVING_URL é obrigatório")
@@ -58,6 +61,8 @@ def validate_production_integrations() -> None:
 
 
 def validate_runtime_settings() -> None:
+    if settings.ENVIRONMENT.strip().lower() not in {"development", "test", "production"}:
+        raise RuntimeError("ENVIRONMENT deve ser development, test ou production.")
     validate_ai_rate_limit_settings()
     if settings.MAX_UPLOAD_BYTES <= 0:
         raise RuntimeError("MAX_UPLOAD_BYTES deve ser maior que zero.")
@@ -65,28 +70,36 @@ def validate_runtime_settings() -> None:
         raise RuntimeError("OPENAI_TIMEOUT_SECONDS deve ser maior que zero.")
     if settings.LLM_PROVIDER not in {"openai", "disabled"}:
         raise RuntimeError("LLM_PROVIDER deve ser 'openai' ou 'disabled'.")
+    if settings.ACCESS_TOKEN_EXPIRE_HOURS <= 0:
+        raise RuntimeError("ACCESS_TOKEN_EXPIRE_HOURS deve ser maior que zero.")
 
-    if settings.ENVIRONMENT.lower() == "production":
-        if (
-            not settings.JWT_SECRET_CONFIGURED
-            or settings.JWT_SECRET_KEY == "replace-with-a-random-secret"
-        ):
-            raise RuntimeError("Defina JWT_SECRET_KEY antes de iniciar em produção.")
-        if not settings.ADMIN_EMAIL or not settings.ADMIN_PASSWORD:
-            raise RuntimeError("Defina ADMIN_EMAIL e ADMIN_PASSWORD em produção.")
+    if settings.is_production:
+        validate_production_auth_settings()
         validate_production_integrations()
 
     origins = [origin.strip() for origin in settings.CORS_ORIGINS.split(",") if origin.strip()]
-    if not origins or "*" in origins:
+    if not origins or any(
+        "*" in origin
+        or urlparse(origin).scheme not in {"http", "https"}
+        or not urlparse(origin).hostname
+        or urlparse(origin).username
+        or urlparse(origin).password
+        or urlparse(origin).path not in {"", "/"}
+        or urlparse(origin).query
+        or urlparse(origin).fragment
+        for origin in origins
+    ):
         raise RuntimeError("CORS_ORIGINS deve conter origens explícitas.")
     return None
 
 # 1. Inicialização da aplicação FastAPI
 app = FastAPI(
-    title="AeroShield AI — Enterprise BFA Engine",
+    title="CRM de Alto Valor",
     version="1.0.0",
     description="Backend for Agents (BFA) para a equipe interna de operações e CRM da Azul: Data Lake Medalhão, MLOps e Multiagentes Preditivos."
 )
+
+register_exception_handlers(app)
 
 # 2. Configuração de Middleware CORS
 app.add_middleware(
@@ -101,9 +114,6 @@ app.add_middleware(
     allow_headers=["Authorization", "Content-Type"],
     expose_headers=["Retry-After"],
 )
-
-# 3. Tratamento Global de Exceções
-register_exception_handlers(app)
 
 # 4. Inclusão do Roteador Central (/api/v1)
 app.include_router(api_router)
@@ -120,7 +130,7 @@ def startup_event():
 def healthcheck():
     return {
         "status": "online",
-        "service": "AeroShield AI BFA",
+        "service": "CRM de Alto Valor",
         "version": "1.0.0",
         "docs": "/docs"
     }

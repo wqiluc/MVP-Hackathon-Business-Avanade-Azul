@@ -2,8 +2,10 @@ import logging
 import os
 import tempfile
 from fastapi import UploadFile, HTTPException, status
+from starlette.concurrency import run_in_threadpool
 from app.config import BASE_DIR, settings
 from app.services.datalake_service import DataLakeService
+from app.services.snapshot import SnapshotBusyError, ingestion_run
 from data.ingestion.file_reader import FileContractError
 
 ALLOWED_EXTENSIONS = {"xlsx", "xls", "csv", "json"}
@@ -71,7 +73,7 @@ class UploadService:
         except OSError as error:
             if temp_path and os.path.exists(temp_path):
                 os.remove(temp_path)
-            logger.exception("Could not save uploaded dataset")
+            logger.error("Could not save uploaded dataset; type=%s", type(error).__name__)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Falha ao guardar o arquivo enviado.",
@@ -87,12 +89,25 @@ class UploadService:
 
     @classmethod
     async def process_upload(cls, file: UploadFile) -> tuple[dict, int]:
+        with ingestion_run(settings.DATA_LAKE_BACKEND):
+            return await cls._process_upload(file)
+
+    @classmethod
+    async def _process_upload(cls, file: UploadFile) -> tuple[dict, int]:
         file_ext = cls.validate_file_extension(file.filename)
         temp_path = await cls.save_temp_file(file)
         try:
             tamanho = os.path.getsize(temp_path)
             try:
-                return DataLakeService.process_ingestion(temp_path, file_ext), tamanho
+                resumo = await run_in_threadpool(
+                    DataLakeService.process_ingestion, temp_path, file_ext,
+                )
+                return resumo, tamanho
+            except SnapshotBusyError as error:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=str(error),
+                ) from error
             except FileContractError as error:
                 raise HTTPException(
                     status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -103,9 +118,10 @@ class UploadService:
                     },
                 ) from error
             except ValueError as error:
+                logger.warning("Dataset rejected; type=%s", type(error).__name__)
                 raise HTTPException(
                     status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                    detail=str(error),
+                    detail="Não foi possível processar os dados enviados. Verifique o arquivo.",
                 ) from error
         finally:
             cls.cleanup_temp_file(temp_path)

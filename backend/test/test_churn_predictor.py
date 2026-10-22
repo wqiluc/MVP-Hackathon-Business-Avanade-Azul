@@ -27,36 +27,14 @@ def test_empty_dataframe_returns_empty_list():
     assert ChurnPredictor.predict(pd.DataFrame(), "") == []
 
 
-def test_without_serving_url_uses_current_rules_and_rounding():
-    df = pd.DataFrame(
-        {
-            "frequency": [0, 24, None, 0],
-            "recency_days": [0, 0, None, 1],
-            "flight_incidents": [0, 0, None, 0],
-        }
-    )
-
-    assert ChurnPredictor.predict(df, "", allow_local_inference=True) == [
-        0.08,
-        0.01,
-        0.08,
-        0.082,
-    ]
-
-
-def test_rules_keep_current_upper_bound_and_null_handling():
-    df = pd.DataFrame(
-        {
-            "frequency": [0, None],
-            "recency_days": [180, None],
-            "flight_incidents": [3, None],
-        }
-    )
-
-    scores = ChurnPredictor.predict(df, "", allow_local_inference=True)
-
-    assert scores == [0.89, 0.08]
-    assert all(0.01 <= score <= 0.99 for score in scores)
+@pytest.mark.parametrize("allow_local", [False, True])
+def test_missing_serving_never_fabricates_model_scores(allow_local):
+    with (
+        patch("ml.inference.churn_predictor.requests.post") as post,
+        pytest.raises(RuntimeError, match="MLflow Serving não está configurado"),
+    ):
+        ChurnPredictor.predict(_feature_frame(), "", allow_local_inference=allow_local)
+    post.assert_not_called()
 
 
 def test_serving_post_uses_expected_endpoint_timeout_and_feature_payload():

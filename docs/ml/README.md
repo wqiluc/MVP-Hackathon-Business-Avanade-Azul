@@ -7,8 +7,8 @@
   random_state=42)` e `RandomForestClassifier(n_estimators=100, max_depth=8,
   random_state=42)`.
 - `ml/evaluation/metrics.py`: accuracy, precision e recall.
-- `ml/inference/churn_predictor.py`: inferência pelo MLflow Serving; regras
-  locais só são usadas quando `MLFLOW_LOCAL_INFERENCE=true` explicitamente.
+- `ml/inference/churn_predictor.py`: inferência pelo MLflow Serving; não
+  substitui modelo ausente por scores heurísticos.
 - `ml/models/mlflow_tracker.py`: configuração do Tracking, experimento, run,
   logging de parâmetros/métricas/modelo e promoção/consulta do alias `champion`
   no Model Registry.
@@ -22,14 +22,16 @@ desse target derivado, não a previsão de churn real. `churn_score` é a
 probabilidade de classe positiva do modelo e não deve ser confundida com
 `high_risk_flag` nem com churn observado.
 
-O Registry mantém o nome técnico `AeroShieldChurnModel` e promove a versão
+O nome exato do modelo no Registry é fornecido por `MLFLOW_MODEL_NAME`, sem
+renomear modelos externos existentes. O registro promove a versão
 validada ao alias `champion`. O teste `test_mlflow_integration.py` pode iniciar
 um Tracking e Serving MLflow locais isolados ao habilitar
 `MLFLOW_INTEGRATION_TESTS=1`; isso valida a integração local, não a
 disponibilidade de uma instância remota de produção.
 
-Tracking e Serving são serviços separados. O `npm start` inicia o Tracking local
-em `http://localhost:5000`; após registrar um modelo, o Serving deve ser iniciado
+Tracking e Serving são serviços separados e opcionais para desenvolvimento.
+O `npm start` só inicia Tracking local quando `MLFLOW_TRACKING_URI` é configurada
+explicitamente; após registrar um modelo, o Serving deve ser iniciado
 separadamente em `http://localhost:5001`. Consulte
 [`infrastructure/mlflow/README.md`](../../infrastructure/mlflow/README.md) para
 comandos de inicialização e testes de integração.

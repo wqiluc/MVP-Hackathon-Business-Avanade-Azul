@@ -68,7 +68,13 @@ if (pythonMajor < 3 || (pythonMajor === 3 && pythonMinor < 12)) {
 
 // Checar Node / npm
 if (!checkRequirement('node --version', 'Node.js') || !checkRequirement('npm --version', 'npm')) {
-  log('❌ Erro: Node.js ou npm não encontrados. Por favor, instale o Node.js v18+.', colors.red);
+  log('❌ Erro: Node.js ou npm não encontrados. Use Node.js 22.12+ ou 24 LTS.', colors.red);
+  process.exit(1);
+}
+
+const [nodeMajor, nodeMinor] = process.versions.node.split('.').map(Number);
+if (!((nodeMajor === 20 && nodeMinor >= 19) || (nodeMajor === 22 && nodeMinor >= 12) || nodeMajor >= 23)) {
+  log('❌ Vite exige Node.js 20.19+, 22.12+ ou 24+. Recomendado: 24 LTS.', colors.red);
   process.exit(1);
 }
 
@@ -114,7 +120,7 @@ if (
 }
 
 function readConfiguredEnv(name, fallback) {
-  if (process.env[name]) return process.env[name];
+  if (process.env[name] !== undefined) return process.env[name];
   for (const envPath of [
     path.join(backendDir, '.env'),
     path.join(__dirname, '.env'),
@@ -131,11 +137,12 @@ function readConfiguredEnv(name, fallback) {
 }
 
 // 4. Iniciar MLflow Tracking quando a URI apontar para o serviço local padrão
-const trackingUri = readConfiguredEnv('MLFLOW_TRACKING_URI', 'http://localhost:5000');
+const trackingUri = readConfiguredEnv('MLFLOW_TRACKING_URI', '');
 let mlflowProcess = null;
 try {
-  const trackingUrl = new URL(trackingUri);
+  const trackingUrl = trackingUri.trim() ? new URL(trackingUri) : null;
   const isLocalTracking =
+    trackingUrl !== null &&
     trackingUrl.protocol === 'http:' &&
     ['localhost', '127.0.0.1', '::1'].includes(trackingUrl.hostname) &&
     (trackingUrl.pathname === '/' || trackingUrl.pathname === '');
@@ -157,12 +164,14 @@ try {
       cwd: __dirname,
       stdio: 'inherit'
     });
-    log(`   -> MLflow Tracking : ${trackingUri}`, colors.cyan);
+    log('   -> MLflow Tracking local habilitado.', colors.cyan);
+  } else if (trackingUrl) {
+    log('   -> MLflow Tracking externo configurado (disponibilidade não verificada).', colors.cyan);
   } else {
-    log(`   -> MLflow Tracking externo: ${trackingUri}`, colors.cyan);
+    log('   -> MLflow desabilitado; desenvolvimento local sem scores de modelo.', colors.gray);
   }
-} catch (error) {
-  log(`❌ MLFLOW_TRACKING_URI inválida: ${error.message}`, colors.red);
+} catch {
+  log('❌ MLFLOW_TRACKING_URI inválida. Verifique a configuração.', colors.red);
   process.exit(1);
 }
 
