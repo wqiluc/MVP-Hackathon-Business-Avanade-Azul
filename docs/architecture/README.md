@@ -1,9 +1,10 @@
-# Arquitetura atual
+# Arquitetura do CRM de Alto Valor
 
-O repositório é um monorepo modular. Os componentes de aplicação/backend
-integrados executam no processo da aplicação FastAPI. MLflow Tracking e MLflow
-Serving são processos/serviços separados, e Snowflake é uma plataforma externa;
-esses serviços não executam no processo FastAPI.
+O repositório `crm-alto-valor` é um monorepo modular. FastAPI é o orquestrador
+do backend: as rotas validam contratos HTTP e delegam coordenação aos serviços
+de aplicação. MLflow Tracking e MLflow Serving são processos/serviços
+separados; Snowflake é uma plataforma externa. Esses serviços não executam no
+processo FastAPI.
 
 ```text
 Frontend (React/Vite)
@@ -19,7 +20,12 @@ Frontend (React/Vite)
 
 - **Upload:** `UploadService` salva arquivo temporário e delega ao
   `DataLakeService`; FileReader → Bronze → Silver → Gold → scoring → persistência
-  do score. O serviço fecha a conexão depois da contagem e resposta.
+  do score. Layers candidatos e scores são validados antes da publicação.
+  DuckDB publica camadas e identificador da execução em uma transação;
+  Snowflake serializa a publicação com uma linha de controle e DML entre
+  `BEGIN` e `COMMIT`. Falhas antes do commit preservam o snapshot ativo anterior.
+  Consulte [dados e publicação](../data/README.md) para limites de concorrência
+  e recuperação.
 - **Treinamento:** `ml_service` lê Gold → valida linhas → `ml.features` prepara
   X/y → `ml.training` executa split e RandomForest → `ml.evaluation` calcula
   métricas → `ml.models` registra no MLflow → serviço devolve o contrato da API.
@@ -36,24 +42,24 @@ regra, não churn observado; `churn_score` é o score do modelo para esse target
 O grafo de contexto é estático e ilustrativo: não há recuperação vetorial,
 embeddings conectados ou ChromaDB.
 
-## Data lake backend routing
+## Roteamento do Data Lake
 
 `UploadService` lê o arquivo e delega a `DataLakeService`.
-`DataLakeService` selects `DuckDBDataLake` for local/offline runs or
-`SnowflakeDataLake` when `DATA_LAKE_BACKEND=snowflake`. Both implement the
-same medallion business contract; Snowflake DDL and transformations are
-versioned in `infrastructure/snowflake/`.
+`DataLakeService` seleciona `DuckDBDataLake` para execução local/offline ou
+`SnowflakeDataLake` quando `DATA_LAKE_BACKEND=snowflake`. Ambos implementam o
+contrato de negócio medallion; DDL e transformações Snowflake são versionados
+em `infrastructure/snowflake/`.
 
-The processing flow is Bronze → Silver → Gold, followed by the existing
-`inference_service.predict_churn` / `ChurnPredictor` → MLflow Serving call.
-The resulting score is written back to Gold. MLflow remains outside the
-data-layer adapters, and Snowflake failures are explicit rather than falling
-back silently to DuckDB or local inference.
+O fluxo de processamento é Bronze → Silver → Gold, seguido por
+`inference_service.predict_churn` / `ChurnPredictor` → MLflow Serving. O score
+resultante é gravado em Gold. MLflow permanece fora dos adapters de dados, e
+falhas de Snowflake são explícitas: não há troca silenciosa para DuckDB ou
+inferência local.
 
-Snowflake Bronze preserves the existing overwrite behavior for each uploaded
-dataset. DuckDB remains available as the local development backend; the two
-backends are separate connections and can be compared with the real Snowflake
-integration test when a dedicated test account and MLflow Serving are available.
+Bronze Snowflake preserva a semântica de substituição por dataset enviado.
+DuckDB permanece como backend local; os adapters são conexões independentes.
+O teste de integração Snowflake exige conta de teste dedicada e MLflow Serving
+disponível, e não é substituído pelos testes locais com mocks.
 
 Antes de qualquer persistência, o serviço substitui IDs da origem por
 pseudônimos HMAC-SHA256 vinculados a `JWT_SECRET_KEY`. A exposição monetária

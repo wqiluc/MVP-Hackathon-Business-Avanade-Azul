@@ -1,9 +1,9 @@
-# AI atual e limitações
+# IA, workflow de decisão e limitações
 
-- `ai/agents/workflow.py` implementa o workflow LangGraph: calcula exposição
-  monetária heurística (`total_spend × 1.30 × churn_score`), recupera contexto,
-  toma uma decisão determinística e marca a conclusão do workflow. O valor
-  monetário não é uma estimativa financeira calibrada.
+- `ai/agents/workflow.py` implementa o workflow LangGraph. Seus estágios
+  calculam exposição monetária heurística (`total_spend × 1.30 × churn_score`),
+  solicitam contexto do grafo, escolhem a ação por regras e definem um marcador
+  de auditoria. O valor monetário não é uma estimativa financeira calibrada.
 - `ai/graphrag/context_retrieval.py` consulta um grafo NetworkX pequeno,
   estático e definido no código. Não é um GraphRAG completo e não consulta uma
   fonte externa de políticas.
@@ -34,3 +34,26 @@ somente a categoria técnica, sem payload, chave ou dados do cliente.
 RAG e GraphRAG permanecem limitados ao escopo demonstrativo do MVP: não há
 pipeline documental, embeddings conectados, ChromaDB ou recuperação vetorial.
 As recomendações não constituem aconselhamento jurídico nem oferta confirmada.
+
+## Componentes e fronteiras
+
+- **Agentes:** o workflow LangGraph coordena cálculo, recuperação de contexto,
+  decisão por regras e conclusão. A resposta da API expõe a origem do texto
+  (`regras`, `llm` ou `llm-indisponivel`) sem transferir ao LLM a decisão.
+- **Contexto:** `ai/graphrag/context_retrieval.py` percorre relações de um
+  grafo NetworkX pequeno e definido no código. O nome GraphRAG é histórico e
+  não significa que haja ingestão documental ou GraphRAG completo.
+- **Embeddings:** `ai/rag/embeddings.py` é um helper opcional local; não há
+  indexação, vector store nem conexão desse helper com o workflow.
+- **Provedor:** OpenAI é uma integração opcional do serviço backend, com
+  timeout, retries limitados para rate limit temporário e fallback. Nenhuma
+  credencial ou chamada de provedor deve ser colocada no frontend.
+
+O workflow de agentes não executa ações externas nem realiza chamadas externas
+por conta própria: ele calcula, recupera contexto e decide por regras dentro do
+fluxo. A personalização textual via OpenAI ocorre posteriormente e não
+transforma o workflow em um executor de ações externas.
+
+Regras vigentes, elegibilidade e políticas não são confirmadas pelo grafo
+ilustrativo. As ações/recomendações exigem revisão humana e devem ser avaliadas
+com os responsáveis de negócio antes de qualquer uso operacional.

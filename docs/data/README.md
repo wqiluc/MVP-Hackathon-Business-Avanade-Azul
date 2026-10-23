@@ -20,6 +20,20 @@ Gold e seleciona o backend configurado:
 6. `data/storage/duckdb_adapter.py` inicializa schemas, lê Gold e substitui
    Gold após o scoring; o chamador abre e fecha a conexão.
 
+### Responsabilidades por camada
+
+- **Ingestão:** `file_reader.py` suporta CSV, XLS/XLSX e JSON e verifica as
+  colunas obrigatórias; a validação do contrato canônico e dos valores de
+  upload está no serviço de backend.
+- **Bronze:** `duckdb_writer.py` materializa/substitui `bronze.raw_clients`
+  usando a conexão DuckDB fornecida pelo orquestrador. Não é append-only.
+- **Silver:** `duckdb_transformer.py` projeta e tipa campos, preserva o
+  identificador opaco em `client_identifier` e filtra IDs ausentes; não faz
+  limpeza genérica de nulos.
+- **Gold:** `duckdb_transformer.py` materializa features analíticas, incluindo
+  `avg_ticket` e `high_risk_flag`. O `churn_score` é persistido depois do
+  scoring pelo adapter correspondente.
+
 `DataLakeService` mantém a ordem Bronze → Silver → Gold → scoring → contagem.
 DuckDB é o backend local para desenvolvimento e testes. O backend seleciona
 DuckDB ou Snowflake por configuração (`DATA_LAKE_BACKEND`). O adapter
@@ -78,3 +92,36 @@ configurado e MLflow Serving acessível. Testes de contrato SQL, isoladamente,
 não comprovam uma conta externa ativa. IDs originais já presentes em snapshots
 antigos não são apagados nem migrados por esta mudança; a próxima ingestão
 substituirá as tabelas e persistirá somente os identificadores opacos.
+
+## Candidato, publicação e recuperação
+
+O upload percorre leitura e validação do arquivo, staging/candidate, geração de
+Bronze, Silver e Gold, scoring, validação do resultado e publicação. A API só
+deve considerar concluída a ingestão depois da publicação e da resposta de
+contagem do snapshot.
+
+- **DuckDB:** staging e transformações ocorrem em uma transação. A publicação
+  das camadas e do registro `gold.snapshot_publication` é confirmada por um
+  único commit. Leitores veem o snapshot anterior até o commit; falha antes do
+  commit faz rollback. Um lock não bloqueante por caminho de banco rejeita
+  uploads concorrentes no mesmo processo. Esse lock não coordena processos
+  distintos.
+- **Snowflake:** candidatos são tabelas temporárias/sessão-local; schema,
+  staging e scoring acontecem antes da transação de publicação. Uma linha de
+  controle singleton serializa escritores. Depois do lock, apenas `DELETE` /
+  `INSERT` e leituras das tabelas ativas ocorrem entre `BEGIN` e `COMMIT`, pois
+  DDL pode causar commit implícito. Erros antes da publicação descartam os
+  candidatos; erros durante a publicação executam rollback. O último commit
+  bem-sucedido vence, não necessariamente o upload iniciado por último.
+- **Ambiguidade de rede:** se a conexão cair durante `COMMIT`, não se deve
+  presumir que o rollback ocorreu. Após restabelecer conexão, confira
+  `gold.snapshot_publication` ou o ID ativo equivalente. O resultado deve ser
+  o snapshot antigo completo ou o novo completo; não existe histórico de
+  snapshots nem restauração pelo produto.
+
+Cada requisição de leitura observa um estado confirmado, mas requisições
+separadas podem ficar em lados diferentes de uma publicação. Não há pinning de
+snapshot entre chamadas, backup histórico ou cancelamento de upload. As
+garantias Snowflake de lock, isolamento, permissões e comportamento de rede
+requerem validação opt-in em uma conta de teste dedicada; os testes locais
+mockados não as comprovam.

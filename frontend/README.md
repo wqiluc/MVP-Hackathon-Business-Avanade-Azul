@@ -1,6 +1,9 @@
-# Frontend: CRM de Alto Valor
+# CRM de Alto Valor — Interface Web
 
-Interface interna para as equipes de CRM, Fidelidade e Relacionamento da Azul. Construída em **React 19 + TypeScript + Vite**, com **React Router** e **Recharts**.
+Interface do CRM de Alto Valor para equipes de relacionamento. Construída em
+**React 19 + TypeScript + Vite**, com **React Router** e **Recharts**. O
+frontend apresenta dados e recomendações fornecidos pela API; autenticação,
+regras de decisão e chamadas a provedores externos permanecem no backend.
 
 ## Como rodar
 

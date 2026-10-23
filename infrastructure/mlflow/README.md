@@ -1,6 +1,6 @@
-# MLflow local infrastructure
+# MLflow local setup
 
-The local hackathon setup runs a real MLflow Tracking Server with a SQLite
+The local CRM setup runs a real MLflow Tracking Server with a SQLite
 backend store and a local, server-proxied artifact directory. No Docker,
 PostgreSQL, object storage, or edits to `backend/mlflow.db` are required.
 

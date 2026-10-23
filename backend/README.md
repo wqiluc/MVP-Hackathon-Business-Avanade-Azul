@@ -1,8 +1,11 @@
-# Backend
+# CRM de Alto Valor API
 
 FastAPI exposes the CRM, upload, dashboard, model and health contracts under
 `/api/v1`. Routes validate HTTP input and delegate to application services;
 services coordinate the root-level `data/`, `ml/` and `ai/` packages.
+
+For the endpoint-by-endpoint HTTP contract, authentication requirements and
+response behavior, see the [API reference](../docs/api/README.md).
 
 ## Runtime flow
 
