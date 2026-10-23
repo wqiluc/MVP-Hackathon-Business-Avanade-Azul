@@ -3,7 +3,7 @@
 Interface do CRM de Alto Valor para equipes de relacionamento. Construída em
 **React 19 + TypeScript + Vite**, com **React Router** e **Recharts**. O
 frontend apresenta dados e recomendações fornecidos pela API; autenticação,
-regras de decisão e chamadas a provedores externos permanecem no backend.
+regras de decisão e chamadas a provedores OpenAI/Gemini permanecem no backend.
 
 ## Como rodar
 

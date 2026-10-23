@@ -31,9 +31,10 @@ Frontend (React/Vite)
   métricas → `ml.models` registra no MLflow → serviço devolve o contrato da API.
 - **Análise/recomendação:** a API chama serviços; `ai/agents` calcula exposição,
   recupera contexto por `ai/graphrag` e o Decision Agent determina a ação e as
-  evidências. OpenAI pode personalizar a recomendação pelo backend; se estiver
-  desabilitada, sem chave ou indisponível, o serviço usa regras e marca
-  explicitamente a origem.
+  evidências. OpenAI ou Gemini podem personalizar o texto por uma camada comum
+  no backend. Se o provider estiver desabilitado ou sem configuração, o serviço
+  usa regras; uma segunda opção só é tentada se `LLM_FALLBACK_PROVIDER` estiver
+  explicitamente configurado. Falhas são identificadas na origem da recomendação.
 
 `infrastructure/snowflake/` mantém o SQL canônico do Data Lake e
 `infrastructure/mlflow/` documenta a configuração de Tracking/Registry e o

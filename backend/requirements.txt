@@ -21,6 +21,7 @@ skops>=0.16.0
 
 # --- Workflow LangGraph, grafo contextual e embeddings opcionais ---
 openai>=1.68.0,<3.0.0
+google-genai>=1.0.0,<2.0.0
 langchain>=0.2.5
 langchain-community>=0.2.5
 langchain-core>=0.2.9

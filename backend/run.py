@@ -68,8 +68,24 @@ def validate_runtime_settings() -> None:
         raise RuntimeError("MAX_UPLOAD_BYTES deve ser maior que zero.")
     if settings.OPENAI_TIMEOUT_SECONDS <= 0:
         raise RuntimeError("OPENAI_TIMEOUT_SECONDS deve ser maior que zero.")
-    if settings.LLM_PROVIDER not in {"openai", "disabled"}:
-        raise RuntimeError("LLM_PROVIDER deve ser 'openai' ou 'disabled'.")
+    if settings.GEMINI_TIMEOUT_SECONDS <= 0:
+        raise RuntimeError("GEMINI_TIMEOUT_SECONDS deve ser maior que zero.")
+    supported_llm_providers = {"openai", "gemini", "disabled"}
+    if settings.LLM_PROVIDER not in supported_llm_providers:
+        raise RuntimeError("LLM_PROVIDER deve ser 'openai', 'gemini' ou 'disabled'.")
+    if settings.LLM_FALLBACK_PROVIDER not in supported_llm_providers:
+        raise RuntimeError(
+            "LLM_FALLBACK_PROVIDER deve ser 'openai', 'gemini' ou 'disabled'."
+        )
+    if settings.LLM_PROVIDER == "disabled" and settings.LLM_FALLBACK_PROVIDER != "disabled":
+        raise RuntimeError(
+            "LLM_FALLBACK_PROVIDER deve ser 'disabled' quando LLM_PROVIDER for 'disabled'."
+        )
+    if (
+        settings.LLM_FALLBACK_PROVIDER == settings.LLM_PROVIDER
+        and settings.LLM_PROVIDER != "disabled"
+    ):
+        raise RuntimeError("LLM_FALLBACK_PROVIDER não pode repetir LLM_PROVIDER.")
     if settings.ACCESS_TOKEN_EXPIRE_HOURS <= 0:
         raise RuntimeError("ACCESS_TOKEN_EXPIRE_HOURS deve ser maior que zero.")
 

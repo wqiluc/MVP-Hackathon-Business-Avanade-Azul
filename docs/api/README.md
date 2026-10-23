@@ -58,7 +58,9 @@ disponibilidade remota.
 As rotas de recomendação e análise passam pela admissão configurada por
 `AI_RATE_LIMIT_*`. Em produção, Redis é obrigatório quando a admissão está
 habilitada; indisponibilidade falha de forma fechada. Esse limite é orçamento
-por janela da aplicação, não cota global do provedor. Consulte o
+por janela da aplicação, não cota global do provedor. OpenAI e Gemini são
+selecionados somente no backend por `LLM_PROVIDER`; fallback entre providers
+é desabilitado por padrão e exige `LLM_FALLBACK_PROVIDER` explícito. Consulte o
 [detalhamento e smoke test real](../../backend/README.md).
 
 ## Testes

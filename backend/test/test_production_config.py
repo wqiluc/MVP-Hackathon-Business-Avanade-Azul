@@ -19,6 +19,7 @@ VALID = {
     "DEMO_PASSWORD": "",
     "CORS_ORIGINS": "https://app.example.com",
     "LLM_PROVIDER": "disabled",
+    "LLM_FALLBACK_PROVIDER": "disabled",
     "DATA_LAKE_BACKEND": "snowflake",
     "SNOWFLAKE_ACCOUNT": "acct",
     "SNOWFLAKE_USER": "user",
@@ -28,6 +29,7 @@ VALID = {
     "MLFLOW_TRACKING_URI": "https://mlflow.example.com",
     "MLFLOW_SERVING_URL": "https://serving.example.com/invocations",
     "MLFLOW_LOCAL_INFERENCE": False,
+    "GEMINI_TIMEOUT_SECONDS": 12,
     "AI_RATE_LIMIT_ENABLED": True,
     "REDIS_URL": "redis://redis.example.invalid:6379/0",
 }
@@ -90,6 +92,7 @@ def test_production_requires_model_name(prod, monkeypatch):
         {"CORS_ORIGINS": "https://user:pass@example.com"},
         {"ENVIRONMENT": "prodution"},
         {"ACCESS_TOKEN_EXPIRE_HOURS": 0},
+        {"GEMINI_TIMEOUT_SECONDS": 0},
     ],
 )
 def test_invalid_production_config_is_rejected_without_secrets(prod, override):
@@ -108,7 +111,7 @@ def test_development_defaults_unchanged(prod):
     validate_runtime_settings()
 
 
-@pytest.mark.parametrize("provider", ["openai", "disabled"])
+@pytest.mark.parametrize("provider", ["openai", "gemini", "disabled"])
 def test_supported_llm_providers_are_accepted(prod, provider):
     prod(ENVIRONMENT="development", LLM_PROVIDER=provider)
     validate_runtime_settings()
@@ -117,7 +120,47 @@ def test_supported_llm_providers_are_accepted(prod, provider):
 @pytest.mark.parametrize("provider", ["ollama", "unknown"])
 def test_unsupported_llm_provider_is_rejected(prod, provider):
     prod(ENVIRONMENT="development", LLM_PROVIDER=provider)
-    with pytest.raises(RuntimeError, match="LLM_PROVIDER deve ser 'openai' ou 'disabled'"):
+    with pytest.raises(RuntimeError, match="LLM_PROVIDER deve ser 'openai', 'gemini' ou 'disabled'"):
+        validate_runtime_settings()
+
+
+@pytest.mark.parametrize("provider", ["openai", "gemini", "disabled"])
+def test_supported_llm_fallback_providers_are_accepted(prod, provider):
+    prod(
+        ENVIRONMENT="development",
+        LLM_PROVIDER="gemini" if provider == "openai" else "openai",
+        LLM_FALLBACK_PROVIDER=provider,
+    )
+    validate_runtime_settings()
+
+
+def test_same_primary_and_fallback_provider_is_rejected(prod):
+    prod(
+        ENVIRONMENT="development",
+        LLM_PROVIDER="gemini",
+        LLM_FALLBACK_PROVIDER="gemini",
+    )
+    with pytest.raises(RuntimeError, match="não pode repetir"):
+        validate_runtime_settings()
+
+
+def test_unsupported_llm_fallback_provider_is_rejected(prod):
+    prod(
+        ENVIRONMENT="development",
+        LLM_PROVIDER="openai",
+        LLM_FALLBACK_PROVIDER="ollama",
+    )
+    with pytest.raises(RuntimeError, match="LLM_FALLBACK_PROVIDER deve ser"):
+        validate_runtime_settings()
+
+
+def test_disabled_provider_rejects_configured_fallback(prod):
+    prod(
+        ENVIRONMENT="development",
+        LLM_PROVIDER="disabled",
+        LLM_FALLBACK_PROVIDER="gemini",
+    )
+    with pytest.raises(RuntimeError, match="deve ser 'disabled'"):
         validate_runtime_settings()
 
 

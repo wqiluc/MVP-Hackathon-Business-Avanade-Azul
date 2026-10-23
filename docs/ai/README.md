@@ -20,16 +20,20 @@
   conectado a um vector store ou ao workflow.
 
 O Decision Agent continua determinístico. Depois da decisão, o serviço de CRM
-pode chamar OpenAI no backend para personalizar texto estruturado, sem permitir
-que o LLM substitua a ação decidida. A chamada usa apenas atributos de perfil,
-score, incidentes e contexto; não envia identificador, nome, e-mail, CPF ou
-dataset. Há timeout; rate limits temporários têm no máximo três tentativas
-totais, backoff exponencial e respeito ao cabeçalho `Retry-After`. Quota/billing,
-timeout, conexão e erros permanentes da API não entram em retry. Sem chave ou
-com `LLM_PROVIDER=disabled`, usa regras (`origem=regras`); falha na chamada,
-incluindo resposta estruturada inválida, usa o fallback com
-`origem=llm-indisponivel`; resposta validada usa `origem=llm`. Logs registram
-somente a categoria técnica, sem payload, chave ou dados do cliente.
+pode chamar OpenAI ou Gemini no backend para personalizar texto estruturado,
+sem permitir que o LLM substitua a ação decidida. Os providers compartilham o
+contrato de resposta e recebem apenas atributos permitidos de perfil, score,
+incidentes e contexto; não recebem identificador, nome, e-mail, CPF ou dataset.
+Há timeout; somente rate limits temporários da OpenAI têm até três tentativas
+totais, backoff exponencial e respeito ao cabeçalho `Retry-After`. Gemini não
+tem retry automático. Quota/billing, timeout, conexão e erros permanentes da API
+não entram em retry. Sem configuração ou com `LLM_PROVIDER=disabled`, usa
+regras (`origem=regras`); falha de todos os providers configurados, incluindo
+resposta estruturada inválida, usa regras com `origem=llm-indisponivel`;
+resposta validada por qualquer provider usa `origem=llm`. Um provider
+alternativo só é tentado se `LLM_FALLBACK_PROVIDER` for explicitamente
+configurado. Logs registram somente a categoria técnica, sem payload, chave ou
+dados do cliente.
 
 RAG e GraphRAG permanecem limitados ao escopo demonstrativo do MVP: não há
 pipeline documental, embeddings conectados, ChromaDB ou recuperação vetorial.
@@ -45,14 +49,17 @@ As recomendações não constituem aconselhamento jurídico nem oferta confirmad
   não significa que haja ingestão documental ou GraphRAG completo.
 - **Embeddings:** `ai/rag/embeddings.py` é um helper opcional local; não há
   indexação, vector store nem conexão desse helper com o workflow.
-- **Provedor:** OpenAI é uma integração opcional do serviço backend, com
-  timeout, retries limitados para rate limit temporário e fallback. Nenhuma
-  credencial ou chamada de provedor deve ser colocada no frontend.
+- **Provedor:** OpenAI e Gemini são integrações opcionais do serviço backend,
+  resolvidas por uma camada comum. OpenAI tem retries limitados para rate
+  limits temporários; Gemini não é repetido automaticamente. O fallback para
+  outro provider só ocorre quando `LLM_FALLBACK_PROVIDER` o seleciona
+  explicitamente. Nenhuma credencial ou chamada de provider deve ser colocada
+  no frontend.
 
 O workflow de agentes não executa ações externas nem realiza chamadas externas
 por conta própria: ele calcula, recupera contexto e decide por regras dentro do
-fluxo. A personalização textual via OpenAI ocorre posteriormente e não
-transforma o workflow em um executor de ações externas.
+fluxo. A personalização textual via OpenAI ou Gemini ocorre posteriormente e
+não transforma o workflow em um executor de ações externas.
 
 Regras vigentes, elegibilidade e políticas não são confirmadas pelo grafo
 ilustrativo. As ações/recomendações exigem revisão humana e devem ser avaliadas

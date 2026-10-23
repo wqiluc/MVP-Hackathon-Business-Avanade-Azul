@@ -24,11 +24,17 @@ class Settings(BaseSettings):
     
     # Provedores de IA (Modo Free vs Produção)  
     LLM_PROVIDER: str = os.getenv("LLM_PROVIDER", "openai").strip().lower()
+    LLM_FALLBACK_PROVIDER: str = os.getenv(
+        "LLM_FALLBACK_PROVIDER", "disabled"
+    ).strip().lower()
     OLLAMA_BASE_URL: str = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
     OLLAMA_MODEL: str = os.getenv("OLLAMA_MODEL", "llama3")
     OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
     OPENAI_MODEL: str = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
     OPENAI_TIMEOUT_SECONDS: float = float(os.getenv("OPENAI_TIMEOUT_SECONDS", "12"))
+    GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
+    GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "")
+    GEMINI_TIMEOUT_SECONDS: float = float(os.getenv("GEMINI_TIMEOUT_SECONDS", "12"))
     AI_RATE_LIMIT_ENABLED: bool = True
     AI_RATE_LIMIT_REQUESTS: int = 10
     AI_RATE_LIMIT_WINDOW_SECONDS: int = 60

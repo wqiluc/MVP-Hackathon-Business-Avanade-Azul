@@ -4,9 +4,14 @@ import math
 import time
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
-from typing import Literal
+from pydantic import ValidationError
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from ai.llm.contracts import (
+    LLMProviderError,
+    RECOMMENDATION_SYSTEM_PROMPT,
+    RecommendationOutput,
+    recommendation_profile,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -14,10 +19,8 @@ MAX_RATE_LIMIT_ATTEMPTS = 3
 INITIAL_BACKOFF_SECONDS = 0.5
 
 
-class OpenAIRecommendationError(ValueError):
-    def __init__(self, reason: str) -> None:
-        self.reason = reason
-        super().__init__(f"OpenAI recommendation unavailable: {reason}")
+class OpenAIRecommendationError(LLMProviderError):
+    pass
 
 
 def _error_details(error: Exception) -> str:
@@ -75,26 +78,9 @@ def _rate_limit_delay(error: Exception, retry_number: int) -> float:
     return max(backoff, retry_after) if retry_after is not None else backoff
 
 
-class RecommendationOutput(BaseModel):
-    model_config = ConfigDict(extra="forbid", strict=True)
-
-    action_code: Literal[
-        "recuperacao-servico",
-        "bonus-pontos",
-        "upgrade",
-        "comunicacao",
-    ]
-    strategy: str = Field(min_length=1, max_length=120)
-    reasoning: str = Field(min_length=1, max_length=500)
-    channel: Literal["App", "E-mail", "SMS", "Telefone"]
-    message: str = Field(min_length=1, max_length=500)
-    benefit: str = Field(min_length=1, max_length=200)
-    bonus_points: int = Field(ge=0, le=0)
-    voucher_value: float = Field(ge=0, le=0)
-    evidence: list[str] = Field(max_length=8)
-
-
 class OpenAIRecommendationService:
+    name = "openai"
+
     def __init__(
         self, api_key: str, model: str, timeout_seconds: float = 12,
         max_retries: int = MAX_RATE_LIMIT_ATTEMPTS - 1,
@@ -106,8 +92,12 @@ class OpenAIRecommendationService:
         self._timeout_seconds = timeout_seconds
         self._max_attempts = max_retries + 1
 
+    @property
+    def configured(self) -> bool:
+        return bool(self._api_key and self._model)
+
     def recommend(self, state: dict) -> RecommendationOutput:
-        if not self._api_key:
+        if not self.configured:
             raise OpenAIRecommendationError("not_configured")
 
         from openai import (
@@ -123,36 +113,13 @@ class OpenAIRecommendationService:
             timeout=self._timeout_seconds,
             max_retries=0,
         )
-        profile = {
-            "tier": state["tier"],
-            "frequency": state["frequency"],
-            "total_spend": state["total_spend"],
-            "churn_score": state["churn_score"],
-            "churn_score_target": "high_risk_flag; not observed churn",
-            "flight_incidents": state["flight_incidents"],
-            "incident_type": state["incident_type"],
-            "value_at_risk": state["value_at_risk"],
-            "graph_rag_context": state["graph_rag_context"],
-        }
+        profile = recommendation_profile(state)
         request = {
             "model": self._model,
             "input": [
                 {
                     "role": "system",
-                    "content": (
-                        "Crie uma recomendação curta para um analista de relacionamento. "
-                        "Use somente os dados e premissas fornecidos; não afirme que "
-                        "benefícios, vouchers ou políticas são direitos confirmados. "
-                        "Diferencie explicitamente políticas marcadas como verificadas "
-                        "das não verificadas, sem inferir elegibilidade individual. "
-                        "Toda oferta deve ser hipotética, demonstrativa e identificada "
-                        "como não verificada; não afirme crédito, concessão ou direito. "
-                        "Use voucher_value=0 e bonus_points=0. As regras podem ser "
-                        "ilustrativas e não verificadas. Não invente incidentes, "
-                        "consentimento, fatos ou benefícios. Se não houver score, não "
-                        "o trate como alto nem como baixo. Não solicite nem inclua "
-                        "identificadores pessoais."
-                    ),
+                    "content": RECOMMENDATION_SYSTEM_PROMPT,
                 },
                 {
                     "role": "user",

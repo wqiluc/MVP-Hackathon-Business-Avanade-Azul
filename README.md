@@ -22,8 +22,8 @@ financeira exibida pelo workflow também é uma heurística, não uma previsão
 financeira.
 
 Este repositório não comprova prontidão de produção, disponibilidade de
-serviços externos ou conformidade legal. Snowflake, MLflow remoto/Serving e
-OpenAI dependem de serviços e credenciais configurados fora do projeto. O
+serviços externos ou conformidade legal. Snowflake, MLflow remoto/Serving,
+OpenAI e Gemini dependem de serviços e credenciais configurados fora do projeto. O
 contexto de grafo é local e estático; não existe recuperação vetorial conectada.
 
 ## Arquitetura resumida
@@ -35,7 +35,7 @@ React + Vite
             -> ingestão e camadas Bronze / Silver / Gold
             -> modelo de risco e MLflow Tracking / Serving
             -> workflow de agentes e contexto em grafo
-            -> OpenAI opcional no backend, com fallback por regras
+            -> OpenAI/Gemini opcionais no backend, com fallback por regras
         -> recomendação apresentada ao analista para revisão humana
 ```
 
@@ -52,7 +52,7 @@ uma integração externa configurável.
 - **Machine learning:** scikit-learn, MLflow Tracking, Model Registry e
   Serving configurável.
 - **Workflow de decisão:** LangGraph, regras determinísticas e grafo NetworkX
-  estático; OpenAI opcional para personalizar texto no backend.
+  estático; OpenAI ou Gemini opcionais para personalizar texto no backend.
 - **Testes:** pytest, testes de serviço do frontend, lint e build.
 
 ## Estrutura do monorepo
@@ -99,10 +99,12 @@ target e métricas estão detalhados em [docs/ml/README.md](docs/ml/README.md).
 ## IA e recomendações
 
 O Decision Agent seleciona ações por regras determinísticas e contexto de um
-grafo pequeno, estático e definido no código. OpenAI, quando habilitada, pode
-personalizar o texto da recomendação pelo backend, mas não substitui a ação
-decidida. Sem configuração ou em falha do provedor, o backend usa fallback
-determinístico e identifica a origem da resposta. As recomendações requerem
+grafo pequeno, estático e definido no código. OpenAI ou Gemini, quando
+habilitados, podem personalizar o texto da recomendação pelo backend, mas não
+substituem a ação decidida. Sem configuração, o backend usa fallback
+determinístico; na falha do provider, só tenta outro se
+`LLM_FALLBACK_PROVIDER` estiver explicitamente configurado. Se todos falharem,
+usa fallback determinístico e identifica a origem da resposta. As recomendações requerem
 revisão humana; não são aconselhamento jurídico nem oferta confirmada. Veja
 [docs/ai/README.md](docs/ai/README.md).
 
@@ -121,8 +123,8 @@ governança, privacidade, operação e disponibilidade do ambiente.
 - Node.js 20.19+ na linha 20 ou 22.12+ (recomendado: 24 LTS) e npm.
 - Python 3.12+.
 - Para desenvolvimento local, DuckDB e LLM desabilitado são os defaults
-  recomendados. MLflow local é opcional; Snowflake, Redis e OpenAI exigem
-  configuração e serviços externos próprios.
+  recomendados. MLflow local é opcional; Snowflake, Redis, OpenAI e Gemini
+  exigem configuração e serviços externos próprios.
 
 Copie `backend/.env.example` para `backend/.env` somente se o arquivo local
 ainda não existir. Configure uma conta local, gere uma `JWT_SECRET_KEY`
@@ -186,8 +188,8 @@ antes de executar integrações reais.
 
 - O target de risco é proxy, não churn observado.
 - O grafo é estático e não existe recuperação vetorial/documental conectada.
-- OpenAI é opcional e a ação é determinada pelo backend; a recomendação exige
-  decisão humana.
+- OpenAI e Gemini são opcionais; a ação é determinada pelo backend e a
+  recomendação exige decisão humana.
 - Snowflake e MLflow Serving dependem de infraestrutura externa e validação
   real no ambiente de destino.
 - O upload substitui o snapshot atual; não há histórico de snapshots ou

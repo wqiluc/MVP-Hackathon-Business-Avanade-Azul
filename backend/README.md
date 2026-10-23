@@ -31,10 +31,13 @@ HTTP routes -> app.services -> data / ml / ai
 
 The Decision Agent uses deterministic rules and a small static NetworkX graph;
 the graph is not a complete GraphRAG implementation and does not use connected
-embeddings or vector retrieval. The backend may use OpenAI to personalize
-recommendation text after the decision; when OpenAI is disabled, unconfigured,
-or unavailable, it uses an explicitly labeled rules fallback. Requests contain
-no client identifier or direct personal identifiers.
+embeddings or vector retrieval. After the decision, the backend can use OpenAI
+or Gemini to personalize recommendation text through a shared structured
+output contract. When the provider is disabled or unconfigured and no alternate
+provider is configured, the service uses rules. A second provider is attempted
+only when `LLM_FALLBACK_PROVIDER` explicitly selects it; if all configured
+providers fail, the rules fallback is labeled `llm-indisponivel`. Requests
+contain no client identifier or direct personal identifiers.
 
 Client identifiers are pseudonymized with keyed HMAC-SHA256 before persistence.
 The key is `JWT_SECRET_KEY`; rotating it requires a coordinated migration.
@@ -98,7 +101,14 @@ Read-only client/dashboard requests and upload are unchanged.
 | `AI_RATE_LIMIT_REQUESTS` | `10` | Requests per JWT `sub` in one window |
 | `AI_RATE_LIMIT_WINDOW_SECONDS` | `60` | Window duration, starting on first admitted request |
 | `AI_RATE_LIMIT_IP_REQUESTS` | `100` | Secondary shared IP barrier, allowing multiple users behind NAT |
-| `AI_OPENAI_MAX_RETRIES` | `2` | Additional provider attempts; validated range 0–2 |
+| `LLM_PROVIDER` | `openai` | Primary provider: `openai`, `gemini` or `disabled` |
+| `LLM_FALLBACK_PROVIDER` | `disabled` | Optional second provider; no cross-provider fallback by default |
+| `OPENAI_API_KEY` / `GEMINI_API_KEY` | empty | Provider credentials; backend only |
+| `OPENAI_MODEL` | `gpt-4o-mini` | OpenAI model |
+| `GEMINI_MODEL` | empty | Required model name when Gemini is selected |
+| `OPENAI_TIMEOUT_SECONDS` | `12` | OpenAI request timeout |
+| `GEMINI_TIMEOUT_SECONDS` | `12` | Gemini request timeout |
+| `AI_OPENAI_MAX_RETRIES` | `2` | Additional OpenAI attempts; validated range 0–2 |
 | `REDIS_URL` | empty | Shared Redis counter store; use `rediss://` when TLS is required |
 
 These are **our application's budgets**, not official OpenAI/free-tier limits.
@@ -151,17 +161,20 @@ unmetered work. Production startup rejects a missing Redis URL when enabled;
 runtime requests fail closed if Redis is unreachable.
 
 OpenAI `RateLimitError` is a separate mechanism. The SDK's internal retries stay
-disabled. Only temporary provider rate limits are retried, honoring numeric or
+disabled. Only temporary OpenAI rate limits are retried, honoring numeric or
 HTTP-date `Retry-After` and exponential backoff. Quota/billing, transport errors
 and invalid structured outputs are not retried. A provider delay exceeding
 `OPENAI_TIMEOUT_SECONDS` immediately selects fallback instead of retrying early
-or occupying a worker for an unbounded delay.
+or occupying a worker for an unbounded delay. Gemini uses its bounded
+`GEMINI_TIMEOUT_SECONDS` and is not retried automatically.
 
-A request generates at most `1 + AI_OPENAI_MAX_RETRIES` provider calls (maximum
-three). Provider failures retain HTTP 200 with an explicitly labeled
-`llm-indisponivel` rules recommendation; disabling/unconfiguring the provider
-retains the normal `regras` origin. Neither changes `high_risk_flag`, null scores,
-GraphRAG, the Decision Agent, or policy/eligibility notices.
+A primary OpenAI request generates at most `1 + AI_OPENAI_MAX_RETRIES` calls
+(maximum three); Gemini generates one. An explicitly configured fallback can
+add its own provider call(s). Provider failures retain HTTP 200 with an
+explicitly labeled `llm-indisponivel` rules recommendation;
+disabling/unconfiguring the provider with no configured fallback retains the
+normal `regras` origin. Neither changes `high_risk_flag`, null scores, GraphRAG,
+the Decision Agent, or policy/eligibility notices.
 
 The fixed windows are not a global monthly quota or concurrency limiter: traffic
 can burst across a window boundary. Monitor usage and configure budgets alongside

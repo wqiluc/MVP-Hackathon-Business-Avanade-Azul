@@ -214,7 +214,7 @@ class CrmService:
 
 
 def gerar_recomendacao(cliente: dict) -> dict:
-    """Run the graph workflow, optionally augment it with OpenAI, and keep fallback visible."""
+    """Run the graph workflow, optionally personalize text, and keep fallback visible."""
     base = cliente["proximaAcao"]
     try:
         final = invoke_agent_workflow({
@@ -255,45 +255,25 @@ def gerar_recomendacao(cliente: dict) -> dict:
         "impactoEstimado": {"reducaoRiscoPp": None, "receitaProtegida": None},
     }
 
-    if settings.LLM_PROVIDER != "openai":
-        logger.info("OpenAI provider disabled; deterministic rules recommendation used.")
-        return _rotular_recomendacao(
-            deterministic,
-            graph_context.get("policies_verified") is True,
-            graph_context.get("policy_context"),
-        )
-
-    from ai.llm.openai_recommendation import (
-        OpenAIRecommendationError,
-        OpenAIRecommendationService,
-    )
-
-    if not settings.OPENAI_API_KEY:
-        logger.info(
-            "OpenAI recommendation not configured; reason=missing_api_key; "
-            "deterministic rules recommendation used."
-        )
-        return _rotular_recomendacao(
-            deterministic,
-            graph_context.get("policies_verified") is True,
-            graph_context.get("policy_context"),
-        )
-
+    from ai.llm.contracts import LLMProviderError
+    from app.services.llm_provider_factory import create_llm_service
     try:
-        output = OpenAIRecommendationService(
-            settings.OPENAI_API_KEY,
-            settings.OPENAI_MODEL,
-            settings.OPENAI_TIMEOUT_SECONDS,
-            max_retries=settings.AI_OPENAI_MAX_RETRIES,
-        ).recommend(final)
-    except OpenAIRecommendationError as error:
+        output = create_llm_service(settings).recommend(final)
+    except LLMProviderError as error:
         logger.warning(
-            "OpenAI recommendation unavailable; reason=%s; "
+            "LLM recommendation unavailable; reason=%s; "
             "deterministic rules fallback used.",
             error.reason,
         )
         return _rotular_recomendacao(
             deterministic | {"origem": "llm-indisponivel"},
+            graph_context.get("policies_verified") is True,
+            graph_context.get("policy_context"),
+        )
+
+    if output is None:
+        return _rotular_recomendacao(
+            deterministic,
             graph_context.get("policies_verified") is True,
             graph_context.get("policy_context"),
         )
