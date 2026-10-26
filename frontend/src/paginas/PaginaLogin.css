@@ -1,0 +1,235 @@
+.login {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  background: var(--page);
+}
+
+/* Painel da marca */
+.login__marca {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  padding: 48px 56px;
+  background: var(--navy);
+  color: var(--navy-ink);
+}
+
+/* Mosaico inspirado no logotipo */
+.login__marca::after {
+  content: '';
+  position: absolute;
+  right: -60px;
+  bottom: -60px;
+  width: 360px;
+  height: 360px;
+  background:
+    linear-gradient(var(--brand), var(--brand)) 60px 60px / 64px 64px no-repeat,
+    linear-gradient(#5a6bd8, #5a6bd8) 128px 60px / 64px 64px no-repeat,
+    linear-gradient(#8cc63f, #8cc63f) 128px 128px / 64px 64px no-repeat,
+    linear-gradient(#f7941d, #f7941d) 196px 128px / 64px 64px no-repeat,
+    linear-gradient(#e2457a, #e2457a) 196px 196px / 64px 64px no-repeat,
+    linear-gradient(#26c6da, #26c6da) 60px 196px / 64px 64px no-repeat;
+  opacity: 0.16;
+  pointer-events: none;
+}
+
+.login__marca-conteudo {
+  position: relative;
+  z-index: 1;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.login__logo {
+  width: 180px;
+  height: auto;
+  display: block;
+}
+
+.login__marca h1 {
+  font-size: clamp(30px, 3.4vw, 42px);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+
+.login__marca p {
+  font-size: 17px;
+  color: var(--navy-ink-muted);
+}
+
+.login__destaques {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.login__destaques li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 15px;
+  color: var(--navy-ink);
+}
+
+.login__destaque-icone {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--brand);
+}
+
+/* Formulário */
+.login__painel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+}
+
+.login__form {
+  width: min(400px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.login__form h2 {
+  font-size: 26px;
+  letter-spacing: -0.01em;
+}
+
+.login__subtitulo {
+  margin-top: 4px;
+  color: var(--text-secondary);
+}
+
+.login__campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.login__entrada {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px;
+  height: 46px;
+  border-radius: 10px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--text-muted);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.login__entrada:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-wash);
+}
+
+.login__entrada input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--text-primary);
+}
+
+.login__entrada:has(input[aria-invalid='true']) {
+  border-color: var(--critical);
+}
+
+.login__olho {
+  display: grid;
+  place-items: center;
+  padding: 6px;
+  margin-right: -6px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.login__olho:hover {
+  background: var(--surface-2);
+  color: var(--text-primary);
+}
+
+.login__botao {
+  height: 46px;
+  font-size: 15px;
+}
+
+.login__demo {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px dashed var(--border-strong);
+  background: var(--surface-2);
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.login__demo strong {
+  color: var(--text-primary);
+}
+
+.login__demo code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+}
+
+@media (max-width: 900px) {
+  .login {
+    grid-template-columns: 1fr;
+  }
+
+  .login__marca {
+    padding: 28px 16px;
+  }
+
+  .login__marca::after,
+  .login__destaques {
+    display: none;
+  }
+
+  .login__marca-conteudo {
+    gap: 12px;
+  }
+
+  .login__logo {
+    width: 128px;
+  }
+
+  .login__painel {
+    align-items: flex-start;
+    padding: 28px 16px 40px;
+  }
+}

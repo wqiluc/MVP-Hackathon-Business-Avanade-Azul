@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "crm-alto-valor-monorepo"
+version = "0.1.0"
+requires-python = ">=3.12"
+
+[tool.setuptools]
+packages = [
+    "ai",
+    "ai.agents",
+    "ai.graphrag",
+    "ai.llm",
+    "ai.rag",
+    "data",
+    "data.ingestion",
+    "data.bronze",
+    "data.silver",
+    "data.gold",
+    "data.storage",
+    "ml",
+    "ml.inference",
+    "ml.features",
+    "ml.evaluation",
+    "ml.training",
+    "ml.models",
+]
+include-package-data = false
