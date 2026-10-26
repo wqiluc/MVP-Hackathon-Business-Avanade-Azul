@@ -9,7 +9,7 @@ import './PaginaLogin.css';
 
 const DESTAQUES = [
   { icone: 'chart', texto: 'Quem são os clientes de alto valor e quanto valem em 24 meses' },
-  { icone: 'alert', texto: 'Classificação de high_risk_flag — não representa churn observado' },
+  { icone: 'alert', texto: 'Score demonstrativo — não representa churn observado' },
   { icone: 'sparkles', texto: 'OpenAI estruturada quando configurada; regras como fallback' },
 ] as const;
 

@@ -6,6 +6,7 @@ import { nivelRisco, TIERS } from '../configuracao/fidelidade';
 import { PERSONAS, PERSONA_IDS } from '../configuracao/personas';
 import { useBuscaAssincrona } from '../hooks/useBuscaAssincrona';
 import { servicoCrm } from '../servicos/servicoCrm';
+import { usandoDadosSinteticos } from '../servicos/configuracaoApi';
 import { formatNumero } from '../utilitarios/formatacao';
 
 const FILTROS_SCORE = [
@@ -35,7 +36,11 @@ export function PaginaClientes() {
     .sort((a, b) => {
       if (a.riscoEvasao === null) return b.riscoEvasao === null ? a.id.localeCompare(b.id) : 1;
       if (b.riscoEvasao === null) return -1;
-      return b.clvProjetado * b.riscoEvasao - a.clvProjetado * a.riscoEvasao || a.id.localeCompare(b.id);
+      return (
+        (b.clvProjetado ?? 0) * b.riscoEvasao -
+        (a.clvProjetado ?? 0) * a.riscoEvasao ||
+        a.id.localeCompare(b.id)
+      );
     });
 
   function atualizarFiltro(chave: string, valor: string) {
@@ -52,7 +57,9 @@ export function PaginaClientes() {
           <div className="eyebrow">Base de clientes</div>
           <h1>Clientes</h1>
           <p>
-            Classificação high_risk_flag: não representa churn observado nem probabilidade calibrada de evasão.
+            {usandoDadosSinteticos
+              ? 'Score sintético demonstrativo; não representa churn observado.'
+              : 'Score de churn disponível quando a origem fornece todas as features exigidas pelo modelo.'}
           </p>
         </div>
       </div>
@@ -73,7 +80,7 @@ export function PaginaClientes() {
           </select>
         </label>
         <label className="field">
-          Faixa do score high_risk_flag
+          Faixa do {usandoDadosSinteticos ? 'score sintético' : 'score de churn'}
           <select className="select" value={score ?? ''} onChange={(e) => atualizarFiltro('risco', e.target.value)}>
             <option value="">Todos os scores</option>
             {FILTROS_SCORE.map((opcao) => <option key={opcao.id} value={opcao.id}>{opcao.rotulo}</option>)}

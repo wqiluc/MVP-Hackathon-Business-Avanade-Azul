@@ -21,7 +21,7 @@ export function AvisoModelo() {
     <div className={`note ${servingConfigurado ? '' : 'note--warning'}`}>
       <Icone name={servingConfigurado ? 'shield' : 'info'} size={16} />
       <span>
-        <strong>{modelo.nome}</strong>
+        <strong>Treino legado: {modelo.nome}</strong>
         {registrado ? (
           <>
             {' '}
@@ -34,15 +34,15 @@ export function AvisoModelo() {
               : ' · aguardando configuração do MLflow Serving'}
           </>
         ) : modelo.status === 'aguardando-configuracao' ? (
-          <> · integração MLflow não configurada. Os scores ficam indisponíveis.</>
+          <> · integração MLflow de treinamento não configurada.</>
         ) : (
           <>
             {' '}
-            · aguardando registro do modelo no {modelo.plataforma}. Os scores ficam indisponíveis até o treino e o
-            Serving.
+            · aguardando registro do modelo de treinamento no {modelo.plataforma}.
           </>
         )}
-        {' '}O alvo é high_risk_flag derivado por regras, não churn observado.
+        {' '}Este fluxo treina o alvo high_risk_flag derivado por regras; o scoring do CRM usa artefatos separados
+        com contratos de 52 features.
       </span>
     </div>
   );

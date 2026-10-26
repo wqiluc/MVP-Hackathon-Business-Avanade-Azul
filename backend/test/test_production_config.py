@@ -27,8 +27,12 @@ VALID = {
     "SNOWFLAKE_DATABASE": "AZUL_DATA_LAKE",
     "SNOWFLAKE_WAREHOUSE": "WH",
     "MLFLOW_TRACKING_URI": "https://mlflow.example.com",
-    "MLFLOW_SERVING_URL": "https://serving.example.com/invocations",
-    "MLFLOW_LOCAL_INFERENCE": False,
+    "ML_INFERENCE_MODE": "databricks",
+    "DATABRICKS_HOST": "https://workspace.example.com",
+    "DATABRICKS_TOKEN": "test-databricks-token",
+    "DATABRICKS_CHURN_ENDPOINT": "churn-endpoint",
+    "DATABRICKS_CLV_ENDPOINT": "clv-endpoint",
+    "ML_CHURN_CLASS_ORDER": "0,1",
     "GEMINI_TIMEOUT_SECONDS": 12,
     "AI_RATE_LIMIT_ENABLED": True,
     "REDIS_URL": "redis://redis.example.invalid:6379/0",
@@ -70,9 +74,13 @@ def test_production_requires_model_name(prod, monkeypatch):
         {"MLFLOW_TRACKING_URI": "http://127.0.0.1:5000"},
         {"MLFLOW_TRACKING_URI": "file:///tmp/mlruns"},
         {"MLFLOW_TRACKING_URI": "./mlruns"},
-        {"MLFLOW_SERVING_URL": ""},
-        {"MLFLOW_SERVING_URL": "not-a-url"},
-        {"MLFLOW_LOCAL_INFERENCE": True},
+        {"ML_INFERENCE_MODE": "unknown"},
+        {"DATABRICKS_HOST": "not-a-url"},
+        {"DATABRICKS_TOKEN": ""},
+        {"DATABRICKS_CHURN_ENDPOINT": ""},
+        {"DATABRICKS_CLV_ENDPOINT": ""},
+        {"ML_CHURN_CLASS_ORDER": "1"},
+        {"ML_CHURN_CLASS_ORDER": "0,2"},
         {"JWT_SECRET_CONFIGURED": False},
         {"JWT_SECRET_KEY": ""},
         {"JWT_SECRET_KEY": "short"},
@@ -107,7 +115,8 @@ def test_invalid_production_config_is_rejected_without_secrets(prod, override):
 def test_development_defaults_unchanged(prod):
     prod(ENVIRONMENT="development", DATA_LAKE_BACKEND="duckdb",
          MLFLOW_TRACKING_URI="http://localhost:5000", MLFLOW_SERVING_URL="",
-         MLFLOW_LOCAL_INFERENCE=True, SNOWFLAKE_ACCOUNT="")
+         ML_INFERENCE_MODE="local", MLFLOW_LOCAL_INFERENCE=True,
+         SNOWFLAKE_ACCOUNT="")
     validate_runtime_settings()
 
 

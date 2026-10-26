@@ -39,6 +39,56 @@ desse target derivado, não a previsão de churn real. `churn_score` é a
 probabilidade de classe positiva do modelo e não deve ser confundida com
 `high_risk_flag` nem com churn observado.
 
+## Modelos empacotados de churn e CLV
+
+O scoring de CRM também suporta os artefatos fornecidos em `modelo_churn/` e
+`pacote_CLV/`. Esse contrato é independente do pipeline legado de treino de
+cinco features documentado acima. Os dois artefatos exigem os mesmos 52 nomes
+de entrada; a lista canônica e os tipos estão em
+`backend/app/services/ml/model_contracts.py`. O `FeatureBuilder` rejeita
+features ausentes, tipos incompatíveis, nulos e valores numéricos não finitos.
+Não há aliases, valores padrão, cálculo de features nem conversão do contrato
+canônico de upload para o contrato dos modelos.
+
+O upload atual contém somente `id_cliente`, `tier`, `frequencia`,
+`recencia_dias`, `gasto_total` e `incidentes`. Portanto, não fornece as 52
+features e não é fonte suficiente para esses modelos: `churn_score` e CLV ficam
+indisponíveis (`NULL`), e a resposta de upload informa a lacuna. Não se usa o
+dataset de exemplo do artefato como dados de clientes nem o classificador proxy
+de cinco features como substituto. Quando uma origem futura entregar o contrato
+completo, o churn seleciona a probabilidade pelo rótulo da classe `1`; o CLV
+retorna a saída numérica escalar do horizonte de 12 meses informado pelo
+artefato.
+
+`ML_INFERENCE_MODE=local` carrega cada modelo MLflow empacotado sob demanda,
+usando `ML_CHURN_MODEL_PATH` e `ML_CLV_MODEL_PATH`. `ML_INFERENCE_MODE=databricks`
+usa os endpoints configurados por `DATABRICKS_HOST`, `DATABRICKS_TOKEN`,
+`DATABRICKS_CHURN_ENDPOINT` e `DATABRICKS_CLV_ENDPOINT`; o token fica somente
+no backend. `ML_CHURN_CLASS_ORDER` declara a ordem das classes para o endpoint
+remoto e deve corresponder aos rótulos observados no artefato. Ambos os modos
+usam `ML_INFERENCE_TIMEOUT_SECONDS`. Em produção, o startup valida o provider
+selecionado; readiness verifica os dois endpoints Databricks ou reporta o
+provider local configurado. Não há fallback automático entre providers.
+
+Modelos oficiais: churn `workspace.default.churn_gb2` versão 1 e CLV
+`workspace.default.clv_gb` versão 3. O notebook `CLVtest.ipynb` (XGBoost no
+Snowflake, saída em `GOLD.CLV_PREVISTO`) é apenas evidência de outra
+implementação e não é o modelo de CLV da aplicação nem é consumido por ela.
+
+Bloqueio externo atual: a origem das 52 features (provavelmente
+`AZUL_DATA_LAKE.SILVER.CLIENTES_CLEAN`) não foi validada, pois seu schema real e
+o vínculo entre `id_cliente` e `CLIENTE_ID` são desconhecidos. Até que sejam
+confirmados, a aplicação não lê essa tabela. Um E2E real exige acesso ao
+Snowflake e ao Databricks Model Serving (ou runtime MLflow isolado).
+
+O ambiente backend validado usa scikit-learn 1.9.1 para o artefato de churn.
+O pacote CLV declara scikit-learn 1.7.2 e não carregou nesse runtime por
+incompatibilidade de dependência (`_loss`). Não se deve atualizar o ambiente
+compartilhado nem substituir o modelo para contornar isso: use um ambiente
+isolado compatível com o pacote ou o endpoint Databricks. Chamadas externas
+foram exercitadas somente com HTTP mockado; a disponibilidade real de serving
+não foi validada.
+
 O nome exato do modelo no Registry é fornecido por `MLFLOW_MODEL_NAME`, sem
 renomear modelos externos existentes. O registro promove a versão
 validada ao alias `champion`. O teste `test_mlflow_integration.py` pode iniciar

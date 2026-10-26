@@ -35,7 +35,7 @@ export function SeloRisco({
   }
   return (
     <span className={`badge ${origem === 'heuristica-sintetica' ? 'badge--synthetic' : 'badge--status'}`}>
-      {origem === 'heuristica-sintetica' ? 'Heurística sintética' : 'high_risk_flag'}
+      {origem === 'heuristica-sintetica' ? 'Heurística sintética' : 'Score de churn'}
       <span className="tabular">· {formatPercentual(risco)}</span>
     </span>
   );

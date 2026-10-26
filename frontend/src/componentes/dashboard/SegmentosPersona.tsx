@@ -12,7 +12,7 @@ interface SegmentosPersonaProps {
 
 /** CLV total por persona (barra de série única) + tamanho e score médio disponível. */
 export function SegmentosPersona({ dados, selecionada, onSelecionar }: SegmentosPersonaProps) {
-  const max = Math.max(1, ...dados.map((d) => d.clvTotal));
+  const max = Math.max(1, ...dados.map((d) => d.clvTotal ?? 0));
   return (
     <div className="segmentos">
       {dados.map((d) => {
@@ -33,9 +33,11 @@ export function SegmentosPersona({ dados, selecionada, onSelecionar }: Segmentos
             </div>
             <div className="hbar" style={{ gridTemplateColumns: '1fr auto' }}>
               <div className="hbar__track">
-                <div className="hbar__fill" style={{ width: `${(d.clvTotal / max) * 100}%` }} />
+                <div className="hbar__fill" style={{ width: `${((d.clvTotal ?? 0) / max) * 100}%` }} />
               </div>
-              <span className="hbar__value">{formatBRLCompacto(d.clvTotal)}</span>
+              <span className="hbar__value">
+                {d.clvTotal === null ? 'CLV indisponível' : formatBRLCompacto(d.clvTotal)}
+              </span>
             </div>
             <div className="segmento__rodape">
               <span className="muted">Score médio</span>

@@ -20,7 +20,7 @@ export function TabelaPrioritarios({ clientes }: { clientes: ClienteResumo[] }) 
             <th>Cliente</th>
             <th>Persona</th>
             <th>Categoria</th>
-            <th className="num">CLV 24m</th>
+            <th className="num">CLV {usandoDadosSinteticos ? 24 : 12}m</th>
             <th className="num">Score</th>
             <th>Score de classificação</th>
             <th>Recomendação</th>
@@ -53,7 +53,9 @@ export function TabelaPrioritarios({ clientes }: { clientes: ClienteResumo[] }) 
               <td>
                 <SeloCategoria tier={c.tier} />
               </td>
-              <td className="num">{formatBRL(c.clvProjetado)}</td>
+              <td className="num">
+                {c.clvProjetado === null ? 'CLV indisponível' : formatBRL(c.clvProjetado)}
+              </td>
               <td className="num">{c.scoreValor}</td>
               <td>
                 <SeloRisco

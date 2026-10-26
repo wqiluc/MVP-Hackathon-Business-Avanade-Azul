@@ -71,6 +71,23 @@ class Settings(BaseSettings):
         os.getenv("MLFLOW_LOCAL_INFERENCE", "false").lower() == "true"
     )
 
+    # Real packaged models are separate from the existing training/Registry flow.
+    ML_INFERENCE_MODE: str = os.getenv("ML_INFERENCE_MODE", "local").strip().lower()
+    ML_CHURN_MODEL_PATH: str = os.getenv(
+        "ML_CHURN_MODEL_PATH", str(BASE_DIR / "modelo_churn")
+    )
+    ML_CLV_MODEL_PATH: str = os.getenv(
+        "ML_CLV_MODEL_PATH", str(BASE_DIR / "pacote_CLV" / "modelo_clv")
+    )
+    ML_INFERENCE_TIMEOUT_SECONDS: float = float(
+        os.getenv("ML_INFERENCE_TIMEOUT_SECONDS", "15")
+    )
+    ML_CHURN_CLASS_ORDER: str = os.getenv("ML_CHURN_CLASS_ORDER", "0,1")
+    DATABRICKS_HOST: str = os.getenv("DATABRICKS_HOST", "")
+    DATABRICKS_TOKEN: str = os.getenv("DATABRICKS_TOKEN", "")
+    DATABRICKS_CHURN_ENDPOINT: str = os.getenv("DATABRICKS_CHURN_ENDPOINT", "")
+    DATABRICKS_CLV_ENDPOINT: str = os.getenv("DATABRICKS_CLV_ENDPOINT", "")
+
     # Acesso do front (ambiente de avaliação do Hackathon)
     DEMO_EMAIL: str = os.getenv("DEMO_EMAIL", "")
     DEMO_PASSWORD: str = os.getenv("DEMO_PASSWORD", "")

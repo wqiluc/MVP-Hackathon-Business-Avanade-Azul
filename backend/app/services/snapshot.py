@@ -95,7 +95,10 @@ def validate_candidate(
     if "churn_score" not in gold:
         raise RuntimeError("Snapshot candidato sem scores.")
     scores = pd.to_numeric(gold["churn_score"], errors="coerce")
-    if scoring_status == "awaiting_model_registration":
+    if scoring_status in {
+        "awaiting_model_registration",
+        "awaiting_model_features",
+    }:
         valid = gold["churn_score"].isna().all()
     elif scoring_status == "scored":
         valid = np.isfinite(scores).all() and scores.between(0, 1).all()

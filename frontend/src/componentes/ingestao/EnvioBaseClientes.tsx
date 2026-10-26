@@ -35,7 +35,8 @@ export function EnvioBaseClientes() {
       <h3>Enviar base de clientes</h3>
       <p>
         CSV, Excel ou JSON (máximo 10 MB). Colunas fora dos contratos aceitos são descartadas antes da Bronze.
-        Sem modelo ativo, a Gold é criada e o score fica pendente até o treinamento no MLflow.
+        O upload canônico tem seis campos e não fornece as 52 features dos modelos; score e CLV ficam indisponíveis
+        até uma origem compatível fornecer o contrato completo.
       </p>
 
       <input

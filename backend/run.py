@@ -1,3 +1,4 @@
+from pathlib import Path
 from urllib.parse import urlparse
 
 import uvicorn
@@ -47,13 +48,52 @@ def validate_production_integrations() -> None:
         problems.append("MLFLOW_TRACKING_URI deve apontar para um servidor remoto")
     if not mlflow_tracker.MODEL_NAME:
         problems.append("MLFLOW_MODEL_NAME é obrigatório")
-    serving = (settings.MLFLOW_SERVING_URL or "").strip()
-    if not serving:
-        problems.append("MLFLOW_SERVING_URL é obrigatório")
-    elif urlparse(serving).scheme not in {"http", "https"}:
-        problems.append("MLFLOW_SERVING_URL deve ser uma URL http(s)")
-    if settings.MLFLOW_LOCAL_INFERENCE:
-        problems.append("MLFLOW_LOCAL_INFERENCE deve ser false")
+    if settings.ML_INFERENCE_MODE == "local":
+        for name, configured_path in (
+            ("ML_CHURN_MODEL_PATH", settings.ML_CHURN_MODEL_PATH),
+            ("ML_CLV_MODEL_PATH", settings.ML_CLV_MODEL_PATH),
+        ):
+            model_path = Path(configured_path).expanduser()
+            if not model_path.is_absolute():
+                model_path = Path(__file__).resolve().parent.parent / model_path
+            if not model_path.is_dir():
+                problems.append(f"{name} deve apontar para um diretório de modelo")
+    elif settings.ML_INFERENCE_MODE == "databricks":
+        host = urlparse(settings.DATABRICKS_HOST.strip())
+        if (
+            host.scheme not in {"http", "https"}
+            or not host.hostname
+            or host.username
+            or host.password
+            or host.path not in {"", "/"}
+            or host.query
+            or host.fragment
+        ):
+            problems.append("DATABRICKS_HOST deve ser uma origem http(s) válida")
+        if not settings.DATABRICKS_TOKEN.strip():
+            problems.append("DATABRICKS_TOKEN é obrigatório")
+        for name, endpoint in (
+            ("DATABRICKS_CHURN_ENDPOINT", settings.DATABRICKS_CHURN_ENDPOINT),
+            ("DATABRICKS_CLV_ENDPOINT", settings.DATABRICKS_CLV_ENDPOINT),
+        ):
+            if not endpoint.strip():
+                problems.append(f"{name} é obrigatório")
+        try:
+            classes = [
+                int(value.strip())
+                for value in settings.ML_CHURN_CLASS_ORDER.split(",")
+                if value.strip()
+            ]
+        except ValueError:
+            classes = []
+        if len(classes) != 2 or len(set(classes)) != 2:
+            problems.append(
+                "ML_CHURN_CLASS_ORDER deve conter duas classes inteiras distintas"
+            )
+        elif 1 not in classes:
+            problems.append("ML_CHURN_CLASS_ORDER deve incluir a classe positiva 1")
+    else:
+        problems.append("ML_INFERENCE_MODE deve ser 'local' ou 'databricks'")
     if problems:
         raise RuntimeError(
             "Configuração de produção inválida: " + "; ".join(problems) + "."
@@ -70,6 +110,10 @@ def validate_runtime_settings() -> None:
         raise RuntimeError("OPENAI_TIMEOUT_SECONDS deve ser maior que zero.")
     if settings.GEMINI_TIMEOUT_SECONDS <= 0:
         raise RuntimeError("GEMINI_TIMEOUT_SECONDS deve ser maior que zero.")
+    if settings.ML_INFERENCE_TIMEOUT_SECONDS <= 0:
+        raise RuntimeError("ML_INFERENCE_TIMEOUT_SECONDS deve ser maior que zero.")
+    if settings.ML_INFERENCE_MODE not in {"local", "databricks"}:
+        raise RuntimeError("ML_INFERENCE_MODE deve ser 'local' ou 'databricks'.")
     supported_llm_providers = {"openai", "gemini", "disabled"}
     if settings.LLM_PROVIDER not in supported_llm_providers:
         raise RuntimeError("LLM_PROVIDER deve ser 'openai', 'gemini' ou 'disabled'.")

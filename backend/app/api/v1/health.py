@@ -1,4 +1,4 @@
-from urllib.parse import urlparse, urlunparse
+from urllib.parse import quote, urlparse, urlunparse
 
 import requests
 from redis.exceptions import RedisError
@@ -106,6 +106,43 @@ def _check_http_health(uri: str, endpoint: str) -> str:
         return "failed"
 
 
+def _check_databricks_endpoint(host: str, token: str, endpoint: str) -> str:
+    parsed = urlparse(host.strip())
+    if (
+        parsed.scheme not in {"http", "https"}
+        or not parsed.netloc
+        or parsed.path not in {"", "/"}
+        or parsed.query
+        or parsed.fragment
+        or not token.strip()
+        or not endpoint.strip()
+    ):
+        return "unverified"
+    url = (
+        f"{parsed.scheme}://{parsed.netloc}/api/2.0/serving-endpoints/"
+        f"{quote(endpoint.strip(), safe='')}"
+    )
+    try:
+        response = requests.get(
+            url,
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=_DEPENDENCY_TIMEOUT_SECONDS,
+            allow_redirects=False,
+        )
+        if response.status_code != 200:
+            return "failed"
+        body = response.json()
+        return (
+            "ready"
+            if isinstance(body, dict)
+            and isinstance(body.get("state"), dict)
+            and body["state"].get("ready") == "READY"
+            else "failed"
+        )
+    except (requests.RequestException, ValueError):
+        return "failed"
+
+
 def _check_redis() -> str:
     try:
         validate_ai_rate_limit_settings()
@@ -121,6 +158,8 @@ def readiness():
     checks = {
         "data_lake_backend": settings.DATA_LAKE_BACKEND in {"duckdb", "snowflake"},
         "mlflow_tracking_configured": bool(settings.MLFLOW_TRACKING_URI.strip()),
+        "ml_inference_mode_configured": settings.ML_INFERENCE_MODE
+        in {"local", "databricks"},
         "upload_limit_configured": settings.MAX_UPLOAD_BYTES > 0,
     }
     dependencies = {}
@@ -145,6 +184,34 @@ def readiness():
     else:
         dependencies["data_lake"] = "unverified"
 
+    if settings.ML_INFERENCE_MODE == "local":
+        dependencies["ml_inference"] = (
+            "configured"
+            if settings.ML_CHURN_MODEL_PATH.strip()
+            and settings.ML_CLV_MODEL_PATH.strip()
+            else "not_configured"
+        )
+    elif settings.ML_INFERENCE_MODE == "databricks":
+        endpoint_statuses = [
+            _check_databricks_endpoint(
+                settings.DATABRICKS_HOST,
+                settings.DATABRICKS_TOKEN,
+                settings.DATABRICKS_CHURN_ENDPOINT,
+            ),
+            _check_databricks_endpoint(
+                settings.DATABRICKS_HOST,
+                settings.DATABRICKS_TOKEN,
+                settings.DATABRICKS_CLV_ENDPOINT,
+            ),
+        ]
+        dependencies["ml_inference"] = (
+            "ready"
+            if all(status == "ready" for status in endpoint_statuses)
+            else "failed"
+        )
+    else:
+        dependencies["ml_inference"] = "unverified"
+
     tracking_uri = settings.MLFLOW_TRACKING_URI.strip()
     dependencies["mlflow_tracking"] = (
         _check_http_health(tracking_uri, "health") if tracking_uri
@@ -156,17 +223,21 @@ def readiness():
     if serving_url:
         dependencies["mlflow_serving"] = _check_http_health(serving_url, "ping")
     else:
-        dependencies["mlflow_serving"] = "failed" if production else "not_configured"
+        dependencies["mlflow_serving"] = "not_configured"
 
     required_dependencies = ("data_lake",)
     if tracking_uri or production:
         required_dependencies += ("mlflow_tracking",)
-    if serving_url or production:
-        required_dependencies += ("mlflow_serving",)
+    if production and settings.ML_INFERENCE_MODE == "databricks":
+        required_dependencies += ("ml_inference",)
     if settings.AI_RATE_LIMIT_ENABLED and (production or settings.REDIS_URL):
         dependencies["redis"] = _check_redis()
         required_dependencies += ("redis",)
-    required_checks = ["data_lake_backend", "upload_limit_configured"]
+    required_checks = [
+        "data_lake_backend",
+        "ml_inference_mode_configured",
+        "upload_limit_configured",
+    ]
     if settings.DATA_LAKE_BACKEND == "snowflake":
         required_checks.append("snowflake_credentials_configured")
     if production:

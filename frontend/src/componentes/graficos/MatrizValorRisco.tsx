@@ -12,6 +12,7 @@ import {
 } from 'recharts';
 import { RISCO_ALTO } from '../../configuracao/fidelidade';
 import { PERSONAS } from '../../configuracao/personas';
+import { usandoDadosSinteticos } from '../../servicos/configuracaoApi';
 import type { ClienteResumo } from '../../tipos/crm';
 import { formatBRLCompacto, formatPercentual } from '../../utilitarios/formatacao';
 
@@ -44,11 +45,11 @@ function TooltipMatriz({ active, payload }: TooltipContentProps) {
       <div className="chart-tooltip__title">{ponto.persona}</div>
       <div style={{ fontWeight: 600, marginBottom: 6 }}>{ponto.nome}</div>
       <div className="chart-tooltip__row">
-        <span>CLV 24m</span>
+        <span>CLV {usandoDadosSinteticos ? 24 : 12}m</span>
         <strong>{formatBRLCompacto(ponto.clv)}</strong>
       </div>
       <div className="chart-tooltip__row">
-        <span>Score high_risk_flag</span>
+        <span>{usandoDadosSinteticos ? 'Score sintético' : 'Score de churn'}</span>
         <strong>{formatPercentual(ponto.risco / 100)}</strong>
       </div>
       <div className="chart-tooltip__title" style={{ marginTop: 6, marginBottom: 0 }}>
@@ -59,10 +60,11 @@ function TooltipMatriz({ active, payload }: TooltipContentProps) {
 }
 
 export function MatrizValorRisco({ clientes, corteClv, onSelecionar }: MatrizValorRiscoProps) {
+  const clientesComScore = clientes.filter((cliente) => cliente.riscoEvasao !== null);
   const pontos = clientes
     .filter(
-      (cliente): cliente is ClienteResumo & { riscoEvasao: number } =>
-        cliente.riscoEvasao !== null,
+      (cliente): cliente is ClienteResumo & { riscoEvasao: number; clvProjetado: number } =>
+        cliente.riscoEvasao !== null && cliente.clvProjetado !== null,
     )
     .map((c) => ({
       id: c.id,
@@ -74,7 +76,11 @@ export function MatrizValorRisco({ clientes, corteClv, onSelecionar }: MatrizVal
     }));
 
   if (pontos.length === 0) {
-    return <div className="empty">Score indisponível até o registro do modelo no MLflow.</div>;
+    return (
+      <div className="empty">
+        {clientesComScore.length ? 'CLV indisponível.' : 'Score indisponível.'}
+      </div>
+    );
   }
 
   const abrir = (ponto: { payload?: Ponto }) => {
@@ -89,12 +95,12 @@ export function MatrizValorRisco({ clientes, corteClv, onSelecionar }: MatrizVal
           {...eixo}
           type="number"
           dataKey="risco"
-          name="Score high_risk_flag"
+          name={usandoDadosSinteticos ? 'Score sintético' : 'Score de churn'}
           domain={[0, 100]}
           ticks={[0, 25, 50, 75, 100]}
           tickFormatter={(v: number) => `${v}%`}
           height={44}
-          label={{ value: 'Score de classificação high_risk_flag', position: 'insideBottom', offset: 0, fill: 'var(--text-muted)', fontSize: 12 }}
+          label={{ value: usandoDadosSinteticos ? 'Score sintético demonstrativo' : 'Score de churn (classe positiva)', position: 'insideBottom', offset: 0, fill: 'var(--text-muted)', fontSize: 12 }}
         />
         <YAxis
           {...eixo}

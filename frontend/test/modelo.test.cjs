@@ -47,7 +47,8 @@ for (const status of ['aguardando-configuracao', 'aguardando-registro']) {
     } });
     assert.doesNotMatch(html, /versão .* registrada/);
     assert.doesNotMatch(html, /acurácia|AUC/);
-    assert.match(html, /scores ficam indisponíveis/);
+    assert.match(html, /contratos de 52 features/);
+    assert.doesNotMatch(html, /scores ficam indisponíveis/);
   });
 }
 

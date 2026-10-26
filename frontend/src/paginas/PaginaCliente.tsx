@@ -88,13 +88,17 @@ function Indicadores({ cliente }: { cliente: Cliente }) {
 
   return (
     <div className="grid grid--kpi">
-      <Indicador label="CLV projetado (24 meses)" value={formatBRLCompacto(cliente.clvProjetado)} hint={formatBRL(cliente.clvProjetado)} />
+      <Indicador
+        label={`CLV projetado (${usandoDadosSinteticos ? 24 : 12} meses)`}
+        value={cliente.clvProjetado === null ? 'CLV indisponível' : formatBRLCompacto(cliente.clvProjetado)}
+        hint={cliente.clvProjetado === null ? 'CLV indisponível' : formatBRL(cliente.clvProjetado)}
+      />
       <Indicador label="Score de alto valor" value={`${cliente.scoreValor}/100`} hint="Valor, frequência, recência e potencial">
         <Medidor value={cliente.scoreValor / 100} label="Score de alto valor" />
       </Indicador>
       <Indicador
-        label={usandoDadosSinteticos ? 'Heurística sintética' : 'Score do classificador high_risk_flag'}
-        value={formatPercentual(cliente.riscoEvasao)}
+        label={usandoDadosSinteticos ? 'Heurística sintética' : 'Score de churn'}
+        value={cliente.riscoEvasao === null ? 'Score indisponível' : formatPercentual(cliente.riscoEvasao)}
         hint={
           <SeloRisco
             risco={cliente.riscoEvasao}
@@ -105,7 +109,7 @@ function Indicadores({ cliente }: { cliente: Cliente }) {
         {cliente.riscoEvasao !== null && (
           <Medidor
             value={cliente.riscoEvasao}
-            label={usandoDadosSinteticos ? 'Heurística sintética' : 'Score high_risk_flag'}
+            label={usandoDadosSinteticos ? 'Heurística sintética' : 'Score de churn'}
             fill="var(--series-1)"
           />
         )}
@@ -165,7 +169,7 @@ export function PaginaCliente() {
           subtitle={
             usandoDadosSinteticos
               ? 'Heurística demonstrativa gerada no navegador; não é uma previsão de churn observável.'
-              : 'O alvo de treino é um rótulo derivado de regras, não churn observado.'
+              : 'Probabilidade da classe positiva do artefato de churn; não equivale a uma taxa observada de evasão.'
           }
         >
           {usandoDadosSinteticos ? (
@@ -174,10 +178,9 @@ export function PaginaCliente() {
             </p>
           ) : (
             <p>
-              A Gold define <code>high_risk_flag = 1</code> quando há pelo menos 2 incidentes ou mais de 60 dias
-              de recência. O modelo classifica esse rótulo; o score não é uma probabilidade de evasão observada.
+              O score corresponde à classe positiva do modelo de churn, não a uma taxa de evasão observada.
               {cliente.riscoEvasao === null &&
-                ' Score indisponível até registrar e servir um modelo no MLflow.'}
+                ' Score indisponível: a ingestão atual fornece seis campos, enquanto o contrato do modelo exige 52 features.'}
             </p>
           )}
         </Cartao>

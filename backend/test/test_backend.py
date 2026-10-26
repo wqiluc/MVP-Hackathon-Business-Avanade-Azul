@@ -106,28 +106,36 @@ def test_datalake_file_reader_delegates_to_file_reader():
     read_file.assert_called_once_with("clients.csv", "csv")
 
 
-def test_score_gold_delegates_persistence_to_duckdb_adapter():
-    conn = duckdb.connect(":memory:")
-    conn.execute("CREATE SCHEMA gold")
-    conn.execute(
-        "CREATE TABLE gold.client_features AS "
-        "SELECT 'AZ-test' AS client_identifier, 3 AS frequency"
+def test_score_gold_reports_missing_real_model_features_without_fabricating_scores():
+    scores, status = DataLakeService.score_gold(
+        pd.DataFrame({"client_identifier": ["AZ-test"], "frequency": [3]})
     )
 
-    with (
-        patch("ml.models.mlflow_tracker.configure_tracking"),
-        patch("ml.models.mlflow_tracker.get_active_churn_model", return_value=object()),
-        patch("app.services.inference_service.predict_churn", return_value=[0.425]) as predict,
-    ):
-        DataLakeService._score_gold(conn)
+    assert status == "awaiting_model_features"
+    assert len(scores) == 1
+    assert pd.isna(scores[0])
 
-    result = conn.execute("SELECT * FROM gold.client_features").fetchdf()
-    conn.close()
 
-    assert result.to_dict(orient="records") == [
-        {"client_identifier": "AZ-test", "frequency": 3, "churn_score": 0.425}
-    ]
-    predict.assert_called_once()
+def test_score_gold_uses_real_churn_service_when_all_features_are_present():
+    from types import SimpleNamespace
+    from app.services.ml.model_contracts import CHURN_FEATURES
+
+    row = {
+        feature: "app" if feature == "canal_aquisicao"
+        else "pessoa_fisica" if feature == "tipo_cliente"
+        else 1
+        for feature in CHURN_FEATURES
+    }
+    predictions = [SimpleNamespace(score=0.25), SimpleNamespace(score=0.75)]
+    with patch(
+        "app.services.ml.churn_service.ChurnService.predict_many",
+        return_value=predictions,
+    ) as predict_many:
+        scores, status = DataLakeService.score_gold(pd.DataFrame([row, row]))
+
+    assert status == "scored"
+    assert scores == [0.25, 0.75]
+    assert list(predict_many.call_args.args[0][0]) == list(CHURN_FEATURES)
 
 
 def test_swagger_docs():

@@ -1,4 +1,5 @@
 import pytest
+from unittest.mock import Mock
 
 from app.config import settings
 from app.services.snowflake_service import SnowflakeDataLake, _SNOWFLAKE_SQL_DIR
@@ -86,7 +87,7 @@ def test_snowflake_connection_reports_missing_credentials_without_connecting(
         SnowflakeDataLake.get_connection()
 
 
-def test_ingestion_scoring_waits_for_a_registered_model(monkeypatch):
+def test_ingestion_scoring_waits_for_the_complete_model_feature_contract(monkeypatch):
     import pandas as pd
 
     from app.services.datalake_service import DataLakeService
@@ -103,41 +104,29 @@ def test_ingestion_scoring_waits_for_a_registered_model(monkeypatch):
     scores, status = DataLakeService.score_gold(gold)
 
     assert len(scores) == 1 and pd.isna(scores[0])
-    assert status == "awaiting_model_registration"
+    assert status == "awaiting_model_features"
 
 
-def test_ingestion_scoring_uses_the_registered_model_via_serving(monkeypatch):
+def test_ingestion_scoring_does_not_call_legacy_serving_without_model_features(
+    monkeypatch,
+):
     import pandas as pd
 
     from app.services.datalake_service import DataLakeService
 
-    serving_url = "http://mlflow.test/invocations"
     gold = pd.DataFrame({"frequency": [2]})
-    calls = []
-    monkeypatch.setattr(settings, "MLFLOW_SERVING_URL", serving_url)
-    monkeypatch.setattr(settings, "MLFLOW_TRACKING_URI", "http://mlflow.test")
-    monkeypatch.setattr("ml.models.mlflow_tracker.configure_tracking", lambda uri: None)
-    monkeypatch.setattr(
-        "ml.models.mlflow_tracker.get_active_churn_model",
-        lambda: object(),
-    )
-
-    def fake_predict(df):
-        calls.append(df)
-        return [0.25]
-
-    monkeypatch.setattr("app.services.inference_service.predict_churn", fake_predict)
+    serving = Mock(side_effect=AssertionError("Legacy Serving must not be contacted"))
+    monkeypatch.setattr("app.services.inference_service.predict_churn", serving)
 
     scores, status = DataLakeService.score_gold(gold)
 
-    assert scores == [0.25]
-    assert status == "scored"
-    assert calls == [gold]
+    assert len(scores) == 1 and pd.isna(scores[0])
+    assert status == "awaiting_model_features"
+    serving.assert_not_called()
 
 
 def test_ingestion_without_tracking_keeps_scores_missing_without_external_calls(monkeypatch):
     import pandas as pd
-    from unittest.mock import Mock
     from app.services.datalake_service import DataLakeService
 
     monkeypatch.setattr(settings, "MLFLOW_TRACKING_URI", "")
@@ -146,7 +135,7 @@ def test_ingestion_without_tracking_keeps_scores_missing_without_external_calls(
     scores, status = DataLakeService.score_gold(pd.DataFrame({"frequency": [2]}))
 
     assert pd.isna(scores[0])
-    assert status == "awaiting_model_registration"
+    assert status == "awaiting_model_features"
     registry.assert_not_called()
 
 
@@ -156,20 +145,15 @@ def test_database_bootstrap_sql_creates_the_documented_default_database():
     assert "USE DATABASE AZUL_DATA_LAKE" in sql
 
 
-def test_real_snowflake_pipeline_matches_duckdb_and_mlflow_serving(
+def test_real_snowflake_pipeline_keeps_scores_missing_without_model_features(
     tmp_path, monkeypatch
 ):
     import os
-    from ml.models.mlflow_tracker import MODEL_NAME
-
     required = (
         settings.SNOWFLAKE_ACCOUNT,
         settings.SNOWFLAKE_USER,
         settings.SNOWFLAKE_PASSWORD,
         settings.SNOWFLAKE_WAREHOUSE,
-        settings.MLFLOW_SERVING_URL,
-        settings.MLFLOW_TRACKING_URI,
-        MODEL_NAME,
     )
     test_database = settings.SNOWFLAKE_TEST_DATABASE
     if (
@@ -178,8 +162,8 @@ def test_real_snowflake_pipeline_matches_duckdb_and_mlflow_serving(
         or not test_database
     ):
         pytest.skip(
-            "Habilite explicitamente Snowflake real, banco de teste dedicado e "
-            "MLflow Serving para executar esta integração."
+            "Habilite explicitamente Snowflake real e banco de teste dedicado "
+            "para executar esta integração."
         )
     if test_database != "CRM_TEST_E2E":
         pytest.fail(
@@ -232,7 +216,7 @@ def test_real_snowflake_pipeline_matches_duckdb_and_mlflow_serving(
     assert result == {
         "status": "success",
         "processed_rows": len(raw),
-        "scoring_status": "scored",
+        "scoring_status": "awaiting_model_features",
         "layers": [
             "BRONZE.BRONZE_CLIENTS",
             "SILVER",
@@ -286,5 +270,4 @@ def test_real_snowflake_pipeline_matches_duckdb_and_mlflow_serving(
         rtol=1e-6,
         atol=1e-6,
     )
-    assert actual["churn_score"].notna().all()
-    assert actual["churn_score"].between(0, 1).all()
+    assert actual["churn_score"].isna().all()

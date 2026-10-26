@@ -79,11 +79,13 @@ opaco HMAC preparado antes da persistência, tier normalizado, casts numéricos
 e filtro de ID não nulo) e as regras Gold (ticket médio com proteção para
 frequência zero e indicador de risco). Alterar `JWT_SECRET_KEY` também altera
 os identificadores derivados; uma rotação dessa chave requer migração
-coordenada dos dados e consumidores que dependem desses IDs. O scoring ML
-continua após Gold: o `ChurnPredictor` chama MLflow Serving e grava
-`churn_score` no backend selecionado. Erros de conexão
-Snowflake ou Serving são propagados; não são substituídos silenciosamente por
-um score local.
+coordenada dos dados e consumidores que dependem desses IDs. Após Gold,
+`DataLakeService` tenta os modelos empacotados de churn/CLV quando o conjunto
+contém todas as 52 features dos contratos reais. Como o upload atual contém
+somente seis campos, o score e o CLV permanecem `NULL`, com status
+`awaiting_model_features`; não há imputação, mapeamento inferido nem fallback
+ao classificador legado de cinco features. Falhas do provider configurado são
+propagadas; não são substituídas silenciosamente por score heurístico.
 
 Bronze mantém semântica de substituição: cada upload substitui a entrada atual
 e Silver/Gold são reconstruídas a partir desse snapshot; não é um histórico

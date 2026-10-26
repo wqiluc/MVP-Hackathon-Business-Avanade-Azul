@@ -4,6 +4,9 @@ import pandas as pd
 from app.config import settings
 from app.services.datalake_service import DataLakeService
 from app.services.agent_service import invoke_agent_workflow
+from app.services.ml.clv_service import ClvService
+from app.services.ml.feature_builder import FeatureBuilder
+from app.services.ml.model_contracts import CHURN_FEATURES
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +62,7 @@ def _acao_regras(risco: float | None, tier: str, incidentes: int) -> dict:
             "não é churn observado."
         ]
         if risco is not None
-        else ["Score indisponível até o registro e a disponibilização do modelo."]
+        else ["Score indisponível porque as features exigidas pelo modelo não estão disponíveis."]
     )
     return {
         "tipo": tipo, "titulo": titulo, "canal": canal,
@@ -79,7 +82,8 @@ def _linha_para_cliente(r) -> dict:
     raw_score = getattr(r, "churn_score", None)
     risco = float(raw_score) if raw_score is not None and pd.notna(raw_score) else None
     receita = float(r.total_spend)
-    clv = round(receita * 2 * (1 - risco * 0.5), 2) if risco is not None else round(receita * 2, 2)
+    raw_clv = getattr(r, "clv_value", None)
+    clv = float(raw_clv) if raw_clv is not None and pd.notna(raw_clv) else None
     score = round(min(100, 100 * (0.4 * min(receita / 60000, 1) + 0.35 * min(r.frequency / 24, 1)
                                   + 0.25 * max(0, 1 - r.recency_days / 180))), 1)
     persona = _persona(type("R", (), {"tier": tier, "frequency": r.frequency, "avg_ticket": float(r.avg_ticket or 0)}))
@@ -90,6 +94,10 @@ def _linha_para_cliente(r) -> dict:
         "aeroportoBase": "—", "cidadeBase": "—", "membroDesde": DATA_REFERENCIA,
         "consentimentoMarketing": None,
         "clvProjetado": clv, "scoreValor": score, "riscoEvasao": round(risco, 3) if risco is not None else None,
+        "clvHorizonteMeses": 12 if clv is not None else None,
+        "clvModelSource": getattr(r, "clv_model_source", None),
+        "clvModelName": getattr(r, "clv_model_name", None),
+        "clvModelVersion": getattr(r, "clv_model_version", None),
         "_churn_score": risco, "_flight_incidents": int(r.flight_incidents),
         "_incident_type": None,
         "recenciaDias": int(r.recency_days), "voos12m": int(r.frequency), "receita12m": receita,
@@ -157,6 +165,27 @@ class CrmService:
         if "churn_score" not in df.columns:
             scores, _ = DataLakeService.score_gold(df)
             df["churn_score"] = scores
+        if set(CHURN_FEATURES).issubset(df.columns):
+            features = FeatureBuilder.build_frame(df, "clv")
+            predictions = ClvService().predict_many(features)
+            df["clv_value"] = [prediction.value for prediction in predictions]
+            df["clv_model_source"] = [
+                prediction.source for prediction in predictions
+            ]
+            df["clv_model_name"] = [prediction.model_name for prediction in predictions]
+            df["clv_model_version"] = [
+                prediction.model_version for prediction in predictions
+            ]
+        else:
+            logger.info(
+                "Real CLV unavailable: required source features are absent "
+                "missing_feature_count=%s",
+                len(set(CHURN_FEATURES) - set(df.columns)),
+            )
+            df["clv_value"] = None
+            df["clv_model_source"] = None
+            df["clv_model_name"] = None
+            df["clv_model_version"] = None
         return [_linha_para_cliente(r) for r in df.itertuples()]
 
     @classmethod
@@ -177,15 +206,19 @@ class CrmService:
         cs = [c for c in todos if not persona or c["persona"] == persona]
         n = len(cs)
         media = lambda xs: (sum(xs) / len(xs)) if xs else 0
+        clv_values = [c["clvProjetado"] for c in cs if c["clvProjetado"] is not None]
         scored = [c for c in cs if c["riscoEvasao"] is not None]
-        risco = [c for c in scored if c["riscoEvasao"] >= RISCO_ALTO]
+        risco = [
+            c for c in scored
+            if c["riscoEvasao"] >= RISCO_ALTO and c["clvProjetado"] is not None
+        ]
         atritos = {}
         return {
             "dataReferencia": DATA_REFERENCIA,
             "totalClientes": n,
             "clientesAltoValor": sum(c["scoreValor"] >= SCORE_ALTO_VALOR for c in cs),
-            "clvMedio": media([c["clvProjetado"] for c in cs]),
-            "receitaEmRisco": sum(c["clvProjetado"] for c in risco),
+            "clvMedio": media(clv_values) if clv_values else None,
+            "receitaEmRisco": sum(c["clvProjetado"] for c in risco) if risco else None,
             "percentualRiscoAlto": len(risco) / len(scored) if scored else None,
             "sentimentoMedio": media([c["sentimentoScore"] for c in cs]),
             "receitaMensal": [
@@ -194,7 +227,11 @@ class CrmService:
                 for i, m in enumerate(MESES)
             ],
             "porPersona": [
-                {"persona": p, "clientes": len(g), "clvTotal": sum(c["clvProjetado"] for c in g),
+                {"persona": p, "clientes": len(g), "clvTotal": (
+                    sum(c["clvProjetado"] for c in g if c["clvProjetado"] is not None)
+                    if any(c["clvProjetado"] is not None for c in g)
+                    else None
+                ),
                  "riscoMedio": (
                      media([c["riscoEvasao"] for c in g if c["riscoEvasao"] is not None])
                      if any(c["riscoEvasao"] is not None for c in g)
@@ -207,7 +244,10 @@ class CrmService:
             "matriz": [_resumo(c) for c in cs],
             "prioritarios": [_resumo(c) for c in sorted(
                 cs,
-                key=lambda c: c["clvProjetado"] * (c["riscoEvasao"] or 0),
+                key=lambda c: (
+                    c["clvProjetado"] is not None and c["riscoEvasao"] is not None,
+                    (c["clvProjetado"] or 0) * (c["riscoEvasao"] or 0),
+                ),
                 reverse=True,
             )[:10]],
         }
@@ -220,6 +260,7 @@ def gerar_recomendacao(cliente: dict) -> dict:
         final = invoke_agent_workflow({
             "client_identifier": cliente["id"],
             "churn_score": cliente["_churn_score"],
+            "clv_12m": cliente.get("clvProjetado"),
             "frequency": cliente["voos12m"],
             "total_spend": cliente["receita12m"],
             "flight_incidents": cliente["_flight_incidents"],

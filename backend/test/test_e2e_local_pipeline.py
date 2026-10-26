@@ -75,29 +75,11 @@ def test_upload_to_decision_recommendation_api_with_local_duckdb(
     monkeypatch.setattr(settings, "MLFLOW_TRACKING_URI", "http://mlflow.test")
     monkeypatch.setattr(settings, "MLFLOW_SERVING_URL", "http://serving.test/invocations")
     monkeypatch.setattr(settings, "MLFLOW_LOCAL_INFERENCE", False)
+    monkeypatch.setattr(settings, "ML_INFERENCE_MODE", "local")
     monkeypatch.setattr(settings, "LLM_PROVIDER", "disabled")
     monkeypatch.setattr(settings, "OPENAI_API_KEY", "")
     monkeypatch.setattr(settings, "DEMO_EMAIL", "analyst@example.test")
     monkeypatch.setattr(settings, "DEMO_PASSWORD", "test-analyst-password")
-
-    monkeypatch.setattr(
-        "ml.models.mlflow_tracker.configure_tracking",
-        lambda _uri: None,
-    )
-    monkeypatch.setattr(
-        "ml.models.mlflow_tracker.get_active_churn_model",
-        lambda: object(),
-    )
-    predictions = []
-
-    def predict_churn(gold):
-        predictions.append(gold.copy())
-        return [0.82] * len(gold)
-
-    monkeypatch.setattr(
-        "app.services.inference_service.predict_churn",
-        predict_churn,
-    )
 
     csv_path = tmp_path / "synthetic_clients.csv"
     subprocess.run(
@@ -138,13 +120,7 @@ def test_upload_to_decision_recommendation_api_with_local_duckdb(
         )
         assert upload.status_code == 200
         assert upload.json()["status"] == "recebido"
-        assert len(predictions) == 1
-        assert len(predictions[0]) == 8
-        assert not any(
-            identifier.startswith("synthetic-")
-            for identifier in predictions[0]["client_identifier"].to_list()
-        )
-
+        assert "features exigidas" in upload.json()["mensagem"]
         connection = DataLakeService.get_connection()
         try:
             assert connection.execute(
@@ -159,18 +135,18 @@ def test_upload_to_decision_recommendation_api_with_local_duckdb(
             scores = connection.execute(
                 "SELECT churn_score FROM gold.client_features"
             ).fetchall()
-            assert [score[0] for score in scores] == [0.82] * 8
+            assert all(score[0] is None for score in scores)
         finally:
             connection.close()
 
         clients = api.get("/api/v1/clientes", headers=headers)
         assert clients.status_code == 200
         client = next(
-            item
-            for item in clients.json()
-            if item["tier"] == "Diamante" and item["riscoEvasao"] == 0.82
+            item for item in clients.json() if item["tier"] == "Diamante"
         )
         assert not client["id"].startswith("synthetic-")
+        assert client["riscoEvasao"] is None
+        assert client["clvProjetado"] is None
 
         recommendation_response = api.post(
             f"/api/v1/clientes/{client['id']}/recomendacao",
@@ -182,4 +158,3 @@ def test_upload_to_decision_recommendation_api_with_local_duckdb(
     assert recommendation["tipo"] == "recuperacao-servico"
     assert recommendation["origem"] == "regras"
     assert any("Diamante -> categorias" in item for item in recommendation["regrasFidelidade"])
-    assert any("high_risk_flag" in item for item in recommendation["justificativa"])

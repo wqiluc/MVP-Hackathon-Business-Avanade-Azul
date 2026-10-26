@@ -16,6 +16,7 @@ import { RISCO_ALTO, SCORE_ALTO_VALOR, TIERS } from '../configuracao/fidelidade'
 import { PERSONAS, PERSONA_IDS } from '../configuracao/personas';
 import { useBuscaAssincrona } from '../hooks/useBuscaAssincrona';
 import { servicoCrm } from '../servicos/servicoCrm';
+import { usandoDadosSinteticos } from '../servicos/configuracaoApi';
 import type { FiltroClientes, PersonaId, Tier } from '../tipos/crm';
 import {
   formatBRL,
@@ -59,7 +60,10 @@ export function PaginaDashboard() {
   };
 
   const corteClv = useMemo(
-    () => percentil(resumo?.matriz.map((c) => c.clvProjetado) ?? [], 0.75),
+    () => percentil(
+      resumo?.matriz.flatMap((c) => c.clvProjetado === null ? [] : [c.clvProjetado]) ?? [],
+      0.75,
+    ),
     [resumo],
   );
 
@@ -72,7 +76,7 @@ export function PaginaDashboard() {
           <div className="eyebrow">Visão executiva</div>
           <h1>Clientes de alto valor</h1>
           <p>
-            Onde está o valor da base, como se distribui o score high_risk_flag e qual ação revisar primeiro.
+            Onde está o valor da base, como se distribui o score de risco e qual ação revisar primeiro.
             {resumo && <> Dados até {formatData(resumo.dataReferencia)}.</>}
           </p>
         </div>
@@ -138,14 +142,18 @@ export function PaginaDashboard() {
               value={formatNumero(resumo.totalClientes)}
               hint={`${formatNumero(resumo.clientesAltoValor)} com score de valor ≥ ${SCORE_ALTO_VALOR}`}
             />
-            <Indicador label="CLV médio projetado" value={formatBRLCompacto(resumo.clvMedio)} hint="Horizonte de 24 meses" />
+            <Indicador
+              label="CLV médio projetado"
+              value={resumo.clvMedio === null ? 'CLV indisponível' : formatBRLCompacto(resumo.clvMedio)}
+              hint={`Horizonte de ${usandoDadosSinteticos ? 24 : 12} meses`}
+            />
             <Indicador
               label="Receita em risco"
-              value={formatBRLCompacto(resumo.receitaEmRisco)}
+              value={resumo.receitaEmRisco === null ? 'CLV indisponível' : formatBRLCompacto(resumo.receitaEmRisco)}
               hint={`CLV de clientes com risco ≥ ${formatPercentual(RISCO_ALTO)}`}
             />
             <Indicador
-              label="Share com score high_risk_flag ≥ 0,5"
+              label={`Share com ${usandoDadosSinteticos ? 'score sintético' : 'score de churn'} ≥ 0,5`}
               value={formatPercentual(resumo.percentualRiscoAlto)}
               hint="Percentual dos clientes com score disponível; não é taxa de churn observado"
             />
@@ -158,7 +166,7 @@ export function PaginaDashboard() {
 
           <div className="grid grid--3-2">
             <CartaoGrafico
-              title="Matriz de valor × score high_risk_flag"
+              title={`Matriz de valor × ${usandoDadosSinteticos ? 'score sintético' : 'score de churn'}`}
               subtitle={`Cada ponto com score disponível é um cliente. Prioridade: CLV acima de ${formatBRLCompacto(corteClv)} e score ≥ ${formatPercentual(RISCO_ALTO)}.`}
               legend={
                 <Legenda
@@ -171,12 +179,12 @@ export function PaginaDashboard() {
               tabela={{
                 colunas: [
                   { rotulo: 'Cliente' },
-                  { rotulo: 'CLV 24m', numerica: true },
-                  { rotulo: 'Score high_risk_flag', numerica: true },
+                  { rotulo: `CLV ${usandoDadosSinteticos ? 24 : 12}m`, numerica: true },
+                  { rotulo: usandoDadosSinteticos ? 'Score sintético' : 'Score de churn', numerica: true },
                 ],
                 linhas: resumo.prioritarios.map((c) => [
                   c.nome,
-                  formatBRL(c.clvProjetado),
+                  c.clvProjetado === null ? 'CLV indisponível' : formatBRL(c.clvProjetado),
                   formatPercentual(c.riscoEvasao),
                 ]),
               }}

@@ -13,6 +13,11 @@ async def ingerir_clientes(arquivo: UploadFile = File(...), current_user: dict =
     message = f"{resumo['processed_rows']} clientes processados nas camadas Bronze, Silver e Gold."
     if resumo.get("scoring_status") == "awaiting_model_registration":
         message += " Score pendente: treine e registre o modelo no MLflow para habilitar inferência."
+    elif resumo.get("scoring_status") == "awaiting_model_features":
+        message += (
+            " Score de churn e CLV indisponíveis: o conjunto não contém todas "
+            "as features exigidas pelos contratos dos modelos."
+        )
     return {
         "arquivo": arquivo.filename, "tamanhoBytes": tamanho, "status": "recebido",
         "mensagem": message,

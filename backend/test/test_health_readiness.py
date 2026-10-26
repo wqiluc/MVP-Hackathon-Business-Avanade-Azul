@@ -34,6 +34,7 @@ def test_readiness_returns_ready_when_required_dependencies_are_healthy(
     assert response.json()["status"] == "ready"
     assert response.json()["dependencies"] == {
         "data_lake": "ready",
+        "ml_inference": "configured",
         "mlflow_tracking": "ready",
         "mlflow_serving": "not_configured",
     }
@@ -49,6 +50,7 @@ def test_local_readiness_without_mlflow_does_not_probe_external_services(
     assert response.status_code == 200
     assert response.json()["checks"]["mlflow_tracking_configured"] is False
     assert response.json()["dependencies"]["mlflow_tracking"] == "not_configured"
+    assert response.json()["dependencies"]["ml_inference"] == "configured"
     probe.assert_not_called()
 
 
@@ -107,13 +109,51 @@ def test_configured_serving_is_checked_at_its_supported_ping_endpoint(
 
     response = client.get("/api/v1/health/ready")
 
-    assert response.status_code == 503
+    assert response.status_code == 200
     assert calls == [
         ("http://mlflow.test", "health"),
         ("https://serving.test/invocations", "ping"),
     ]
-    assert (
-        response.json()["detail"]["dependencies"]["mlflow_serving"] == "failed"
+    assert response.json()["dependencies"]["mlflow_serving"] == "failed"
+
+
+def test_databricks_readiness_checks_both_serving_endpoints(local_readiness, monkeypatch):
+    monkeypatch.setattr(settings, "ML_INFERENCE_MODE", "databricks")
+    monkeypatch.setattr(settings, "DATABRICKS_HOST", "https://workspace.test")
+    monkeypatch.setattr(settings, "DATABRICKS_TOKEN", "test-token")
+    monkeypatch.setattr(settings, "DATABRICKS_CHURN_ENDPOINT", "churn")
+    monkeypatch.setattr(settings, "DATABRICKS_CLV_ENDPOINT", "clv")
+    checked = []
+
+    def check(host, token, endpoint):
+        checked.append((host, token, endpoint))
+        return "ready"
+
+    monkeypatch.setattr(health, "_check_databricks_endpoint", check)
+    response = client.get("/api/v1/health/ready")
+
+    assert response.status_code == 200
+    assert response.json()["dependencies"]["ml_inference"] == "ready"
+    assert checked == [
+        ("https://workspace.test", "test-token", "churn"),
+        ("https://workspace.test", "test-token", "clv"),
+    ]
+
+
+def test_databricks_endpoint_health_check_uses_bounded_authenticated_request(monkeypatch):
+    response = Mock(status_code=200)
+    response.json.return_value = {"state": {"ready": "READY"}}
+    request = Mock(return_value=response)
+    monkeypatch.setattr(health.requests, "get", request)
+
+    assert health._check_databricks_endpoint(
+        "https://workspace.test/", "test-token", "churn endpoint"
+    ) == "ready"
+    request.assert_called_once_with(
+        "https://workspace.test/api/2.0/serving-endpoints/churn%20endpoint",
+        headers={"Authorization": "Bearer test-token"},
+        timeout=health._DEPENDENCY_TIMEOUT_SECONDS,
+        allow_redirects=False,
     )
 
 

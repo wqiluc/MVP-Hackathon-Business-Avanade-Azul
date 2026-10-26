@@ -63,5 +63,6 @@ def recommendation_profile(state: dict) -> dict:
         "flight_incidents": state["flight_incidents"],
         "incident_type": state["incident_type"],
         "value_at_risk": state["value_at_risk"],
+        "clv_12m": state.get("clv_12m"),
         "graph_rag_context": state["graph_rag_context"],
     }

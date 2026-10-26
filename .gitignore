@@ -7,5 +7,11 @@ __pycache__/
 .pytest_cache/
 *.egg-info/
 mlruns/
+# Artefatos de modelo e saídas derivadas de dados reais (não versionar)
+modelo_churn/
+pacote_CLV/
+*.pkl
+*.joblib
+*.code-workspace
 *.log
 .env.local

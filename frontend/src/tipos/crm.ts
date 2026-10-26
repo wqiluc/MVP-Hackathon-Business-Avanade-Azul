@@ -86,11 +86,15 @@ export interface Cliente {
   membroDesde: string;
   consentimentoMarketing: boolean | null;
 
-  /** CLV: receita projetada em 24 meses caso o cliente seja retido, em R$. */
-  clvProjetado: number;
+  /** CLV real de 12 meses na API; synthetic source retains its 24-month projection. */
+  clvProjetado: number | null;
+  clvHorizonteMeses?: 12 | 24 | null;
+  clvModelSource?: 'local' | 'databricks' | null;
+  clvModelName?: string | null;
+  clvModelVersion?: string | null;
   /** Score de alto valor, 0–100 (valor monetário, frequência, recência e potencial). */
   scoreValor: number;
-  /** Probability of the synthetic high_risk_flag label; not observed churn. */
+  /** API model probability or synthetic demo score; null when model features are unavailable. */
   riscoEvasao: number | null;
 
   recenciaDias: number;
@@ -134,8 +138,8 @@ export interface ResumoDashboard {
   dataReferencia: string;
   totalClientes: number;
   clientesAltoValor: number;
-  clvMedio: number;
-  receitaEmRisco: number;
+  clvMedio: number | null;
+  receitaEmRisco: number | null;
   percentualRiscoAlto: number | null;
   sentimentoMedio: number;
   receitaMensal: PontoMensal[];
@@ -143,7 +147,7 @@ export interface ResumoDashboard {
   porPersona: {
     persona: PersonaId;
     clientes: number;
-    clvTotal: number;
+    clvTotal: number | null;
     riscoMedio: number | null;
   }[];
   porTier: { tier: Tier; clientes: number }[];

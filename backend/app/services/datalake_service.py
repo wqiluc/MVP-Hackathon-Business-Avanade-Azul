@@ -117,19 +117,26 @@ class DataLakeService:
 
     @staticmethod
     def score_gold(df: pd.DataFrame) -> tuple[list[float], str]:
-        """Score Gold only after a registry alias exists; never substitute a heuristic."""
-        from ml.models.mlflow_tracker import configure_tracking, get_active_churn_model
+        """Score only with the real 52-feature artifact; never derive missing inputs."""
+        from app.services.ml.churn_service import ChurnService
+        from app.services.ml.feature_builder import (
+            FeatureBuilder,
+            MissingModelFeaturesError,
+        )
 
-        if not settings.MLFLOW_TRACKING_URI.strip():
-            logger.info("Scoring unavailable: MLflow Tracking is not configured.")
-            return [float("nan")] * len(df), "awaiting_model_registration"
-        configure_tracking(settings.MLFLOW_TRACKING_URI)
-        if get_active_churn_model() is None:
-            return [float("nan")] * len(df), "awaiting_model_registration"
-
-        from app.services.inference_service import predict_churn
-
-        return predict_churn(df), "scored"
+        try:
+            features = FeatureBuilder.build_frame(df, "churn")
+        except MissingModelFeaturesError as error:
+            logger.info(
+                "Real churn scoring unavailable: required source features are absent "
+                "missing_feature_count=%s",
+                len(error.missing),
+            )
+            return [float("nan")] * len(df), "awaiting_model_features"
+        if not features:
+            return [], "scored"
+        predictions = ChurnService().predict_many(features)
+        return [prediction.score for prediction in predictions], "scored"
 
     @classmethod
     def read_gold(cls) -> pd.DataFrame:

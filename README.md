@@ -33,7 +33,7 @@ React + Vite
     -> FastAPI (API, autenticação e orquestração)
         -> serviços de aplicação
             -> ingestão e camadas Bronze / Silver / Gold
-            -> modelo de risco e MLflow Tracking / Serving
+            -> artefatos de churn/CLV (provider local ou Databricks) e treino legado via MLflow
             -> workflow de agentes e contexto em grafo
             -> OpenAI/Gemini opcionais no backend, com fallback por regras
         -> recomendação apresentada ao analista para revisão humana
@@ -49,8 +49,8 @@ uma integração externa configurável.
 - **API e serviços:** Python, FastAPI e Pydantic.
 - **Dados:** FileReader, DuckDB e adaptador Snowflake; camadas Bronze, Silver
   e Gold.
-- **Machine learning:** scikit-learn, MLflow Tracking, Model Registry e
-  Serving configurável.
+- **Machine learning:** artefatos empacotados de churn/CLV com provider local
+  ou Databricks; MLflow Tracking/Registry para o fluxo legado de treinamento.
 - **Workflow de decisão:** LangGraph, regras determinísticas e grafo NetworkX
   estático; OpenAI ou Gemini opcionais para personalizar texto no backend.
 - **Testes:** pytest, testes de serviço do frontend, lint e build.
@@ -78,8 +78,10 @@ uma integração externa configurável.
    `id_cliente,tier,frequencia,recencia_dias,gasto_total,incidentes`.
 2. O serviço de ingestão pseudonimiza IDs com HMAC antes da persistência.
 3. O pipeline materializa Bronze, transforma Silver e calcula Gold.
-4. Quando o modelo está configurado, o score é calculado pelo MLflow Serving e
-   persistido em Gold; sem modelo configurado, o score permanece nulo.
+4. Churn/CLV são calculados somente quando as 52 features dos contratos reais
+   estão disponíveis. O upload canônico atual fornece seis campos; portanto,
+   os scores ficam nulos com status `awaiting_model_features`. Não há mapeamento
+   inferido nem fallback ao scorer legado.
 5. A API publica o resultado do upload e disponibiliza os dados para dashboard,
    lista, perfil e recomendação.
 
@@ -95,6 +97,9 @@ O conjunto de treino usa `frequency`, `recency_days`, `total_spend`,
 uma regra proxy (`flight_incidents >= 2` ou `recency_days > 60`); métricas
 descrevem a classificação dessa regra, não churn observado. Modelo, features,
 target e métricas estão detalhados em [docs/ml/README.md](docs/ml/README.md).
+Os modelos empacotados de churn e CLV são independentes desse treinador e
+exigem 52 features; a lacuna de dados do upload e os providers são descritos
+no [guia de ML](docs/ml/README.md).
 
 ## IA e recomendações
 

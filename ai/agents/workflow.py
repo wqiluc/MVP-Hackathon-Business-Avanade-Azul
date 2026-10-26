@@ -1,4 +1,4 @@
-from typing import TypedDict
+from typing import NotRequired, TypedDict
 
 from langgraph.graph import END, StateGraph
 
@@ -17,6 +17,7 @@ class AgentState(TypedDict):
     graph_rag_context: dict
     decision: dict
     audit_status: str
+    clv_12m: NotRequired[float | None]
 
 
 def query_manager_agent(state: AgentState) -> AgentState:
@@ -85,6 +86,9 @@ def decision_agent(state: AgentState) -> AgentState:
             f"Score do classificador para high_risk_flag: {churn_score:.3f}; "
             "não representa churn observado."
         )
+    clv_12m = state.get("clv_12m")
+    if clv_12m is not None:
+        evidence.append(f"CLV previsto para 12 meses: R$ {clv_12m:.2f}.")
 
     if incident_needs_review:
         reasoning = (

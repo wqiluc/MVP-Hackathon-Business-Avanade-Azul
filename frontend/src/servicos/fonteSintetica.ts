@@ -53,10 +53,10 @@ function calcularResumo(clientes: Cliente[], semFiltroPersona: Cliente[]): Resum
     dataReferencia: DATA_REFERENCIA,
     totalClientes: clientes.length,
     clientesAltoValor: clientes.filter((c) => c.scoreValor >= SCORE_ALTO_VALOR).length,
-    clvMedio: media(clientes.map((c) => c.clvProjetado)),
+    clvMedio: media(clientes.map((c) => c.clvProjetado ?? 0)),
     receitaEmRisco: clientes
       .filter((c) => c.riscoEvasao !== null && c.riscoEvasao >= RISCO_ALTO)
-      .reduce((a, c) => a + c.clvProjetado, 0),
+      .reduce((a, c) => a + (c.clvProjetado ?? 0), 0),
     percentualRiscoAlto: clientes.length
       ? clientes.filter((c) => c.riscoEvasao !== null && c.riscoEvasao >= RISCO_ALTO).length / clientes.length
       : 0,
@@ -71,7 +71,7 @@ function calcularResumo(clientes: Cliente[], semFiltroPersona: Cliente[]): Resum
       return {
         persona,
         clientes: grupo.length,
-        clvTotal: grupo.reduce((a, c) => a + c.clvProjetado, 0),
+        clvTotal: grupo.reduce((a, c) => a + (c.clvProjetado ?? 0), 0),
         riscoMedio: media(grupo.flatMap((c) => (c.riscoEvasao === null ? [] : [c.riscoEvasao]))),
       };
     }),
@@ -81,7 +81,7 @@ function calcularResumo(clientes: Cliente[], semFiltroPersona: Cliente[]): Resum
       .sort((a, b) => b.mencoes - a.mencoes),
     matriz: clientes.map(resumir),
     prioritarios: [...clientes]
-      .sort((a, b) => b.clvProjetado * (b.riscoEvasao ?? 0) - a.clvProjetado * (a.riscoEvasao ?? 0))
+      .sort((a, b) => (b.clvProjetado ?? 0) * (b.riscoEvasao ?? 0) - (a.clvProjetado ?? 0) * (a.riscoEvasao ?? 0))
       .slice(0, 10)
       .map(resumir),
   };
@@ -91,7 +91,7 @@ export const fonteSintetica: FonteDeDadosCrm = {
   async listarClientes(filtro) {
     return filtrar(filtro)
       .map(resumir)
-      .sort((a, b) => b.clvProjetado * (b.riscoEvasao ?? 0) - a.clvProjetado * (a.riscoEvasao ?? 0));
+      .sort((a, b) => (b.clvProjetado ?? 0) * (b.riscoEvasao ?? 0) - (a.clvProjetado ?? 0) * (a.riscoEvasao ?? 0));
   },
   async obterCliente(id) {
     return CLIENTES.find((c) => c.id === id) ?? null;

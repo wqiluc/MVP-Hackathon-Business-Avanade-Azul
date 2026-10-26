@@ -22,7 +22,7 @@ interface Modulo {
 const MODULOS: Modulo[] = [
   {
     titulo: 'Dashboard',
-    descricao: 'Visão executiva da base: CLV, score high_risk_flag, personas, categorias e atritos da jornada.',
+    descricao: 'Visão executiva da base: CLV, score de risco, personas, categorias e atritos da jornada.',
     icone: 'chart',
     para: '/dashboard',
   },
@@ -86,8 +86,8 @@ export function PaginaMenu() {
   const stats = resumo && [
     { rotulo: 'Clientes monitorados', valor: formatNumero(resumo.totalClientes) },
     { rotulo: 'Alto valor (score ≥ 70)', valor: formatNumero(resumo.clientesAltoValor) },
-    { rotulo: 'CLV médio (24 meses)', valor: formatBRLCompacto(resumo.clvMedio) },
-    { rotulo: 'Receita em risco', valor: formatBRLCompacto(resumo.receitaEmRisco) },
+    { rotulo: `CLV médio (${usandoDadosSinteticos ? 24 : 12} meses)`, valor: resumo.clvMedio === null ? 'CLV indisponível' : formatBRLCompacto(resumo.clvMedio) },
+    { rotulo: 'Receita em risco', valor: resumo.receitaEmRisco === null ? 'CLV indisponível' : formatBRLCompacto(resumo.receitaEmRisco) },
   ];
 
   return (
@@ -156,7 +156,9 @@ export function PaginaMenu() {
                   </div>
                   <div className="row">
                     <SeloPersona persona={c.persona} />
-                    <small className="tabular">CLV {formatBRLCompacto(c.clvProjetado)}</small>
+                    <small className="tabular">
+                      {c.clvProjetado === null ? 'CLV indisponível' : `CLV ${formatBRLCompacto(c.clvProjetado)}`}
+                    </small>
                   </div>
                   <small>
                     <Icone name="sparkles" size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} />

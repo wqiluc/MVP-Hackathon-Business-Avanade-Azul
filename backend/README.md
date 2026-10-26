@@ -270,15 +270,21 @@ For local development, select `DATA_LAKE_BACKEND=duckdb`, set
 persistent random `JWT_SECRET_KEY` to keep HMAC identifiers stable across
 restarts. An empty development key is ephemeral, not suitable for retained data.
 
-MLflow is optional locally. Without Tracking or a model name, `GET /modelo`
-returns `aguardando-configuracao` with null metrics; uploads without Tracking
-or a registered model keep null scores with `awaiting_model_registration`.
-No heuristic substitutes a model score, including with the legacy
-`MLFLOW_LOCAL_INFERENCE` flag. Training is an explicit admin operation requiring
-Tracking and `MLFLOW_MODEL_NAME`; it is never performed at startup.
-Configured dependencies fail explicitly if unavailable; only unconfigured
-MLflow is omitted from local readiness requirements. Production still requires
-remote Tracking, an explicit model name and Serving.
+MLflow Tracking and `MLFLOW_MODEL_NAME` remain optional locally for the
+administrative training flow; without them, `GET /modelo` returns
+`aguardando-configuracao` with null metrics. CRM inference uses the packaged
+52-feature churn and CLV contracts through `ML_INFERENCE_MODE=local` or
+`databricks`, independently of the legacy five-feature trainer and
+`MLFLOW_SERVING_URL`. The canonical upload supplies only six fields, so its
+scores remain null with `awaiting_model_features` until an upstream source
+provides every required model feature. No feature is inferred and no heuristic
+substitutes a model score. See the [model integration notes](../docs/ml/README.md)
+for provider configuration and the CLV runtime limitation.
+
+Training is an explicit admin operation; it never occurs at startup.
+Configured MLflow Tracking failures remain explicit. Production validates remote
+Tracking and the selected model provider; readiness checks Databricks endpoints
+when that provider is selected.
 
 ## Tests
 
