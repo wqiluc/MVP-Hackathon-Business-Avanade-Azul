@@ -116,3 +116,25 @@ e não deve ser renomeado como parte de uma mudança de branding sem migração 
 Registry e dos consumidores. O alias esperado é `champion`. O guia em
 `infrastructure/mlflow/README.md` contém os passos locais de Tracking, treino,
 Serving e testes reais opt-in.
+
+## Contratos de ingestão
+
+O upload reconhece explicitamente dois contratos, detectados por nomes exatos
+de colunas (`backend/app/services/ml/ingestion_contracts.py`):
+
+| Contrato | Colunas | Situação |
+|---|---|---|
+| `CRM_CANONICAL` | `id_cliente, tier, recencia_dias, frequencia, gasto_total, incidentes` | Processado (Bronze → Silver → Gold). |
+| `ML_FEATURES_52` | As 52 features de `CHURN_FEATURES` (fonte única: `model_contracts.py`) | Aceito para **scoring**: Churn e CLV oficiais rodam sobre as 52 features; `churn_180d`, `clv_12m`, `cpf` e demais colunas são descartadas antes do modelo. Nada é publicado no snapshot CRM nem persistido; a resposta traz só um resumo agregado (sem IDs). |
+
+- No scoring `ML_FEATURES_52`, Churn e CLV são independentes: se um modelo estiver
+  indisponível (`ModelInferenceError`), seu agregado vem `null` e `scoring_status`
+  fica `partial` (ou `unavailable` se ambos falharem). Não há fórmula substituta nem HTTP 500.
+- A prioridade é ML > CRM > `UNKNOWN`; `UNKNOWN` é rejeitado listando os contratos aceitos.
+- `churn_180d` e `clv_12m` são alvos de treino, não entradas de inferência; sua
+  presença não altera a detecção e nunca chega ao modelo.
+- Não há aliases (`frequencia → voos_12m`, `gasto_total → gasto_total_12m`,
+  `incidentes → n_cancelamentos_12m`): não existe mapeamento oficial entre o
+  contrato ML e os campos do CRM. Enquanto não existir, `ML_FEATURES_52` não é
+  processado, e Churn/CLV reais continuam dependendo das 52 features.
+- A API devolve `ingestion_contract` nas respostas de sucesso e nos erros 422.

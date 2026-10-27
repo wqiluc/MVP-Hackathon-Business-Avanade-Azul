@@ -64,7 +64,7 @@ def register_exception_handlers(app: FastAPI) -> None:
             content.update(
                 {
                     key: detail[key]
-                    for key in ("missing_columns", "invalid_columns")
+                    for key in ("missing_columns", "invalid_columns", "ingestion_contract")
                     if key in detail
                 }
             )

@@ -69,6 +69,13 @@ export function EnvioBaseClientes() {
           <Icone name={recibo.status === 'simulado' ? 'info' : 'check'} size={16} />
           <span>
             <strong>{recibo.arquivo}</strong> — {recibo.mensagem}
+            {recibo.ingestion_contract && <> Contrato detectado: <strong>{recibo.ingestion_contract}</strong>.</>}
+            {recibo.scoring_summary && (
+              <>
+                {' '}Churn médio: {recibo.scoring_summary.churn_score_mean === null ? 'Score indisponível' : `${(recibo.scoring_summary.churn_score_mean * 100).toFixed(1)}%`}
+                {' · '}CLV médio: {recibo.scoring_summary.clv_mean === null ? 'CLV indisponível' : recibo.scoring_summary.clv_mean.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}.
+              </>
+            )}
           </span>
         </div>
       )}

@@ -35,13 +35,14 @@ function mensagemValidacao(payload: unknown): string | undefined {
     ['missing_columns', 'Colunas ausentes'],
     ['invalid_columns', 'Colunas inválidas'],
   ] as const;
+  const contrato = typeof body.ingestion_contract === 'string' ? ` Contrato detectado: ${body.ingestion_contract}.` : '';
   const detalhes = campos.map(([chave, rotulo]) => {
     const colunas = body[chave];
     return Array.isArray(colunas) && colunas.length && colunas.every((item) => typeof item === 'string')
       ? ` ${rotulo}: ${colunas.join(', ')}.`
       : '';
   }).join('');
-  return `${mensagem}${detalhes}`;
+  return `${mensagem}${detalhes}${contrato}`;
 }
 
 function mensagemErro(status: number, espera: number | null, payload: unknown): string {

@@ -83,6 +83,13 @@ class Settings(BaseSettings):
         os.getenv("ML_INFERENCE_TIMEOUT_SECONDS", "15")
     )
     ML_CHURN_CLASS_ORDER: str = os.getenv("ML_CHURN_CLASS_ORDER", "0,1")
+    # Interpretador dedicado (opcional) para artefatos com dependências pinadas
+    # incompatíveis com o .venv da API; ex.: CLV v3 exige scikit-learn 1.7.2.
+    ML_CHURN_PYTHON: str = os.getenv("ML_CHURN_PYTHON", "")
+    ML_CLV_PYTHON: str = os.getenv("ML_CLV_PYTHON", "")
+    ML_ISOLATED_TIMEOUT_SECONDS: float = float(
+        os.getenv("ML_ISOLATED_TIMEOUT_SECONDS", "120")
+    )
     DATABRICKS_HOST: str = os.getenv("DATABRICKS_HOST", "")
     DATABRICKS_TOKEN: str = os.getenv("DATABRICKS_TOKEN", "")
     DATABRICKS_CHURN_ENDPOINT: str = os.getenv("DATABRICKS_CHURN_ENDPOINT", "")

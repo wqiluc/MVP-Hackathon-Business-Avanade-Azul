@@ -115,6 +115,7 @@ class UploadService:
                         "message": str(error),
                         "missing_columns": error.missing_columns,
                         "invalid_columns": error.invalid_columns,
+                        "ingestion_contract": error.ingestion_contract,
                     },
                 ) from error
             except ValueError as error:
