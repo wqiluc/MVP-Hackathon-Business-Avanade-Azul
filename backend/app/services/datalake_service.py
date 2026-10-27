@@ -80,17 +80,167 @@ class DataLakeService:
             df_raw = cls._ler_arquivo(file_path, file_type)
             if df_raw.empty:
                 raise ValueError("O arquivo enviado está vazio.")
+            contract = df_raw.attrs.get("ingestion_contract")
+            if contract == "ML_FEATURES_52":
+                return cls.score_ml_features(df_raw)
             df_raw = cls._replace_source_ids_with_internal_ids(df_raw)
-
             if settings.DATA_LAKE_BACKEND == "snowflake":
                 from app.services.snowflake_service import SnowflakeDataLake
-                return SnowflakeDataLake.process_ingestion(df_raw)
-            if settings.DATA_LAKE_BACKEND == "duckdb":
-                return DuckDBDataLake.process_ingestion(df_raw)
-            raise ValueError(
-                f"Backend de Data Lake inválido: {settings.DATA_LAKE_BACKEND!r}. "
-                "Use 'duckdb' ou 'snowflake'."
+                resumo = SnowflakeDataLake.process_ingestion(df_raw)
+            elif settings.DATA_LAKE_BACKEND == "duckdb":
+                resumo = DuckDBDataLake.process_ingestion(df_raw)
+            else:
+                raise ValueError(
+                    f"Backend de Data Lake inválido: {settings.DATA_LAKE_BACKEND!r}. "
+                    "Use 'duckdb' ou 'snowflake'."
+                )
+            return {**resumo, "ingestion_contract": contract} if contract else resumo
+        
+    @staticmethod
+    def score_ml_features(features: pd.DataFrame) -> dict:
+        """Score ML_FEATURES_52 and persist results for the local CRM demo."""
+        from app.services.ml.churn_service import ChurnService
+        from app.services.ml.clv_service import ClvService
+        from app.services.ml.feature_builder import FeatureBuilder
+        from app.services.ml.inference_provider import ModelInferenceError
+
+        try:
+            churn = ChurnService().predict_many(
+                FeatureBuilder.build_frame(features, "churn")
             )
+            clv = ClvService().predict_many(
+                FeatureBuilder.build_frame(features, "clv")
+            )
+        except ModelInferenceError as error:
+            logger.warning("ML scoring failed: %s", error)
+            return {
+                "status": "unavailable",
+                "processed_rows": len(features),
+                "ingestion_contract": "ML_FEATURES_52",
+                "scoring_status": "unavailable",
+                "layers": [],
+                "scoring_summary": {},
+            }
+
+        scores = [p.score for p in churn]
+        values = [p.value for p in clv]
+
+        output = features.copy()
+
+        # Internal identifier used by the local CRM demo.
+        if "id_cliente" in output.columns:
+            output["client_identifier"] = output["id_cliente"].astype(str)
+        else:
+            output["client_identifier"] = [
+                f"ml-demo-{i + 1:03d}" for i in range(len(output))
+            ]
+
+        # ML outputs.
+        output["churn_score"] = scores
+        output["clv_12m"] = values
+        output["clvProjetado"] = output["clv_12m"]
+        output["riscoEvasao"] = output["churn_score"]
+
+        # CRM compatibility fields.
+        output["tier"] = output["tier_idx"].map(
+            {
+                0: "Básico",
+                1: "Topázio",
+                2: "Safira",
+                3: "Diamante",
+            }
+        ).fillna("Básico")
+
+        output["frequency"] = output["voos_12m"]
+        output["recency_days"] = output["dias_desde_ultimo_voo"]
+        output["total_spend"] = output["gasto_total_12m"]
+        output["flight_incidents"] = output["n_cancelamentos_12m"]
+        output["avg_ticket"] = output["ticket_medio_12m"]
+
+        # Persist local CRM snapshot.
+        with duckdb_writer(settings.DUCKDB_PATH):
+            conn = DataLakeService.get_connection()
+            try:
+                DuckDBAdapter.init_schema(conn)
+                DuckDBAdapter.write_gold(conn, output)
+
+                conn.execute(
+                    """
+                    CREATE OR REPLACE TABLE gold.snapshot_publication AS
+                    SELECT
+                        ? AS execution_id,
+                        CURRENT_TIMESTAMP AS published_at
+                    """,
+                    [execution_id()],
+                )
+            finally:
+                conn.close()
+
+        return {
+            "status": "success",
+            "processed_rows": len(output),
+            "ingestion_contract": "ML_FEATURES_52",
+            "scoring_status": "scored",
+            "layers": [
+                "gold.client_features",
+                "gold.snapshot_publication",
+            ],
+            "scoring_summary": {
+                "churn_score_mean": sum(scores) / len(scores),
+                "churn_score_max": max(scores),
+                "clv_mean": sum(values) / len(values),
+                "model_versions": {
+                    "churn": (
+                        f"{churn[0].model_name}:"
+                        f"{churn[0].model_version}"
+                    ),
+                    "clv": (
+                        f"{clv[0].model_name}:"
+                        f"{clv[0].model_version}"
+                    ),
+                },
+            },
+        }
+ 
+    # @staticmethod
+    # def score_ml_features(features: pd.DataFrame) -> dict:
+    #     """Score ML_FEATURES_52 uploads with the official models; nothing is persisted
+    #     or published to the CRM snapshot, and no per-client output is returned."""
+    #     from app.services.ml.churn_service import ChurnService
+    #     from app.services.ml.clv_service import ClvService
+    #     from app.services.ml.feature_builder import FeatureBuilder
+
+    #     from app.services.ml.inference_provider import ModelInferenceError
+
+    #     def run(service, kind: str):
+    #         try:
+    #             return service().predict_many(FeatureBuilder.build_frame(features, kind))
+    #         except ModelInferenceError:
+    #             return None
+
+    #     churn = run(ChurnService, "churn")
+    #     clv = run(ClvService, "clv")
+    #     summary: dict = {"churn_score_mean": None, "churn_score_max": None, "clv_mean": None}
+    #     versions: dict = {}
+    #     if churn:
+    #         scores = [p.score for p in churn]
+    #         summary.update(churn_score_mean=sum(scores) / len(scores), churn_score_max=max(scores))
+    #         versions["churn"] = f"{churn[0].model_name}:{churn[0].model_version}"
+    #     if clv:
+    #         values = [p.value for p in clv]
+    #         summary["clv_mean"] = sum(values) / len(values)
+    #         versions["clv"] = f"{clv[0].model_name}:{clv[0].model_version}"
+    #     summary["model_versions"] = versions
+    #     available = [m for m, r in (("churn", churn), ("clv", clv)) if r]
+    #     status = "scored" if len(available) == 2 else ("partial" if available else "unavailable")
+    #     return {
+    #         "status": "scored_not_persisted",
+    #         "processed_rows": len(features),
+    #         "ingestion_contract": "ML_FEATURES_52",
+    #         "scoring_status": status,
+    #         "layers": [],
+    #         "scoring_summary": summary,
+    #     }
 
     @staticmethod
     def _replace_source_ids_with_internal_ids(df_raw: pd.DataFrame) -> pd.DataFrame:

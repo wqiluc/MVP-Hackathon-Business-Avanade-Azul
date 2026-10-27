@@ -160,33 +160,35 @@ class CrmService:
     @staticmethod
     def carregar_clientes() -> list[dict]:
         df = DataLakeService.read_gold()
+
         if df.empty:
             return []
+
+        # Churn já calculado durante a ingestão ML_FEATURES_52.
         if "churn_score" not in df.columns:
             scores, _ = DataLakeService.score_gold(df)
             df["churn_score"] = scores
-        if set(CHURN_FEATURES).issubset(df.columns):
-            features = FeatureBuilder.build_frame(df, "clv")
-            predictions = ClvService().predict_many(features)
-            df["clv_value"] = [prediction.value for prediction in predictions]
-            df["clv_model_source"] = [
-                prediction.source for prediction in predictions
-            ]
-            df["clv_model_name"] = [prediction.model_name for prediction in predictions]
-            df["clv_model_version"] = [
-                prediction.model_version for prediction in predictions
-            ]
-        else:
-            logger.info(
-                "Real CLV unavailable: required source features are absent "
-                "missing_feature_count=%s",
-                len(set(CHURN_FEATURES) - set(df.columns)),
-            )
-            df["clv_value"] = None
+
+        # CLV já calculado durante a ingestão ML_FEATURES_52.
+        # Não recalcular aqui: o artefato CLV possui ambiente sklearn isolado.
+        if "clv_value" not in df.columns:
+            if "clv_12m" in df.columns:
+                df["clv_value"] = df["clv_12m"]
+            elif "clvProjetado" in df.columns:
+                df["clv_value"] = df["clvProjetado"]
+            else:
+                df["clv_value"] = None
+
+        if "clv_model_source" not in df.columns:
             df["clv_model_source"] = None
+
+        if "clv_model_name" not in df.columns:
             df["clv_model_name"] = None
+
+        if "clv_model_version" not in df.columns:
             df["clv_model_version"] = None
-        return [_linha_para_cliente(r) for r in df.itertuples()]
+
+        return [_linha_para_cliente(r) for r in df.itertuples()]   
 
     @classmethod
     def listar(cls, persona: str | None = None, tier: str | None = None) -> list[dict]:

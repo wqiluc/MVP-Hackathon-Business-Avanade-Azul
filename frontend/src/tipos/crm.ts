@@ -181,4 +181,12 @@ export interface ReciboIngestao {
   tamanhoBytes: number;
   status: 'recebido' | 'simulado';
   mensagem: string;
+  /** Contrato de ingestão detectado pelo backend (ex.: CRM_CANONICAL). */
+  ingestion_contract?: string | null;
+  /** Resumo agregado do scoring ML_FEATURES_52 (sem dados individuais). */
+  scoring_summary?: {
+    churn_score_mean: number | null;
+    churn_score_max: number | null;
+    clv_mean: number | null;
+  };
 }

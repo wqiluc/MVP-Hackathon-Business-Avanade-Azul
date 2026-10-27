@@ -67,7 +67,11 @@ def decision_agent(state: AgentState) -> AgentState:
     evidence = [
         f"Tier CRM: {tier}",
         f"Incidentes de voo: {state['flight_incidents']}",
-        f"Valor em risco calculado: R$ {value_at_risk:.2f}",
+        (
+            f"Valor em risco calculado: R$ {value_at_risk:.2f}"
+            if state.get("clv_12m") is not None
+            else "Valor em risco: indisponível"
+        ),
         (
             "Contexto de política marcado como verificado; elegibilidade individual "
             "não confirmada."

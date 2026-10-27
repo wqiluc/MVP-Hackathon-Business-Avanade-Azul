@@ -12,8 +12,10 @@ class FileContractError(ValueError):
         *,
         missing_columns: list[str] | None = None,
         invalid_columns: list[str] | None = None,
+        ingestion_contract: str | None = None,
     ) -> None:
         super().__init__(message)
+        self.ingestion_contract = ingestion_contract
         self.missing_columns = missing_columns or []
         self.invalid_columns = invalid_columns or []
 
@@ -64,9 +66,27 @@ class FileReader:
             )
         df.columns = normalized_columns
 
-        if set(cls.CANONICAL_COLUMNS).issubset(
-            {column.lower() for column in normalized_columns}
-        ):
+        # Lazy import keeps the model contract as the single source of truth.
+        from app.services.ml.ingestion_contracts import (
+            ACCEPTED_CONTRACTS_MESSAGE,
+            IngestionContract,
+            detect_ingestion_contract,
+            extract_ml_features,
+        )
+
+        contract = detect_ingestion_contract(normalized_columns)
+        if contract is IngestionContract.ML_FEATURES_52:
+            try:
+                features = extract_ml_features(df)
+            except ValueError as error:
+                raise FileContractError(
+                    f"Contrato ML_FEATURES_52 com valores inválidos ou ausentes: {error}",
+                    ingestion_contract=contract.value,
+                ) from error
+            features.attrs["ingestion_contract"] = contract.value
+            return features
+
+        if contract is IngestionContract.CRM_CANONICAL:
             if tuple(column.lower() for column in normalized_columns) != cls.CANONICAL_COLUMNS:
                 raise FileContractError(
                     "O cabeçalho deve conter somente as seis colunas canônicas, na ordem documentada.",
@@ -76,22 +96,27 @@ class FileReader:
                     ),
                 )
             canonical = df.rename(columns=str.lower).loc[:, cls.CANONICAL_COLUMNS].copy()
+            contract_name = IngestionContract.CRM_CANONICAL.value
         elif cls.SYNTHETIC_COLUMNS.issubset(set(normalized_columns)):
             canonical = cls._adapt_synthetic_dataset(df)
+            contract_name = "CRM_SYNTHETIC"
         else:
             canonical_names = set(cls.CANONICAL_COLUMNS)
             canonical_present = {column.lower() for column in normalized_columns}
             canonical_missing = sorted(canonical_names - canonical_present)
             synthetic_missing = sorted(cls.SYNTHETIC_COLUMNS - set(normalized_columns))
             raise FileContractError(
-                "Arquivo incompatível com o contrato de ingestão. "
-                f"Colunas canônicas ausentes: {', '.join(canonical_missing)}. "
+                f"{ACCEPTED_CONTRACTS_MESSAGE} "
+                f"Colunas CRM ausentes: {', '.join(canonical_missing)}. "
                 "Ou forneça o formato sintético com: "
                 f"{', '.join(synthetic_missing)}.",
                 missing_columns=canonical_missing,
+                ingestion_contract=IngestionContract.UNKNOWN.value,
             )
 
-        return cls._validate_canonical(canonical)
+        validated = cls._validate_canonical(canonical)
+        validated.attrs["ingestion_contract"] = contract_name
+        return validated
 
     @classmethod
     def _read_csv(cls, file_path: str) -> pd.DataFrame:

@@ -202,6 +202,18 @@ def test_local_provider_loads_model_lazily_and_reads_registered_metadata(
     assert result.classes == (0, 1)
 
 
+def test_local_provider_wraps_model_load_failures_as_inference_error(tmp_path):
+    model_path = tmp_path / "model"
+    model_path.mkdir()
+    provider = LocalMLflowInferenceProvider(
+        {"clv": str(model_path)},
+        model_loader=Mock(side_effect=ModuleNotFoundError("xgboost")),
+    )
+
+    with pytest.raises(ModelInferenceError, match="could not be loaded"):
+        provider.predict("clv", pd.DataFrame([_features()]), "predict")
+
+
 def test_databricks_provider_uses_mocked_http_and_model_serving_contract(monkeypatch):
     post = Mock()
     post.return_value.json.return_value = {"predictions": [[0.25, 0.75]]}
@@ -270,3 +282,64 @@ def test_real_model_services_do_not_load_artifacts_during_import():
 
     assert "mlflow.sklearn.load_model(cache_key)" in text
     assert text.index("def _load") < text.index("mlflow.sklearn.load_model(cache_key)")
+
+
+def _databricks_provider(token="sensitive"):
+    return DatabricksServingInferenceProvider(
+        "https://workspace.example", token, {"churn": "churn-ep", "clv": "clv-ep"}, 1,
+        {"churn": (0, 1)},
+    )
+
+
+@pytest.mark.parametrize("model_key", ["churn", "clv"])
+@pytest.mark.parametrize("status", [401, 403, 404, 408, 429, 500, 502, 503, 504])
+def test_databricks_http_errors_become_model_inference_error(monkeypatch, model_key, status):
+    response = Mock(status_code=status)
+    response.raise_for_status.side_effect = requests.HTTPError(f"{status} sensitive-detail")
+    post = Mock(return_value=response)
+    monkeypatch.setattr("app.services.ml.inference_provider.requests.post", post)
+
+    with pytest.raises(ModelInferenceError, match="request failed") as error:
+        _databricks_provider().predict(model_key, pd.DataFrame([_features()]), "predict")
+    assert "sensitive" not in str(error.value)
+    assert post.call_count == 1
+
+
+@pytest.mark.parametrize("model_key", ["churn", "clv"])
+def test_databricks_connection_error_becomes_model_inference_error(monkeypatch, model_key):
+    monkeypatch.setattr(
+        "app.services.ml.inference_provider.requests.post",
+        Mock(side_effect=requests.ConnectionError("sensitive")),
+    )
+    with pytest.raises(ModelInferenceError, match="request failed"):
+        _databricks_provider().predict(model_key, pd.DataFrame([_features()]), "predict")
+
+
+def test_databricks_missing_credentials_or_endpoint_is_unavailable():
+    provider = DatabricksServingInferenceProvider("", "", {"clv": ""}, 1)
+    with pytest.raises(ModelInferenceError, match="required"):
+        provider.predict("clv", pd.DataFrame([_features()]), "predict")
+
+
+def test_databricks_payload_has_exactly_the_contract_columns_in_order(monkeypatch):
+    from app.services.ml.model_contracts import CHURN_FEATURES
+
+    post = Mock()
+    post.return_value.json.return_value = {"predictions": [[0.4, 0.6]]}
+    monkeypatch.setattr("app.services.ml.inference_provider.requests.post", post)
+    frame = pd.DataFrame([FeatureBuilder.build_churn(_features()).model_dump()])
+    _databricks_provider().predict("churn", frame, "predict_proba")
+
+    assert post.call_args.kwargs["json"]["dataframe_split"]["columns"] == list(CHURN_FEATURES)
+
+
+def test_churn_and_clv_services_via_databricks_provider(monkeypatch):
+    def fake_post(url, **kwargs):
+        body = Mock()
+        body.json.return_value = {"predictions": [[0.2, 0.8]] if "churn-ep" in url else [1234.5]}
+        return body
+
+    monkeypatch.setattr("app.services.ml.inference_provider.requests.post", fake_post)
+    provider = _databricks_provider()
+    assert ChurnService(provider).predict(_features()).score == pytest.approx(0.8)
+    assert ClvService(provider).predict(_features()).value == pytest.approx(1234.5)
