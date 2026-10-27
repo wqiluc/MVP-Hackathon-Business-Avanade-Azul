@@ -1,0 +1,32 @@
+from fastapi import APIRouter, Depends, UploadFile, File
+from app.core.security import get_current_user
+from app.services.schemas.upload_schema import UploadResponse
+from app.services.upload_service import UploadService
+
+router = APIRouter()
+
+
+@router.post("/clientes")
+async def ingerir_clientes(arquivo: UploadFile = File(...), current_user: dict = Depends(get_current_user)):
+    """Contrato do front: recebe a base e roda Bronze → Silver → Gold + inferência."""
+    resumo, tamanho = await UploadService.process_upload(arquivo)
+    message = f"{resumo['processed_rows']} clientes processados nas camadas Bronze, Silver e Gold."
+    if resumo.get("scoring_status") == "awaiting_model_registration":
+        message += " Score pendente: treine e registre o modelo no MLflow para habilitar inferência."
+    elif resumo.get("scoring_status") == "awaiting_model_features":
+        message += (
+            " Score de churn e CLV indisponíveis: o conjunto não contém todas "
+            "as features exigidas pelos contratos dos modelos."
+        )
+    return {
+        "arquivo": arquivo.filename, "tamanhoBytes": tamanho, "status": "recebido",
+        "mensagem": message,
+    }
+
+
+@router.post("/ingest", response_model=UploadResponse)
+async def upload_dataset(file: UploadFile = File(...), current_user: dict = Depends(get_current_user)):
+    """Rota legada (/data/ingest)."""
+    resumo, _ = await UploadService.process_upload(file)
+    return UploadResponse(
+        message="Base de dados processada com sucesso nas camadas Bronze, Silver e Gold!", details=resumo)
