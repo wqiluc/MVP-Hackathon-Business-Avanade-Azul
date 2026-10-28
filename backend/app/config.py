@@ -89,10 +89,13 @@ class Settings(BaseSettings):
     ML_CLV_PYTHON: str = os.getenv("ML_CLV_PYTHON", "")
     ML_ISOLATED_TIMEOUT_SECONDS: float = float(
         os.getenv("ML_ISOLATED_TIMEOUT_SECONDS", "120")
-    )
-    DATABRICKS_HOST: str = os.getenv("DATABRICKS_HOST", "")
-    DATABRICKS_TOKEN: str = os.getenv("DATABRICKS_TOKEN", "")
+        )
+    DATABRICKS_CHURN_HOST: str = os.getenv("DATABRICKS_CHURN_HOST", "")
+    DATABRICKS_CHURN_TOKEN: str = os.getenv("DATABRICKS_CHURN_TOKEN", "")
     DATABRICKS_CHURN_ENDPOINT: str = os.getenv("DATABRICKS_CHURN_ENDPOINT", "")
+
+    DATABRICKS_CLV_HOST: str = os.getenv("DATABRICKS_CLV_HOST", "")
+    DATABRICKS_CLV_TOKEN: str = os.getenv("DATABRICKS_CLV_TOKEN", "")
     DATABRICKS_CLV_ENDPOINT: str = os.getenv("DATABRICKS_CLV_ENDPOINT", "")
 
     # Acesso do front (ambiente de avaliação do Hackathon)

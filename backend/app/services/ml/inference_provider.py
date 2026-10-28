@@ -219,14 +219,17 @@ class DatabricksServingInferenceProvider:
 
     def __init__(
         self,
-        host: str,
-        token: str,
+        hosts: dict[str, str],
+        tokens: dict[str, str],
         endpoints: dict[str, str],
         timeout_seconds: float,
         class_orders: dict[str, tuple[Any, ...]] | None = None,
     ):
-        self.host = host.rstrip("/")
-        self.token = token
+        self.hosts = {
+            key: value.rstrip("/")
+            for key, value in hosts.items()
+        }
+        self.tokens = tokens
         self.endpoints = endpoints
         self.timeout_seconds = timeout_seconds
         self.class_orders = class_orders or {}
@@ -235,19 +238,22 @@ class DatabricksServingInferenceProvider:
         self, model_key: str, frame: pd.DataFrame, method: str
     ) -> InferenceResult:
         del method
+        host = self.hosts.get(model_key, "").strip()
+        token = self.tokens.get(model_key, "").strip()
         endpoint = self.endpoints.get(model_key, "").strip()
-        if not self.host or not self.token or not endpoint:
+
+        if not host or not token or not endpoint:
             raise ModelInferenceError(
                 f"Databricks host, token, and {model_key} endpoint are required."
             )
         url = (
-            f"{self.host}/api/2.0/serving-endpoints/"
+            f"{host}/api/2.0/serving-endpoints/"
             f"{quote(endpoint, safe='')}/invocations"
         )
         try:
             response = requests.post(
                 url,
-                headers={"Authorization": f"Bearer {self.token}"},
+                headers={"Authorization": f"Bearer {token}"},
                 json={"dataframe_split": frame.to_dict(orient="split")},
                 timeout=self.timeout_seconds,
             )
@@ -308,14 +314,20 @@ def _settings_provider():
                 "ML_CHURN_CLASS_ORDER must define exactly two distinct classes."
             )
         return DatabricksServingInferenceProvider(
-            settings.DATABRICKS_HOST,
-            settings.DATABRICKS_TOKEN,
-            {
+            hosts={
+                "churn": settings.DATABRICKS_CHURN_HOST,
+                "clv": settings.DATABRICKS_CLV_HOST,
+            },
+            tokens={
+                "churn": settings.DATABRICKS_CHURN_TOKEN,
+                "clv": settings.DATABRICKS_CLV_TOKEN,
+            },
+            endpoints={
                 "churn": settings.DATABRICKS_CHURN_ENDPOINT,
                 "clv": settings.DATABRICKS_CLV_ENDPOINT,
             },
-            settings.ML_INFERENCE_TIMEOUT_SECONDS,
-            {"churn": churn_classes},
+            timeout_seconds=settings.ML_INFERENCE_TIMEOUT_SECONDS,
+            class_orders={"churn": churn_classes},
         )
     raise ModelInferenceError("ML_INFERENCE_MODE must be local or databricks.")
 
